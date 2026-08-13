@@ -86,3 +86,35 @@ input[type=range] { width: 100%; height: 3px; appearance: none; background: line
 .branch-mini i { display: block; height: 100%; background: #789b88; }
 .history-note { margin-top: 14px; padding-top: 10px; border-top: 1px solid #26313e; color: #718094; font-size: 9px; }
 @media (max-width: 760px) { .analysis-strip, .branch-grid { grid-template-columns: 1fr; }.analysis-strip > div { min-height: 0; }.delta-grid { grid-template-columns: 1fr; }.delta-head { display: block; }.delta-head small { display: block; margin-top: 8px; }.delta-row { grid-template-columns: 12px minmax(80px, 1fr) auto auto; gap: 5px; }.prob-column > small { font-size: 7px; }.control-actions .wide-action { grid-column: auto; } }
+
+/* CSV dropzone, visual analytics and branch rankings. */
+.import-zone { transition: border-color .18s, background .18s; }
+.import-zone.drag-active { border-color: #c8a866; background: #1b2b36; box-shadow: inset 0 0 0 1px #c8a86644; }
+.drop-hint { display: inline-flex; margin-left: 10px; color: #8c9aaa; font-size: 9px; }
+.toolbar-actions { display: flex; align-items: center; gap: 14px; }
+.toolbar-actions button { display: flex; align-items: center; gap: 5px; }
+.analysis-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.chart-panel { min-width: 0; border: 1px solid #2a3543; background: #121b27; padding: 14px; }
+.radar-panel { grid-column: 1 / -1; }
+.chart-panel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid #293544; }
+.chart-panel-head h4 { margin: 5px 0 0; color: #e5dfd3; font-family: 'DM Serif Display', serif; font-size: 19px; font-weight: 400; }
+.chart-panel-head small { color: #758496; font-size: 8px; text-align: right; }
+.analysis-chart { width: 100%; min-width: 0; height: 190px; min-height: 190px; margin-top: 8px; position: relative; }
+.branch-rankings { margin: 18px 0; padding: 16px; border: 1px solid #3a4653; background: linear-gradient(135deg, #172432, #111a25); }
+.branch-ranking-intro { border-bottom: 1px solid #2c3846; padding-bottom: 12px; }
+.branch-ranking-intro h4 { margin: 6px 0 3px; color: #e5dfd3; font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; }
+.branch-ranking-intro p { margin: 0; color: #8491a1; font-size: 9px; line-height: 1.6; }
+.branch-ranking-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.branch-ranking-card { padding: 13px; border: 1px solid #2d3a48; background: #121b27; }
+.branch-ranking-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.branch-ranking-head h5 { margin: 4px 0 0; color: #e5dfd3; font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; }
+.branch-ranking-head strong { color: #c8a866; font-size: 13px; font-weight: 500; }
+.branch-kicker { color: #768699; font-size: 8px; letter-spacing: .08em; }
+.branch-ranking-card > p { min-height: 28px; margin: 8px 0; color: #8491a1; font-size: 9px; line-height: 1.5; }
+.branch-rank-list { border-top: 1px solid #293544; }
+.branch-rank-row { display: grid; grid-template-columns: 18px 11px minmax(70px, 1fr) auto auto; gap: 7px; align-items: center; min-height: 39px; border-bottom: 1px solid #25303c; color: #768699; font-size: 8px; }
+.branch-rank-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d9dfe2; font-size: 9px; font-weight: 500; }
+.branch-rank-row b { color: #c8a866; font-size: 9px; font-weight: 500; }
+.branch-rank-number { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #293646; color: #9aa8b7; font-size: 8px; }
+.branch-rank-number.n1 { background: #c8a866; color: #111923; }.branch-rank-number.n2 { background: #aeb6c0; color: #17202c; }.branch-rank-number.n3 { background: #956a53; color: #f6ead3; }
+@media (max-width: 760px) { .analysis-charts { grid-template-columns: 1fr; }.radar-panel { grid-column: auto; }.chart-panel-head { display: block; }.chart-panel-head small { display: block; margin-top: 6px; text-align: left; }.drop-hint { display: block; margin: 8px 0 0; }.toolbar-actions { gap: 7px; }.toolbar-actions button { font-size: 8px; }.branch-ranking-grid { grid-template-columns: 1fr; } }
