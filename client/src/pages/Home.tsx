@@ -1,10 +1,15 @@
-/* Velvet Turf design: premium sports-editorial dashboard, asymmetrical race-lab layout, navy/ivory/brass palette. */
-import { useMemo, useState } from "react";
-import { Activity, ChevronDown, Gauge, Info, Play, RotateCcw, SlidersHorizontal, Trophy, Zap } from "lucide-react";
+/* Velvet Turf design: premium sports-editorial race lab. This page adds local CSV import, editable field management, and saved scenario comparison without a backend. */
+import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { Activity, ChevronDown, Download, FileUp, Gauge, Info, Pencil, Play, RotateCcw, Save, SlidersHorizontal, Trophy, Upload, X, Zap } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 
-const horseSeeds = [
+type Style = "逃げ" | "先行" | "差し" | "追込";
+type Horse = { no: number; name: string; color: string; style: Style; speed: number; stamina: number; start: number; form: number; popularity: number };
+type ResultHorse = Horse & { wins: number; places: number; winRate: number; placeRate: number; avgScore: number };
+type Snapshot = { id: number; label: string; distance: number; going: string; pace: string; runs: number; top: string; topRate: number; results: ResultHorse[] };
+
+const sampleHorses: Horse[] = [
   { no: 1, name: "ノーブル・アーチ", color: "#b9c3d4", style: "差し", speed: 88, stamina: 82, start: 78, form: 91, popularity: 2 },
   { no: 2, name: "サウス・レガシー", color: "#e7b66a", style: "先行", speed: 84, stamina: 87, start: 90, form: 86, popularity: 4 },
   { no: 3, name: "ヴェルヴェット・R", color: "#db7e70", style: "逃げ", speed: 91, stamina: 70, start: 95, form: 80, popularity: 1 },
@@ -14,94 +19,53 @@ const horseSeeds = [
   { no: 7, name: "グリーン・モーメント", color: "#8ebc83", style: "追込", speed: 79, stamina: 92, start: 69, form: 81, popularity: 8 },
   { no: 8, name: "アステル・コール", color: "#9bbbd2", style: "差し", speed: 85, stamina: 84, start: 76, form: 79, popularity: 6 },
 ];
-
 const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n));
-
-function runSimulation(distance: number, going: string, pace: string, runs: number) {
-  const goingFactor: Record<string, number> = { 良: 1, 稍重: 0.97, 重: 0.93, 不良: 0.88 };
-  const paceFactor: Record<string, Record<string, number>> = {
-    スロー: { 逃げ: 1.04, 先行: 1.02, 差し: 0.98, 追込: 0.95 },
-    平均: { 逃げ: 1, 先行: 1, 差し: 1, 追込: 1 },
-    ハイ: { 逃げ: 0.94, 先行: 0.97, 差し: 1.03, 追込: 1.06 },
-  };
-  const totals = horseSeeds.map((horse) => ({ ...horse, wins: 0, places: 0, points: 0, samples: [] as number[] }));
+const parseStyle = (value: string): Style => (["逃げ", "先行", "差し", "追込"].includes(value) ? value : "差し") as Style;
+function runSimulation(horses: Horse[], distance: number, going: string, pace: string, runs: number) {
+  const goingFactor: Record<string, number> = { 良: 1, 稍重: .97, 重: .93, 不良: .88 };
+  const paceFactor: Record<string, Record<Style, number>> = { スロー: { 逃げ: 1.04, 先行: 1.02, 差し: .98, 追込: .95 }, 平均: { 逃げ: 1, 先行: 1, 差し: 1, 追込: 1 }, ハイ: { 逃げ: .94, 先行: .97, 差し: 1.03, 追込: 1.06 } };
+  const totals = horses.map((horse) => ({ ...horse, wins: 0, places: 0, avgScore: 0, samples: [] as number[] }));
   for (let i = 0; i < runs; i++) {
-    const ranked = totals.map((horse) => {
-      const distanceFit = distance >= 2000 ? horse.stamina * 0.16 : horse.speed * 0.16;
+    totals.map((horse) => {
+      const distanceFit = distance >= 2000 ? horse.stamina * .16 : horse.speed * .16;
       const paceFit = paceFactor[pace][horse.style];
-      const goingFit = 1 + (horse.stamina - 80) * (1 - goingFactor[going]) * 0.006;
-      const noise = (Math.random() - 0.5) * 16;
-      const score = (horse.speed * 0.35 + horse.stamina * 0.25 + horse.start * 0.12 + horse.form * 0.28 + distanceFit) * paceFit * goingFit + noise;
+      const goingFit = 1 + (horse.stamina - 80) * (1 - goingFactor[going]) * .006;
+      const score = (horse.speed * .35 + horse.stamina * .25 + horse.start * .12 + horse.form * .28 + distanceFit) * paceFit * goingFit + (Math.random() - .5) * 16;
       return { horse, score };
-    }).sort((a, b) => b.score - a.score);
-    ranked.forEach((item, index) => {
-      item.horse.points += Math.max(0, 9 - index);
-      item.horse.samples.push(item.score);
-      if (index === 0) item.horse.wins++;
-      if (index < 3) item.horse.places++;
-    });
+    }).sort((a, b) => b.score - a.score).forEach((item, index) => { item.horse.samples.push(item.score); item.horse.avgScore += item.score; if (index === 0) item.horse.wins++; if (index < 3) item.horse.places++; });
   }
-  return totals.map((horse) => ({ ...horse, winRate: horse.wins / runs * 100, placeRate: horse.places / runs * 100, avgScore: horse.samples.reduce((a, b) => a + b, 0) / runs })).sort((a, b) => b.winRate - a.winRate);
+  return totals.map(({ samples, ...horse }) => ({ ...horse, winRate: horse.wins / runs * 100, placeRate: horse.places / runs * 100, avgScore: horse.avgScore / runs })).sort((a, b) => b.winRate - a.winRate) as ResultHorse[];
+}
+function csvRows(text: string) {
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) throw new Error("CSVにデータがありません。");
+  const headers = lines[0].split(",").map((x) => x.trim().toLowerCase());
+  const find = (names: string[], row: string[]) => { const index = headers.findIndex((h) => names.includes(h)); return index >= 0 ? row[index]?.trim() : ""; };
+  const rows = lines.slice(1).map((line, index) => { const row = line.split(","); const name = find(["name", "馬名", "馬名(英)", "horse"], row); if (!name) throw new Error(`${index + 2}行目: name / 馬名 がありません。`); return { no: Number(find(["no", "馬番", "number"], row)) || index + 1, name, color: ["#b9c3d4", "#e7b66a", "#db7e70", "#95c6b0", "#aa9ad6", "#d7a5ca", "#8ebc83", "#9bbbd2"][index % 8], style: parseStyle(find(["style", "脚質"], row)), speed: clamp(Number(find(["speed", "末脚", "スピード"], row)) || 70), stamina: clamp(Number(find(["stamina", "持久力", "スタミナ"], row)) || 70), start: clamp(Number(find(["start", "先行力", "スタート"], row)) || 70), form: clamp(Number(find(["form", "近況", "調子"], row)) || 70), popularity: Number(find(["popularity", "人気"], row)) || 0 } as Horse; });
+  if (rows.length < 2) throw new Error("2頭以上の馬データが必要です。"); return rows;
 }
 
 export default function Home() {
-  const [distance, setDistance] = useState(2000);
-  const [going, setGoing] = useState("良");
-  const [pace, setPace] = useState("平均");
-  const [runs, setRuns] = useState(10000);
-  const [seed, setSeed] = useState(0);
-  const [activeTab, setActiveTab] = useState("overview");
-  const results = useMemo(() => runSimulation(distance, going, pace, runs), [distance, going, pace, runs, seed]);
-  const favorite = results[0];
-  const chartData = results.slice(0, 6).map((horse, index) => ({ name: `${index + 1}着`, value: Math.round(horse.winRate * 10) / 10 }));
-  const rerun = () => setSeed((value) => value + 1);
+  const [horses, setHorses] = useState<Horse[]>(sampleHorses); const [distance, setDistance] = useState(2000); const [going, setGoing] = useState("良"); const [pace, setPace] = useState("平均"); const [runs, setRuns] = useState(10000); const [seed, setSeed] = useState(0); const [tab, setTab] = useState("overview"); const [panel, setPanel] = useState<"none" | "manage" | "compare">("none"); const [history, setHistory] = useState<Snapshot[]>([]); const [selectedHistory, setSelectedHistory] = useState<number[]>([]); const [csvMessage, setCsvMessage] = useState(""); const [editing, setEditing] = useState<number | null>(null); const fileRef = useRef<HTMLInputElement>(null);
+  const results = useMemo(() => runSimulation(horses, distance, going, pace, runs), [horses, distance, going, pace, runs, seed]); const favorite = results[0];
+  const updateHorse = (no: number, key: keyof Horse, value: string | number) => setHorses((prev) => prev.map((horse) => horse.no === no ? { ...horse, [key]: key === "style" ? parseStyle(String(value)) : key === "name" ? value : clamp(Number(value)) } : horse));
+  const run = () => setSeed((v) => v + 1);
+  const saveScenario = () => { const snapshot: Snapshot = { id: Date.now(), label: `${distance.toLocaleString()}m / ${going} / ${pace}`, distance, going, pace, runs, top: favorite.name, topRate: favorite.winRate, results: results.slice(0, 5) }; setHistory((prev) => [snapshot, ...prev].slice(0, 6)); setPanel("compare"); };
+  const handleCsv = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { try { const imported = csvRows(String(reader.result)); setHorses(imported); setCsvMessage(`${imported.length}頭を読み込みました。`); setPanel("manage"); } catch (error) { setCsvMessage(error instanceof Error ? error.message : "CSVを読み込めませんでした。"); } }; reader.readAsText(file, "UTF-8"); event.target.value = ""; };
+  const chartData = results.slice(0, 6).map((horse, index) => ({ name: `${index + 1}着`, value: Number(horse.winRate.toFixed(1)) }));
+  return <div className="app-shell"><header className="topbar"><div className="brand-lockup"><div className="brand-mark"><img src="/manus-storage/keiba-track-mark_68c4cb74.png" alt="Keiba Simulator mark" /></div><div><div className="brand-name">KEIBA <span>LAB</span></div><div className="brand-caption">RACE SIMULATION STUDIO</div></div></div><div className="topbar-meta"><span className="status-dot" />LOCAL MODEL <span className="divider" /> AUG 13, 2026 <button className="ghost-icon" aria-label="Information"><Info size={16} /></button></div></header>
+    <main className="dashboard-grid"><aside className="control-rail"><div className="rail-heading"><span className="eyebrow">01 / SETUP</span><SlidersHorizontal size={16} /></div><h1>レースを<br /><em>組み立てる。</em></h1><p className="rail-intro">条件を変えると、展開の読み筋も変わります。実在馬データを読み込み、仮想レースを複数回走らせます。</p><div className="setting-group"><label>コース距離 <strong>{distance.toLocaleString()}m</strong></label><input type="range" min="1200" max="3200" step="100" value={distance} onChange={(e) => setDistance(Number(e.target.value))} /><div className="range-labels"><span>1,200m</span><span>3,200m</span></div></div><div className="setting-group"><label>馬場状態</label><div className="segmented">{["良", "稍重", "重", "不良"].map((item) => <button key={item} className={going === item ? "selected" : ""} onClick={() => setGoing(item)}>{item}</button>)}</div></div><div className="setting-group"><label>想定ペース</label><div className="select-wrap"><select value={pace} onChange={(e) => setPace(e.target.value)}><option>スロー</option><option>平均</option><option>ハイ</option></select><ChevronDown size={15} /></div></div><div className="setting-group"><label>試行回数 <strong>{runs.toLocaleString()}回</strong></label><input type="range" min="1000" max="50000" step="1000" value={runs} onChange={(e) => setRuns(Number(e.target.value))} /><div className="range-labels"><span>1,000</span><span>50,000</span></div></div><Button className="simulate-button" onClick={run}><Play size={15} fill="currentColor" /> シミュレーションを走らせる</Button><div className="control-actions"><button onClick={() => setPanel("manage")}><Pencil size={13} /> 出走馬を管理</button><button onClick={saveScenario}><Save size={13} /> 結果を保存</button></div><p className="model-note"><span className="brass-line" />能力値・脚質・距離適性・馬場補正・ペース補正・乱数を合成したブラウザ内モデルです。</p></aside>
+      <section className="main-stage"><div className="hero-panel"><img src="/manus-storage/velvet-turf-hero_f15cb3f8.jpg" alt="夜の競馬場" /><div className="hero-overlay" /><div className="hero-copy"><span className="eyebrow light">RACE 07 / VIRTUAL TURF</span><h2>第42回<br /><span>サマー・カップ</span></h2><div className="hero-specs"><span>東京 11R</span><span>芝 {distance.toLocaleString()}m</span><span>{going} / {pace}ペース</span></div></div><div className="hero-badge"><span>RUNS</span><strong>{runs.toLocaleString()}</strong><small>trials completed</small></div></div><div className="stage-tabs"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>結果サマリー</button><button className={tab === "field" ? "active" : ""} onClick={() => setTab("field")}>出走馬の読み筋</button><button className={tab === "compare" ? "active" : ""} onClick={() => { setTab("compare"); setPanel("compare"); }}>保存結果 <b>{history.length}</b></button><span className="tab-rule" /><span className="last-run"><Zap size={14} /> LIVE MODEL · UPDATED JUST NOW</span></div>{tab === "overview" && <><div className="headline-row"><div><span className="eyebrow">TOP PROBABILITY</span><h3>{favorite.name}</h3><p>勝率 <strong>{favorite.winRate.toFixed(1)}%</strong> · 連対率 {favorite.placeRate.toFixed(1)}%</p></div><div className="headline-number"><span>WIN PROBABILITY</span><strong>{favorite.winRate.toFixed(1)}<small>%</small></strong></div></div><div className="result-table-wrap"><div className="table-heading"><span>勝率ランキング</span><span>着順確率の分布</span></div>{results.map((horse, index) => <div className={`horse-row ${index === 0 ? "top-rank" : ""}`} key={`${horse.no}-${horse.name}`}><div className="rank">{String(index + 1).padStart(2, "0")}</div><div className="silk-dot" style={{ background: horse.color }} /><div className="horse-name"><strong>{horse.name}</strong><span>馬番 {horse.no} · {horse.style}</span></div><div className="prob-bar"><div style={{ width: `${clamp(horse.winRate * 2.9)}%` }} /></div><div className="win-rate">{horse.winRate.toFixed(1)}<small>%</small></div><div className="trend">{index < 2 ? "↑" : "→"}</div></div>)}</div></>}{tab === "field" && <div className="field-grid">{horses.map((horse) => <div className="field-card" key={horse.no}><div className="field-card-top"><span className="silk-dot" style={{ background: horse.color }} /><span>#{horse.no}</span><span className="style-tag">{horse.style}</span></div><h3>{horse.name}</h3><div className="metric"><span>末脚</span><div><i style={{ width: `${horse.speed}%` }} /></div><b>{horse.speed}</b></div><div className="metric"><span>持久力</span><div><i style={{ width: `${horse.stamina}%` }} /></div><b>{horse.stamina}</b></div><div className="metric"><span>近況</span><div><i style={{ width: `${horse.form}%` }} /></div><b>{horse.form}</b></div></div>)}</div>}{tab === "compare" && <Comparison history={history} selected={selectedHistory} setSelected={setSelectedHistory} />}</section>
+      <aside className="insight-rail"><div className="rail-heading"><span className="eyebrow">02 / INSIGHT</span><Gauge size={16} /></div><div className="insight-card accent-card"><div className="card-label"><span>PACE OUTLOOK</span><span className="live-pill">{pace}</span></div><h3>{pace === "ハイ" ? "前崩れの余地。" : pace === "スロー" ? "前残りに注意。" : "隊列は均衡。"}</h3><p>各脚質に異なる余地があり、能力値と馬場適性の差が最終盤で効きます。</p><div className="pace-track"><span className="pace-marker" style={{ left: pace === "ハイ" ? "79%" : pace === "スロー" ? "22%" : "50%" }} /></div><div className="pace-labels"><span>後方有利</span><span>前方有利</span></div></div><div className="insight-card"><div className="card-label"><span>TOP 3 CONSENSUS</span><Trophy size={15} /></div><div className="podium-list">{results.slice(0, 3).map((horse, i) => <div className="podium-item" key={horse.no}><span className={`medal m${i + 1}`}>{i + 1}</span><strong>{horse.name}</strong><span>{horse.winRate.toFixed(1)}%</span></div>)}</div></div><div className="insight-card chart-card"><div className="card-label"><span>WIN PROBABILITY CURVE</span><Activity size={15} /></div><div className="mini-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><defs><linearGradient id="brassFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8a866" stopOpacity={.4}/><stop offset="100%" stopColor="#c8a866" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#ffffff12" vertical={false} /><XAxis dataKey="name" tick={{ fill: "#788394", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis hide /><Tooltip contentStyle={{ background: "#1b2431", border: "1px solid #c8a86655", borderRadius: 4, color: "#f3efe5" }} /><Area type="monotone" dataKey="value" stroke="#c8a866" fill="url(#brassFill)" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></div><button className="reset-button" onClick={() => { setHorses(sampleHorses); setDistance(2000); setGoing("良"); setPace("平均"); setRuns(10000); run(); }}><RotateCcw size={14} /> 条件を初期化</button></aside></main>
+      {panel !== "none" && <div className="drawer-backdrop" onClick={() => setPanel("none")}><section className="data-drawer" onClick={(e) => e.stopPropagation()}><div className="drawer-header"><div><span className="eyebrow">DATA ROOM</span><h2>{panel === "manage" ? "出走馬データを管理" : "保存結果を比較"}</h2></div><button className="close-button" onClick={() => setPanel("none")}><X size={18} /></button></div>{panel === "manage" ? <Management horses={horses} setHorses={setHorses} fileRef={fileRef} handleCsv={handleCsv} csvMessage={csvMessage} editing={editing} setEditing={setEditing} updateHorse={updateHorse} reset={() => setHorses(sampleHorses)} /> : <Comparison history={history} selected={selectedHistory} setSelected={setSelectedHistory} expanded />}</section></div>}
+      <footer className="footer"><span>KEIBA LAB / PRIVATE RACE MODEL</span><span>結果はシミュレーション上の推計であり、実際のレース結果を保証するものではありません。</span></footer></div>;
+}
 
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand-lockup">
-          <div className="brand-mark"><img src="/manus-storage/keiba-track-mark_68c4cb74.png" alt="Keiba Simulator mark" /></div>
-          <div><div className="brand-name">KEIBA <span>LAB</span></div><div className="brand-caption">RACE SIMULATION STUDIO</div></div>
-        </div>
-        <div className="topbar-meta"><span className="status-dot" />LOCAL MODEL <span className="divider" /> AUG 13, 2026 <button className="ghost-icon" aria-label="Information"><Info size={16} /></button></div>
-      </header>
-
-      <main className="dashboard-grid">
-        <aside className="control-rail">
-          <div className="rail-heading"><span className="eyebrow">01 / SETUP</span><SlidersHorizontal size={16} /></div>
-          <h1>レースを<br /><em>組み立てる。</em></h1>
-          <p className="rail-intro">条件を変えると、展開の読み筋も変わります。ここでは仮想レースを複数回走らせ、結果の分布を観察します。</p>
-          <div className="setting-group">
-            <label>コース距離 <strong>{distance.toLocaleString()}m</strong></label>
-            <input type="range" min="1200" max="3200" step="100" value={distance} onChange={(e) => setDistance(Number(e.target.value))} />
-            <div className="range-labels"><span>1,200m</span><span>3,200m</span></div>
-          </div>
-          <div className="setting-group"><label>馬場状態</label><div className="segmented">{["良", "稍重", "重", "不良"].map((item) => <button key={item} className={going === item ? "selected" : ""} onClick={() => setGoing(item)}>{item}</button>)}</div></div>
-          <div className="setting-group"><label>想定ペース</label><div className="select-wrap"><select value={pace} onChange={(e) => setPace(e.target.value)}><option>スロー</option><option>平均</option><option>ハイ</option></select><ChevronDown size={15} /></div></div>
-          <div className="setting-group"><label>試行回数 <strong>{runs.toLocaleString()}回</strong></label><input type="range" min="1000" max="50000" step="1000" value={runs} onChange={(e) => setRuns(Number(e.target.value))} /><div className="range-labels"><span>1,000</span><span>50,000</span></div></div>
-          <Button className="simulate-button" onClick={rerun}><Play size={15} fill="currentColor" /> シミュレーションを走らせる</Button>
-          <p className="model-note"><span className="brass-line" />能力値・脚質・距離適性・馬場補正・ペース補正・乱数を合成したブラウザ内モデルです。</p>
-        </aside>
-
-        <section className="main-stage">
-          <div className="hero-panel">
-            <img src="/manus-storage/velvet-turf-hero_f15cb3f8.jpg" alt="夜の競馬場" />
-            <div className="hero-overlay" />
-            <div className="hero-copy"><span className="eyebrow light">RACE 07 / VIRTUAL TURF</span><h2>第42回<br /><span>サマー・カップ</span></h2><div className="hero-specs"><span>東京 11R</span><span>芝 {distance.toLocaleString()}m</span><span>{going} / {pace}ペース</span></div></div>
-            <div className="hero-badge"><span>RUNS</span><strong>{runs.toLocaleString()}</strong><small>trials completed</small></div>
-          </div>
-
-          <div className="stage-tabs"><button className={activeTab === "overview" ? "active" : ""} onClick={() => setActiveTab("overview")}>結果サマリー</button><button className={activeTab === "field" ? "active" : ""} onClick={() => setActiveTab("field")}>出走馬の読み筋</button><span className="tab-rule" /><span className="last-run"><Zap size={14} /> LIVE MODEL · UPDATED JUST NOW</span></div>
-
-          {activeTab === "overview" ? <>
-            <div className="headline-row"><div><span className="eyebrow">TOP PROBABILITY</span><h3>{favorite.name}</h3><p>勝率 <strong>{favorite.winRate.toFixed(1)}%</strong> · 連対率 {favorite.placeRate.toFixed(1)}%</p></div><div className="headline-number"><span>WIN PROBABILITY</span><strong>{favorite.winRate.toFixed(1)}<small>%</small></strong></div></div>
-            <div className="result-table-wrap"><div className="table-heading"><span>勝率ランキング</span><span>着順確率の分布</span></div>{results.map((horse, index) => <div className={"horse-row " + (index === 0 ? "top-rank" : "")} key={horse.no}><div className="rank">{String(index + 1).padStart(2, "0")}</div><div className="silk-dot" style={{ background: horse.color }} /><div className="horse-name"><strong>{horse.name}</strong><span>馬番 {horse.no} · {horse.style}</span></div><div className="prob-bar"><div style={{ width: `${clamp(horse.winRate * 2.9)}%` }} /></div><div className="win-rate">{horse.winRate.toFixed(1)}<small>%</small></div><div className="trend">{index < 2 ? "↑" : "→"}</div></div>)}</div>
-          </> : <div className="field-grid">{horseSeeds.map((horse) => <div className="field-card" key={horse.no}><div className="field-card-top"><span className="silk-dot" style={{ background: horse.color }} /> <span>#{horse.no}</span><span className="style-tag">{horse.style}</span></div><h3>{horse.name}</h3><div className="metric"><span>末脚</span><div><i style={{ width: `${horse.speed}%` }} /></div><b>{horse.speed}</b></div><div className="metric"><span>持久力</span><div><i style={{ width: `${horse.stamina}%` }} /></div><b>{horse.stamina}</b></div><div className="metric"><span>近況</span><div><i style={{ width: `${horse.form}%` }} /></div><b>{horse.form}</b></div></div>)}</div>}
-        </section>
-
-        <aside className="insight-rail"><div className="rail-heading"><span className="eyebrow">02 / INSIGHT</span><Gauge size={16} /></div><div className="insight-card accent-card"><div className="card-label"><span>PACE OUTLOOK</span><span className="live-pill">{pace}</span></div><h3>{pace === "ハイ" ? "前崩れの余地。" : pace === "スロー" ? "前残りに注意。" : "隊列は均衡。"}</h3><p>{pace === "ハイ" ? "後方待機組の末脚が、最後の直線で浮上しやすいシナリオです。" : pace === "スロー" ? "先行勢が余力を残して直線へ。位置取りが勝負を分けます。" : "各脚質に均等な余地。能力値と馬場適性の差が効きます。"}</p><div className="pace-track"><span className="pace-marker" style={{ left: pace === "ハイ" ? "79%" : pace === "スロー" ? "22%" : "50%" }} /></div><div className="pace-labels"><span>後方有利</span><span>前方有利</span></div></div><div className="insight-card"><div className="card-label"><span>TOP 3 CONSENSUS</span><Trophy size={15} /></div><div className="podium-list">{results.slice(0, 3).map((horse, i) => <div className="podium-item" key={horse.no}><span className={`medal m${i + 1}`}>{i + 1}</span><strong>{horse.name}</strong><span>{horse.winRate.toFixed(1)}%</span></div>)}</div></div><div className="insight-card chart-card"><div className="card-label"><span>WIN PROBABILITY CURVE</span><Activity size={15} /></div><div className="mini-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><defs><linearGradient id="brassFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8a866" stopOpacity={0.4}/><stop offset="100%" stopColor="#c8a866" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#ffffff12" vertical={false} /><XAxis dataKey="name" tick={{ fill: "#788394", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis hide domain={[0, "auto"]} /><Tooltip contentStyle={{ background: "#1b2431", border: "1px solid #c8a86655", borderRadius: 4, color: "#f3efe5" }} /><Area type="monotone" dataKey="value" stroke="#c8a866" fill="url(#brassFill)" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></div><button className="reset-button" onClick={() => { setDistance(2000); setGoing("良"); setPace("平均"); setRuns(10000); rerun(); }}><RotateCcw size={14} /> 条件を初期化</button></aside>
-      </main>
-      <footer className="footer"><span>KEIBA LAB / PRIVATE RACE MODEL</span><span>結果はシミュレーション上の推計であり、実際のレース結果を保証するものではありません。</span></footer>
-    </div>
-  );
+function Management({ horses, setHorses, fileRef, handleCsv, csvMessage, editing, setEditing, updateHorse, reset }: { horses: Horse[]; setHorses: (v: Horse[]) => void; fileRef: React.RefObject<HTMLInputElement | null>; handleCsv: (e: ChangeEvent<HTMLInputElement>) => void; csvMessage: string; editing: number | null; setEditing: (v: number | null) => void; updateHorse: (no: number, key: keyof Horse, value: string | number) => void; reset: () => void }) {
+  return <div><div className="import-zone"><input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleCsv} hidden /><button onClick={() => fileRef.current?.click()}><Upload size={16} /> CSVを選択して読み込む</button><a href={`data:text/csv;charset=utf-8,${encodeURIComponent("no,name,style,speed,stamina,start,form\n1,サンプルホース,差し,85,82,78,88")}`} download="keiba-lab-template.csv"><Download size={14} /> テンプレート</a><p>UTF-8 CSV。列名は <b>no, name, style, speed, stamina, start, form</b> または日本語見出しに対応します。</p>{csvMessage && <div className="csv-message">{csvMessage}</div>}</div><div className="drawer-toolbar"><span>{horses.length}頭を登録中</span><button onClick={reset}><RotateCcw size={13} /> サンプルに戻す</button></div><div className="manage-table"><div className="manage-head"><span>馬番 / 馬名</span><span>脚質</span><span>末脚</span><span>持久力</span><span>先行力</span><span>近況</span><span /></div>{horses.map((horse) => editing === horse.no ? <div className="manage-row editing-row" key={horse.no}><div className="name-edit"><span className="silk-dot" style={{ background: horse.color }} /><input value={horse.name} onChange={(e) => updateHorse(horse.no, "name", e.target.value)} /></div><select value={horse.style} onChange={(e) => updateHorse(horse.no, "style", e.target.value)}>{["逃げ", "先行", "差し", "追込"].map((s) => <option key={s}>{s}</option>)}</select>{(["speed", "stamina", "start", "form"] as const).map((key) => <input key={key} className="number-edit" type="number" min="0" max="100" value={horse[key]} onChange={(e) => updateHorse(horse.no, key, e.target.value)} />)}<button className="save-edit" onClick={() => setEditing(null)}><Save size={14} /></button></div> : <div className="manage-row" key={horse.no}><div className="name-edit"><span className="no-badge">{String(horse.no).padStart(2, "0")}</span><span className="silk-dot" style={{ background: horse.color }} /><strong>{horse.name}</strong></div><span>{horse.style}</span><span>{horse.speed}</span><span>{horse.stamina}</span><span>{horse.start}</span><span>{horse.form}</span><button onClick={() => setEditing(horse.no)}><Pencil size={14} /></button></div>)}</div><p className="drawer-footnote">編集内容はこのブラウザの現在セッションに反映され、次回のシミュレーションから使用されます。CSVはサーバーへ送信されません。</p></div>;
+}
+function Comparison({ history, selected, setSelected, expanded = false }: { history: Snapshot[]; selected: number[]; setSelected: (v: number[]) => void; expanded?: boolean }) {
+  const toggle = (id: number) => setSelected(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id].slice(-3)); const chosen = history.filter((item) => selected.includes(item.id));
+  if (!history.length) return <div className="empty-state"><Save size={24} /><h3>まだ保存された結果はありません</h3><p>条件を整えて「結果を保存」を押すと、ここで比較できます。</p></div>;
+  return <div className={expanded ? "comparison expanded" : "comparison"}><div className="comparison-intro"><span className="eyebrow">SCENARIO ARCHIVE</span><p>最大3つまで選択して、条件と上位確率を並べて比較できます。</p></div><div className="history-list">{history.map((item) => <label className={selected.includes(item.id) ? "history-card selected" : "history-card"} key={item.id}><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /><span className="history-check">{selected.includes(item.id) ? "✓" : ""}</span><span><strong>{item.label}</strong><small>{new Date(item.id).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} · {item.runs.toLocaleString()}回</small></span><b>{item.topRate.toFixed(1)}%</b></label>)}</div>{chosen.length > 0 && <div className="comparison-grid">{chosen.map((item) => <div className="compare-column" key={item.id}><div className="compare-title"><span>{item.going} / {item.pace}</span><strong>{item.distance.toLocaleString()}m</strong></div>{item.results.slice(0, 5).map((horse, index) => <div className="compare-row" key={horse.no}><span>{index + 1}</span><strong>{horse.name}</strong><b>{horse.winRate.toFixed(1)}%</b></div>)}</div>)}</div>}</div>;
 }
