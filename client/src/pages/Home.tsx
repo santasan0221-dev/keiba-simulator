@@ -21,20 +21,24 @@ const sampleHorses: Horse[] = [
 ];
 const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, n));
 const parseStyle = (value: string): Style => (["逃げ", "先行", "差し", "追込"].includes(value) ? value : "差し") as Style;
-function runSimulation(horses: Horse[], distance: number, going: string, pace: string, runs: number) {
-  const goingFactor: Record<string, number> = { 良: 1, 稍重: .97, 重: .93, 不良: .88 };
-  const paceFactor: Record<string, Record<Style, number>> = { スロー: { 逃げ: 1.04, 先行: 1.02, 差し: .98, 追込: .95 }, 平均: { 逃げ: 1, 先行: 1, 差し: 1, 追込: 1 }, ハイ: { 逃げ: .94, 先行: .97, 差し: 1.03, 追込: 1.06 } };
-  const totals = horses.map((horse) => ({ ...horse, wins: 0, places: 0, avgScore: 0, samples: [] as number[] }));
+function runSimulation(horses: Horse[], distance: number, going: string, pace: string, runs: number, seed: number) {
+  const goingPenalty: Record<string, number> = { 良: 0, 稍重: 0.035, 重: 0.075, 不良: 0.12 };
+  const paceFactor: Record<string, Record<Style, number>> = { スロー: { 逃げ: 1.045, 先行: 1.025, 差し: .98, 追込: .95 }, 平均: { 逃げ: 1, 先行: 1, 差し: 1, 追込: 1 }, ハイ: { 逃げ: .94, 先行: .97, 差し: 1.025, 追込: 1.06 } };
+  const distanceRatio = clamp((distance - 1600) / 1200, 0, 1);
+  const hash = (value: number) => { const x = Math.sin(value * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+  const totals = horses.map((horse) => ({ ...horse, wins: 0, places: 0, avgScore: 0 }));
   for (let i = 0; i < runs; i++) {
     totals.map((horse) => {
-      const distanceFit = distance >= 2000 ? horse.stamina * .16 : horse.speed * .16;
+      const distanceFit = horse.speed * (1 - distanceRatio) + horse.stamina * distanceRatio;
+      const goingFit = 1 - Math.max(0, 80 - horse.stamina) * goingPenalty[going] * .008;
+      const marketPrior = horse.popularity ? clamp((12 - horse.popularity) * .12, -1.2, 1.2) : 0;
       const paceFit = paceFactor[pace][horse.style];
-      const goingFit = 1 + (horse.stamina - 80) * (1 - goingFactor[going]) * .006;
-      const score = (horse.speed * .35 + horse.stamina * .25 + horse.start * .12 + horse.form * .28 + distanceFit) * paceFit * goingFit + (Math.random() - .5) * 16;
+      const noise = ((hash(seed * 1000003 + i * 97 + horse.no * 53) + hash(seed * 7919 + i * 17 + horse.no * 131)) - 1) * 9;
+      const score = (horse.speed * .30 + horse.stamina * .25 + horse.start * .13 + horse.form * .24 + distanceFit * .08 + marketPrior) * paceFit * goingFit + noise;
       return { horse, score };
-    }).sort((a, b) => b.score - a.score).forEach((item, index) => { item.horse.samples.push(item.score); item.horse.avgScore += item.score; if (index === 0) item.horse.wins++; if (index < 3) item.horse.places++; });
+    }).sort((a, b) => b.score - a.score).forEach((item, index) => { item.horse.avgScore += item.score; if (index === 0) item.horse.wins++; if (index < 3) item.horse.places++; });
   }
-  return totals.map(({ samples, ...horse }) => ({ ...horse, winRate: horse.wins / runs * 100, placeRate: horse.places / runs * 100, avgScore: horse.avgScore / runs })).sort((a, b) => b.winRate - a.winRate) as ResultHorse[];
+  return totals.map((horse) => ({ ...horse, winRate: horse.wins / runs * 100, placeRate: horse.places / runs * 100, avgScore: horse.avgScore / runs })).sort((a, b) => b.winRate - a.winRate) as ResultHorse[];
 }
 function csvRows(text: string) {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -46,8 +50,8 @@ function csvRows(text: string) {
 }
 
 export default function Home() {
-  const [horses, setHorses] = useState<Horse[]>(sampleHorses); const [distance, setDistance] = useState(2000); const [going, setGoing] = useState("良"); const [pace, setPace] = useState("平均"); const [runs, setRuns] = useState(10000); const [seed, setSeed] = useState(0); const [tab, setTab] = useState("overview"); const [panel, setPanel] = useState<"none" | "manage" | "compare">("none"); const [history, setHistory] = useState<Snapshot[]>([]); const [selectedHistory, setSelectedHistory] = useState<number[]>([]); const [csvMessage, setCsvMessage] = useState(""); const [editing, setEditing] = useState<number | null>(null); const fileRef = useRef<HTMLInputElement>(null);
-  const results = useMemo(() => runSimulation(horses, distance, going, pace, runs), [horses, distance, going, pace, runs, seed]); const favorite = results[0];
+  const [horses, setHorses] = useState<Horse[]>(sampleHorses); const [distance, setDistance] = useState(2000); const [going, setGoing] = useState("良"); const [pace, setPace] = useState("平均"); const [runs, setRuns] = useState(10000); const [seed, setSeed] = useState(1); const [tab, setTab] = useState("overview"); const [panel, setPanel] = useState<"none" | "manage" | "compare">("none"); const [history, setHistory] = useState<Snapshot[]>([]); const [selectedHistory, setSelectedHistory] = useState<number[]>([]); const [csvMessage, setCsvMessage] = useState(""); const [editing, setEditing] = useState<number | null>(null); const fileRef = useRef<HTMLInputElement>(null);
+  const results = useMemo(() => runSimulation(horses, distance, going, pace, runs, seed), [horses, distance, going, pace, runs, seed]); const favorite = results[0];
   const updateHorse = (no: number, key: keyof Horse, value: string | number) => setHorses((prev) => prev.map((horse) => horse.no === no ? { ...horse, [key]: key === "style" ? parseStyle(String(value)) : key === "name" ? value : clamp(Number(value)) } : horse));
   const run = () => setSeed((v) => v + 1);
   const saveScenario = () => { const snapshot: Snapshot = { id: Date.now(), label: `${distance.toLocaleString()}m / ${going} / ${pace}`, distance, going, pace, runs, top: favorite.name, topRate: favorite.winRate, results: results.slice(0, 5) }; setHistory((prev) => [snapshot, ...prev].slice(0, 6)); setPanel("compare"); };
