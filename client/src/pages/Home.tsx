@@ -7,6 +7,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { deriveFinishMargins, derivePreviousFinishMargins, generateRaceFrames, type RaceFrame } from "@/lib/racePlayback";
+import { OfficialRaceCatalog } from "@/components/OfficialRaceCatalog";
 
 type Style = "逃げ" | "先行" | "差し" | "追込";
 type Going = "良" | "稍重" | "重" | "不良"; type MarginMode = "前走馬との差" | "1着馬から";
@@ -122,6 +123,15 @@ function runSimulation(horses: Horse[], distance: number, going: Going, pace: st
 
 
 function RaceReplay({ horses, ranks, positions, progress, running, paused, raceLabel, venue, pace, distance, focusedHorseNo, onFocusChange, cameraZoom, onZoomChange, photoFinishActive, photoFinishSpeed, onPhotoFinishSpeedChange, marginMode, onMarginModeChange, onPhotoFrameStep, onExportResult, onPhotoFinish, onRun, onReset }: { horses: Horse[]; ranks: number[]; positions: Record<number, number>; progress: number; running: boolean; paused: boolean; raceLabel: string; venue: string; pace: string; distance: number; focusedHorseNo: number | null; onFocusChange: (no: number | null) => void; cameraZoom: number; onZoomChange: (zoom: number) => void; photoFinishActive: boolean; photoFinishSpeed: number; onPhotoFinishSpeedChange: (speed: number) => void; marginMode: MarginMode; onMarginModeChange: (mode: MarginMode) => void; onPhotoFrameStep: (delta: number) => void; onExportResult: () => void; onPhotoFinish: () => void; onRun: () => void; onReset: () => void }) {
+  const displayVenue = raceLabel.includes("中京記念") ? "中京 7R" : raceLabel.includes("NST賞") ? "新潟 7R" : venue;
+  const displaySurface = raceLabel.includes("NST賞") ? "ダート" : "芝";
+  useEffect(() => {
+    const heroSpecs = document.querySelector(".hero-specs");
+    const specs = heroSpecs?.querySelectorAll("span");
+    if (!specs || specs.length < 2) return;
+    specs[0].textContent = displayVenue;
+    specs[1].textContent = `${displaySurface} ${distance.toLocaleString()}m`;
+  }, [displayVenue, displaySurface, distance]);
   const active = horses.filter((horse) => !horse.withdrawn);
   const ranked = ranks.map((no) => active.find((horse) => horse.no === no)).filter((horse): horse is Horse => Boolean(horse));
   const runners = ranked.length ? ranked : active;
@@ -138,7 +148,7 @@ function RaceReplay({ horses, ranks, positions, progress, running, paused, raceL
   const finishTime = (horse: Horse, index: number) => { const seconds = distance / 17.45 + index * .37 + (horse.no % 4) * .02; const minutes = Math.floor(seconds / 60); return `${minutes}:${(seconds - minutes * 60).toFixed(1).padStart(4, "0")}`; };
   const silkMark = (horse: Horse) => { const pattern = getSilkPattern(horse); if (pattern === "縦縞") return <><rect x="-8" y="-7" width="4" height="14" fill="#f5eee0" opacity=".94" /><rect x="4" y="-7" width="4" height="14" fill="#f5eee0" opacity=".94" /></>; if (pattern === "横縞") return <><rect x="-14" y="-4" width="28" height="3" fill="#f5eee0" opacity=".94" /><rect x="-14" y="3" width="28" height="3" fill="#f5eee0" opacity=".94" /></>; if (pattern === "星") return <text className="silk-symbol" y="4" textAnchor="middle">★</text>; if (pattern === "ダイヤ") return <path d="M0 -6 L7 0 L0 6 L-7 0Z" fill="#f5eee0" opacity=".94" />; return null; };
   return <section className={`race-replay ${focusedHorseNo !== null ? "camera-following" : ""}`} aria-label={`${raceLabel}のコース走行ビュー`}>
-    <div className="race-replay-heading"><div><span className="eyebrow">LIVE COURSE REPLAY</span><h3>{raceLabel}<small>{venue} · 芝 {distance.toLocaleString()}m · {pace}ペース</small></h3></div><span className={running ? "replay-status live" : "replay-status"}>{running ? paused ? "PAUSED" : "RACING" : progress >= 100 ? "FINISHED" : "READY"}</span></div>
+    <div className="race-replay-heading"><div><span className="eyebrow">LIVE COURSE REPLAY</span><h3>{raceLabel}<small>{displayVenue} · {displaySurface} {distance.toLocaleString()}m · {pace}ペース</small></h3></div><span className={running ? "replay-status live" : "replay-status"}>{running ? paused ? "PAUSED" : "RACING" : progress >= 100 ? "FINISHED" : "READY"}</span></div>
     <div className="race-replay-stage">
       <div className="replay-art" style={{ backgroundImage: "linear-gradient(90deg, rgba(6,13,22,.94), rgba(6,13,22,.68)), url(/manus-storage/sapporo-race-view-reference_1fd6444b.png)" }} />
       <svg className="replay-course" viewBox="0 0 620 365" role="img" aria-label="楕円コースを走る出走馬">
@@ -356,6 +366,7 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
 
   return <div className="management-panel">
     <div className="official-race-card"><div><span className="eyebrow">OFFICIAL RACE DATA</span><strong>2026年8月16日 札幌記念（GII）</strong><small>札幌・芝2,000mの出走馬と条件を読み込みます。</small></div><button onClick={loadSapporoKinen}>札幌記念を読み込む</button></div>
+    <OfficialRaceCatalog />
     <RaceDayUpdatePanel horses={horses} setHorses={setHorses} live={live} />
     <PastPerformanceImport horses={horses} setHorses={setHorses} />
     <HorseProfileComparison horses={horses} going={live.going} />
