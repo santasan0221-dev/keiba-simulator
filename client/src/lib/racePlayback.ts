@@ -54,6 +54,15 @@ export function deriveFinishMargins(frame: RaceFrame): FinishMargin[] {
   });
 }
 
+export function derivePreviousFinishMargins(frame: RaceFrame): FinishMargin[] {
+  return frame.ranks.map((no, index) => {
+    const position = frame.positions[no] ?? 0;
+    const aheadPosition = index === 0 ? position : (frame.positions[frame.ranks[index - 1]] ?? position);
+    const lengths = index === 0 ? 0 : Math.max(0, (aheadPosition - position) * 80);
+    return { no, lengths, label: formatFinishMargin(lengths, index === 0) };
+  });
+}
+
 export function generateRaceFrames(horses: ReplayHorse[], seed: number, frameCount = 26): RaceFrame[] {
   const active = horses.slice().sort((a, b) => a.no - b.no);
   if (!active.length) return [];

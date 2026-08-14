@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveFinishMargins, formatFinishMargin, generateRaceFrames } from "./racePlayback";
+import { deriveFinishMargins, derivePreviousFinishMargins, formatFinishMargin, generateRaceFrames } from "./racePlayback";
 
 const horses = [
   { no: 1, name: "逃げ馬", style: "逃げ" as const, speed: 84, stamina: 78, start: 94, form: 80, averageScore: 82 },
@@ -36,5 +36,10 @@ describe("finish margins", () => {
     const margins = deriveFinishMargins({ progress: 100, segment: "ゴール前", ranks: [1, 2, 3], positions: { 1: 1, 2: .998, 3: .99 } });
     expect(margins.map((item) => item.label)).toEqual(["—", "アタマ", "1馬身"]);
     expect(margins[1]?.lengths).toBeLessThan(margins[2]?.lengths ?? 0);
+  });
+
+  it("直前の馬を基準にした差を導出する", () => {
+    const margins = derivePreviousFinishMargins({ progress: 100, segment: "ゴール前", ranks: [1, 2, 3], positions: { 1: 1, 2: .99, 3: .98 } });
+    expect(margins.map((item) => item.label)).toEqual(["—", "1馬身", "1馬身"]);
   });
 });
