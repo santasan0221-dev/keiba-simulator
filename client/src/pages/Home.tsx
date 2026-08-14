@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { deriveFinishMargins, derivePreviousFinishMargins, generateRaceFrames, type RaceFrame } from "@/lib/racePlayback";
 import { OfficialRaceCatalog } from "@/components/OfficialRaceCatalog";
+import { resolveOfficialRaceCondition } from "@/lib/officialRaceData";
 
 type Style = "逃げ" | "先行" | "差し" | "追込";
 type Going = "良" | "稍重" | "重" | "不良"; type MarginMode = "前走馬との差" | "1着馬から";
@@ -131,15 +132,28 @@ function runSimulation(horses: Horse[], distance: number, going: Going, pace: st
 
 
 function RaceReplay({ horses, ranks, positions, progress, running, paused, raceLabel, venue, pace, distance, focusedHorseNo, onFocusChange, cameraZoom, onZoomChange, photoFinishActive, photoFinishSpeed, onPhotoFinishSpeedChange, marginMode, onMarginModeChange, onPhotoFrameStep, onExportResult, onPhotoFinish, onRun, onReset }: { horses: Horse[]; ranks: number[]; positions: Record<number, number>; progress: number; running: boolean; paused: boolean; raceLabel: string; venue: string; pace: string; distance: number; focusedHorseNo: number | null; onFocusChange: (no: number | null) => void; cameraZoom: number; onZoomChange: (zoom: number) => void; photoFinishActive: boolean; photoFinishSpeed: number; onPhotoFinishSpeedChange: (speed: number) => void; marginMode: MarginMode; onMarginModeChange: (mode: MarginMode) => void; onPhotoFrameStep: (delta: number) => void; onExportResult: () => void; onPhotoFinish: () => void; onRun: () => void; onReset: () => void }) {
-  const displayVenue = raceLabel.includes("中京記念") ? "中京 7R" : raceLabel.includes("NST賞") ? "新潟 7R" : venue;
-  const displaySurface = raceLabel.includes("NST賞") ? "ダート" : "芝";
+  const fallbackCondition = { venue: venue.replace(/\s\d+R$/, ""), raceNumber: venue.match(/\d+R$/)?.[0] ?? "11R", surface: "芝" as const, distance, weather: "晴" as const, going: "良" as const, pace: pace === "ハイ" ? "ハイ" as const : "平均" as const, courseNote: "" };
+  const [officialCondition, setOfficialCondition] = useState(() => resolveOfficialRaceCondition(raceLabel, fallbackCondition));
+  const displayVenue = `${officialCondition.venue} ${officialCondition.raceNumber}`;
+  const displaySurface = officialCondition.surface;
   useEffect(() => {
+    const nextCondition = resolveOfficialRaceCondition(raceLabel, fallbackCondition);
+    setOfficialCondition(nextCondition);
+    const distanceControl = document.querySelector('.control-rail input[type="range"]') as HTMLInputElement | null;
+    if (distanceControl && distance !== nextCondition.distance) {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(distanceControl, String(nextCondition.distance));
+      distanceControl.dispatchEvent(new Event("input", { bubbles: true }));
+    } else {
+      localStorage.setItem("keiba-lab-distance", JSON.stringify(nextCondition.distance));
+    }
     const heroSpecs = document.querySelector(".hero-specs");
     const specs = heroSpecs?.querySelectorAll("span");
     if (!specs || specs.length < 2) return;
-    specs[0].textContent = displayVenue;
-    specs[1].textContent = `${displaySurface} ${distance.toLocaleString()}m`;
-  }, [displayVenue, displaySurface, distance]);
+    specs[0].textContent = `${nextCondition.venue} ${nextCondition.raceNumber}`;
+    specs[1].textContent = `${nextCondition.surface} ${nextCondition.distance.toLocaleString()}m`;
+    const heroEyebrow = document.querySelector(".hero-copy > .eyebrow");
+    if (heroEyebrow) heroEyebrow.textContent = `RACE 07 / VIRTUAL ${nextCondition.surface === "ダート" ? "DIRT" : "TURF"}`;
+  }, [raceLabel, venue, distance, pace]);
   const active = horses.filter((horse) => !horse.withdrawn);
   const ranked = ranks.map((no) => active.find((horse) => horse.no === no)).filter((horse): horse is Horse => Boolean(horse));
   const runners = ranked.length ? ranked : active;

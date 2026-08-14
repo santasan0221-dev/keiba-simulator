@@ -24,6 +24,10 @@ export type OfficialRaceCard = {
   horses: OfficialRaceHorse[];
 };
 
+export type PersistedOfficialRaceCondition = Pick<OfficialRaceCard, "id" | "label" | "venue" | "raceNumber" | "surface" | "distance" | "weather" | "going" | "pace" | "courseNote"> & { savedAt: number };
+
+export const OFFICIAL_RACE_CONDITION_KEY = "keiba-lab-official-race-condition";
+
 const colors = ["#b9c3d4", "#e7b66a", "#db7e70", "#95c6b0", "#aa9ad6", "#d7a5ca", "#8ebc83", "#9bbbd2"];
 const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
@@ -68,6 +72,31 @@ export const weekendOfficialRaces: OfficialRaceCard[] = [
   },
 ];
 
+const builtInRaceConditions: OfficialRaceCard[] = [{
+  id: "sapporo-kinen-2026",
+  label: "第62回 札幌記念",
+  venue: "札幌",
+  raceNumber: "11R",
+  surface: "芝",
+  distance: 2000,
+  weather: "晴",
+  going: "良",
+  pace: "平均",
+  courseNote: "札幌・芝2,000mの標準初期条件です。直前情報パネルで当日の確定条件へ上書きできます。",
+  sourceUrl: "https://www.jra.go.jp/keiba/calendar2026/2026/8/0816.html",
+  horses: [],
+}];
+
+export function resolveOfficialRaceCondition(raceLabel: string, fallback: Pick<OfficialRaceCard, "venue" | "raceNumber" | "surface" | "distance" | "weather" | "going" | "pace" | "courseNote">): PersistedOfficialRaceCondition {
+  const stored = typeof window === "undefined" ? null : (() => {
+    try { return JSON.parse(window.localStorage.getItem(OFFICIAL_RACE_CONDITION_KEY) || "null") as PersistedOfficialRaceCondition | null; } catch { return null; }
+  })();
+  if (stored?.label === raceLabel) return stored;
+  const configured = [...weekendOfficialRaces, ...builtInRaceConditions].find((race) => race.label === raceLabel);
+  if (configured) return { ...configured, savedAt: 0 };
+  return { id: "sapporo-kinen-2026", label: raceLabel, ...fallback, savedAt: 0 };
+}
+
 export function buildOfficialRaceHorses(card: OfficialRaceCard) {
   return card.horses.map((horse, index) => {
     const frontRunner = horse.style === "逃げ" || horse.style === "先行";
@@ -107,7 +136,7 @@ export function getOfficialRaceStorage(card: OfficialRaceCard) {
     "keiba-lab-weather": JSON.stringify(card.weather),
     "keiba-lab-pace": JSON.stringify(card.pace),
     "keiba-lab-race-label": JSON.stringify(card.label),
-    "keiba-lab-official-race-condition": JSON.stringify({
+    [OFFICIAL_RACE_CONDITION_KEY]: JSON.stringify({
       id: card.id,
       label: card.label,
       venue: card.venue,
