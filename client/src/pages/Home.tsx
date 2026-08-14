@@ -2,6 +2,7 @@ import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "re
 import { Activity, ChevronDown, Clock3, Download, Gauge, ImageDown, Info, Pause, Pencil, Play, RotateCcw, Save, SlidersHorizontal, Trophy, Upload, UserRound, Weight, X, Zap, Loader2 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
+import { MANAGEMENT_PAGE_SIZES, type ManagementPageSize, getManagementPageCount, getManagementPageItems } from "@/lib/managementPagination";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
@@ -201,7 +202,7 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
   const [sortKey, setSortKey] = useState<SortKey>("no");
   const [sortAscending, setSortAscending] = useState(true);
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState<ManagementPageSize>(6);
 
   const handleNumberChange = (currentNo: number, raw: string) => {
     const setError = (message: string) => setNumberErrors((items) => ({ ...items, [currentNo]: message }));
@@ -241,10 +242,61 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
   };
 
   useEffect(() => { setPage(1); }, [query, sortKey, sortAscending]);
-  const pageCount = Math.max(1, Math.ceil(filteredHorses.length / pageSize));
-  const visibleHorses = filteredHorses.slice((page - 1) * pageSize, page * pageSize);
+  const pageCount = getManagementPageCount(filteredHorses.length, pageSize);
+  const visibleHorses = getManagementPageItems(filteredHorses, page, pageSize);
   useEffect(() => { setPage((current) => Math.min(current, pageCount)); }, [pageCount]);
   const resetConditions = () => { setQuery(""); setSortKey("no"); setSortAscending(true); setPage(1); };
+  const movePage = (direction: -1 | 1) => setPage((current) => Math.min(pageCount, Math.max(1, current + direction)));
+  const updatePageSize = (value: string) => { setPageSize(Number(value) as ManagementPageSize); setPage(1); };
+  const downloadCurrentPageCsv = () => {
+    const headers = ["馬番", "馬名", "脚質", "末脚", "持久力", "近況", "騎手", "馬体重kg", "最新単勝オッズ"];
+    const rows = visibleHorses.map((horse) => [horse.no, horse.name, horse.style, horse.speed, horse.stamina, horse.form, horse.jockey ?? "", horse.bodyWeight ?? "", horse.latestOdds ?? ""]);
+    const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `keiba-lab-management-page-${page}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    toast.success("現在ページのCSVを書き出しました", { description: `${visibleHorses.length}頭分の馬データです。` });
+  };
+  const exportCurrentPagePdf = async () => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    try {
+      const response = await fetch(FONT_URL);
+      if (!response.ok) throw new Error("font unavailable");
+      const fontBase64 = arrayBufferToBase64(await response.arrayBuffer());
+      pdf.addFileToVFS("NotoSansJP.ttf", fontBase64);
+      pdf.addFont("NotoSansJP.ttf", "NotoSansJP", "normal");
+      pdf.setFont("NotoSansJP");
+    } catch { /* フォント取得に失敗した場合も英数字のPDFを出力する */ }
+    pdf.setFontSize(16);
+    pdf.text("KEIBA LAB / MANAGEMENT PAGE", 14, 18);
+    pdf.setFontSize(9);
+    pdf.text(`Page ${page}/${pageCount} · ${visibleHorses.length} horses · ${new Date().toLocaleString("ja-JP")}`, 14, 26);
+    let y = 38;
+    visibleHorses.forEach((horse, index) => {
+      pdf.setFontSize(10);
+      pdf.text(`${index + 1}. #${horse.no}  ${horse.name}  ${horse.style}`, 14, y);
+      pdf.setFontSize(8);
+      pdf.text(`Speed ${horse.speed} / Stamina ${horse.stamina} / Form ${horse.form}${horse.jockey ? ` / Jockey ${horse.jockey}` : ""}${horse.bodyWeight ? ` / ${horse.bodyWeight}kg` : ""}${horse.latestOdds ? ` / Odds ${horse.latestOdds.toFixed(1)}` : ""}`, 20, y + 5);
+      y += 12;
+    });
+    pdf.save(`keiba-lab-management-page-${page}.pdf`);
+    toast.success("現在ページのPDFを書き出しました", { description: `${visibleHorses.length}頭分の馬データです。` });
+  };
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditingField = target?.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target?.tagName ?? "");
+      if (event.defaultPrevented || isEditingField || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.toLowerCase() === "r") { event.preventDefault(); resetConditions(); toast.message("検索・並び替え条件をリセットしました"); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); movePage(-1); }
+      if (event.key === "ArrowRight") { event.preventDefault(); movePage(1); }
+    };
+    window.addEventListener("keydown", handleKeyboardShortcut);
+    return () => window.removeEventListener("keydown", handleKeyboardShortcut);
+  }, [pageCount]);
   const sortMark = (key: SortKey) => sortKey === key ? (sortAscending ? " ↑" : " ↓") : "";
 
   return <div className="management-panel">
@@ -257,9 +309,10 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
     {csvMessage && <p className="csv-message">{csvMessage}</p>}
     <div className="manage-toolbar"><label className="manage-search"><span>検索</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="馬名・馬番・脚質" /></label><span>{filteredHorses.length}/{horses.length}頭を表示中</span><div><button onClick={resetConditions}><RotateCcw size={13} /> 条件をリセット</button><button onClick={exportCsv}><Download size={13} /> 馬データCSV</button><button onClick={loadSapporoKinen}>札幌記念データ</button><button onClick={reset}><RotateCcw size={13} /> サンプルに戻す</button></div></div>
     <div className="manage-sortbar"><span>並び替え</span>{([ ["no", "馬番"], ["name", "馬名"], ["style", "脚質"], ["speed", "末脚"], ["stamina", "持久"], ["form", "近況"] ] as [SortKey, string][]).map(([key, label]) => <button key={key} className={sortKey === key ? "active" : ""} onClick={() => changeSort(key)}>{label}{sortMark(key)}</button>)}</div>
+    <div className="manage-page-tools"><span>ショートカット: <kbd>R</kbd> 条件をリセット / <kbd>←</kbd><kbd>→</kbd> ページ移動</span><div><button onClick={downloadCurrentPageCsv} disabled={!visibleHorses.length}><Download size={13} /> このページをCSV</button><button onClick={exportCurrentPagePdf} disabled={!visibleHorses.length}><Download size={13} /> このページをPDF</button></div></div>
     <div className="manage-table"><div className="manage-head"><span>馬番</span><span>馬名</span><span>脚質</span><span>末脚</span><span>持久</span><span>近況</span><span /></div>{visibleHorses.map((horse) => { const error = numberErrors[horse.no]; const isSaving = savingNo === horse.no; return editing === horse.no ? <div className="manage-row editing" key={horse.no}><input className={error ? "manage-number-input input-error" : "manage-number-input"} type="number" min="1" max="18" value={horse.no} aria-invalid={Boolean(error)} aria-describedby={error ? `horse-${horse.no}-error` : undefined} onChange={(event) => handleNumberChange(horse.no, event.target.value)} />{error && <span id={`horse-${horse.no}-error`} className="field-error">{error}</span>}<input value={horse.name} onChange={(event) => updateHorse(horse.no, "name", event.target.value)} /><select value={horse.style} onChange={(event) => updateHorse(horse.no, "style", event.target.value)}><option>逃げ</option><option>先行</option><option>差し</option><option>追込</option></select><input type="number" value={horse.speed} onChange={(event) => updateHorse(horse.no, "speed", event.target.value)} /><input type="number" value={horse.stamina} onChange={(event) => updateHorse(horse.no, "stamina", event.target.value)} /><input type="number" value={horse.form} onChange={(event) => updateHorse(horse.no, "form", event.target.value)} /><button disabled={Boolean(error) || isSaving} onClick={() => finishEditing(horse.no)}>{isSaving ? <><Loader2 size={13} className="animate-spin" /> 保存中</> : "保存"}</button></div> : <div className="manage-row" key={horse.no}><span className="horse-number">#{horse.no}</span><strong><i className="silk-dot" style={{ background: horse.color }} />{horse.name}</strong><span>{horse.style}</span><span>{horse.speed}</span><span>{horse.stamina}</span><span>{horse.form}</span><button onClick={() => setEditing(horse.no)}>編集</button></div>; })}</div>
     {Object.values(numberErrors).map((message) => <p className="csv-message error" role="alert" key={message}>{message}</p>)}
-    {filteredHorses.length > pageSize && <div className="manage-pagination" aria-label="馬一覧のページ送り"><button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1}>前へ</button><span>ページ {page} / {pageCount}</span><button onClick={() => setPage((current) => Math.min(pageCount, current + 1))} disabled={page === pageCount}>次へ</button></div>}
+    <div className="manage-pagination" aria-label="馬一覧のページ送り"><label>表示件数<select value={pageSize} onChange={(event) => updatePageSize(event.target.value)}>{MANAGEMENT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size}件</option>)}</select></label><button onClick={() => movePage(-1)} disabled={page === 1}>前へ</button><span>ページ {page} / {pageCount}</span><button onClick={() => movePage(1)} disabled={page === pageCount}>次へ</button></div>
   </div>;
 }
 
