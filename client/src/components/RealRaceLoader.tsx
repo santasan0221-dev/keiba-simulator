@@ -99,14 +99,14 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
         </button>
       </div>
       <label style={{ display: "block", fontSize: 10, color: "#8290a1", marginBottom: 8 }}>
-        接続先 single_pick_ai(自分のPCで開くなら既定のままでOK)
+        接続先 single_pick_ai(空=同一サーバ配信=/sim。公開サイトからはhttpsのURLを貼る)
         <input
           value={base}
           onChange={(e) => {
             setBase(e.target.value);
             setApiBase(e.target.value);
           }}
-          placeholder="http://localhost:8000"
+          placeholder="空 or https://xxxx.trycloudflare.com"
           style={{ width: "100%", marginTop: 4, background: "#0d1722", color: "#e7ece8", border: "1px solid #354553", borderRadius: 3, padding: 6, fontSize: 11 }}
         />
       </label>

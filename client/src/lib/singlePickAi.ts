@@ -11,12 +11,13 @@
 // consumes these horses is a what-if sandbox, not the validated prediction.
 import type { Going, Horse, Style } from "@/pages/Home";
 
-// Prediction API base, resolved at RUNTIME (not build time) so the deployed
-// site can point at whichever single_pick_ai the viewer is running — including
-// http://localhost:8000 on their own machine (browsers allow https pages to
-// call http://localhost). Overridable in the UI and remembered in localStorage.
-const DEFAULT_BASE =
-  (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undefined) || "http://localhost:8000";
+// Prediction API base, resolved at RUNTIME (not build time).
+// Default is empty = same origin, so serving the app from single_pick_ai at
+// /sim just works (fetches /api/lab on the same host). For the standalone
+// deployed site, the viewer can paste an HTTPS single_pick_ai URL (e.g. a
+// cloudflared tunnel) in the loader; a plain http://localhost URL cannot be
+// used from an https page (browser mixed-content blocking).
+const DEFAULT_BASE = (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undefined) || "";
 const BASE_STORAGE_KEY = "single_pick_ai_base";
 
 export function getApiBase(): string {
