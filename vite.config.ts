@@ -167,6 +167,15 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ["recharts"],
+          "pdf-export": ["jspdf"],
+          "image-export": ["html2canvas"],
+        },
+      },
+    },
   },
   server: {
     host: true,
