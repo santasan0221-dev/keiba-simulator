@@ -18,7 +18,22 @@ KEIBA LAB(このリポ)を消費者向けフロントとし、**single_pick_ai �
 
 読み込んだ数値はブラウザ内 what-if のシードであり、実際の予測・的中を保証しない(UI 明記)。
 
-## 使い方
+## 使い方(推奨: 1台のサーバで全部)
+
+single_pick_ai が API とシミュレーター両方を配信するので、**起動は single_pick_ai だけ**。CORS も別サーバも不要。
+
+1. simulator をサブパス `/sim/` 用にビルド(Git Bash はパス変換で `/sim/` が化けるため `MSYS_NO_PATHCONV=1` を付ける):
+   ```bash
+   MSYS_NO_PATHCONV=1 npx vite build --base=/sim/
+   ```
+   → `dist/public` が生成される。
+2. single_pick_ai を起動(既定でこのリポの `dist/public` を `/sim` に配信。パスは env `KEIBA_SIMULATOR_DIST` で変更可)。
+3. ブラウザで `http://<single_pick_ai>/sim/` を開く → 右下「本物のレースを読み込む」。
+   - 同一オリジンなのでクライアントは相対 `/api/lab` を叩く(`VITE_SINGLE_PICK_AI_BASE` 不要)。
+
+App のルーターは Vite の base を自動追従(`client/src/App.tsx`)。ルート直下配信(`--base=/`)でもそのまま動く。
+
+## 使い方(別オリジン: クライアント直 fetch)
 
 1. single_pick_ai を起動(FastAPI, 既定 `http://127.0.0.1:8000`)。CORS で本アプリのオリジンを許可(single_pick_ai 側で対応済み)。
 2. このアプリ:
