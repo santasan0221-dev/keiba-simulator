@@ -179,6 +179,15 @@ export default defineConfig({
   },
   server: {
     host: true,
+    // Dev proxy to single_pick_ai's read-only prediction API. In production,
+    // set VITE_SINGLE_PICK_AI_BASE to single_pick_ai's URL (client fetches it
+    // directly; single_pick_ai must allow the simulator origin via CORS).
+    proxy: {
+      "/api/lab": {
+        target: process.env.SINGLE_PICK_AI_URL ?? "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
     allowedHosts: [
       ".manuspre.computer",
       ".manus.computer",
