@@ -18,6 +18,12 @@ export type RaceFrame = {
   segment: string;
 };
 
+export type FinishMargin = {
+  no: number;
+  lengths: number;
+  label: string;
+};
+
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 
 const styleBias = (style: ReplayStyle, phase: number) => {
@@ -28,6 +34,25 @@ const styleBias = (style: ReplayStyle, phase: number) => {
 };
 
 const segmentFor = (progress: number) => progress < 25 ? "スタート直後" : progress < 50 ? "第1コーナー" : progress < 75 ? "向正面" : progress < 92 ? "最終コーナー" : "ゴール前";
+
+export function formatFinishMargin(lengths: number, winner = false) {
+  if (winner) return "—";
+  if (lengths < .08) return "ハナ";
+  if (lengths < .18) return "アタマ";
+  if (lengths < .34) return "クビ";
+  if (lengths < .75) return "½馬身";
+  const rounded = Math.round(lengths * 2) / 2;
+  return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded}馬身`;
+}
+
+export function deriveFinishMargins(frame: RaceFrame): FinishMargin[] {
+  const winnerPosition = frame.positions[frame.ranks[0]] ?? 0;
+  return frame.ranks.map((no, index) => {
+    const position = frame.positions[no] ?? 0;
+    const lengths = index === 0 ? 0 : Math.max(0, (winnerPosition - position) * 80);
+    return { no, lengths, label: formatFinishMargin(lengths, index === 0) };
+  });
+}
 
 export function generateRaceFrames(horses: ReplayHorse[], seed: number, frameCount = 26): RaceFrame[] {
   const active = horses.slice().sort((a, b) => a.no - b.no);
