@@ -4,6 +4,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, 
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { toast } from "sonner";
 
 type Style = "逃げ" | "先行" | "差し" | "追込";
 type Going = "良" | "稍重" | "重" | "不良";
@@ -199,6 +200,8 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("no");
   const [sortAscending, setSortAscending] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   const handleNumberChange = (currentNo: number, raw: string) => {
     const setError = (message: string) => setNumberErrors((items) => ({ ...items, [currentNo]: message }));
@@ -214,7 +217,12 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
   const finishEditing = (horseNo: number) => {
     if (numberErrors[horseNo]) return;
     setSavingNo(horseNo);
-    window.setTimeout(() => { setEditing(null); setSavingNo(null); }, 360);
+    window.setTimeout(() => {
+      setEditing(null);
+      setSavingNo(null);
+      const savedHorse = horses.find((horse) => horse.no === horseNo);
+      toast.success("馬番データを保存しました", { description: savedHorse ? `${savedHorse.name}（馬番${savedHorse.no}）の変更を反映しました。` : "変更を反映しました。" });
+    }, 360);
   };
 
   const filteredHorses = useMemo(() => {
@@ -232,6 +240,11 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
     else { setSortKey(nextKey); setSortAscending(true); }
   };
 
+  useEffect(() => { setPage(1); }, [query, sortKey, sortAscending]);
+  const pageCount = Math.max(1, Math.ceil(filteredHorses.length / pageSize));
+  const visibleHorses = filteredHorses.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => { setPage((current) => Math.min(current, pageCount)); }, [pageCount]);
+  const resetConditions = () => { setQuery(""); setSortKey("no"); setSortAscending(true); setPage(1); };
   const sortMark = (key: SortKey) => sortKey === key ? (sortAscending ? " ↑" : " ↓") : "";
 
   return <div className="management-panel">
@@ -242,10 +255,11 @@ function Management({ horses, setHorses, fileRef, handleCsv, handleFile, exportC
     <CsvMappingPanel onImport={(items) => { setHorses(items); setNumberErrors({}); setEditing(null); }} />
     <div className={dragging ? "import-zone dragging" : "import-zone"} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files?.[0]; if (file) handleFile(file); }}><Upload size={19} /><strong>標準列のCSVをすぐ読み込む</strong><span>列名が異なる場合は上のマッピング画面を使用</span><input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleCsv} hidden /><button onClick={() => fileRef.current?.click()}>標準CSVを選択</button></div>
     {csvMessage && <p className="csv-message">{csvMessage}</p>}
-    <div className="manage-toolbar"><label className="manage-search"><span>検索</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="馬名・馬番・脚質" /></label><span>{filteredHorses.length}/{horses.length}頭を表示中</span><div><button onClick={exportCsv}><Download size={13} /> 馬データCSV</button><button onClick={loadSapporoKinen}>札幌記念データ</button><button onClick={reset}><RotateCcw size={13} /> サンプルに戻す</button></div></div>
+    <div className="manage-toolbar"><label className="manage-search"><span>検索</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="馬名・馬番・脚質" /></label><span>{filteredHorses.length}/{horses.length}頭を表示中</span><div><button onClick={resetConditions}><RotateCcw size={13} /> 条件をリセット</button><button onClick={exportCsv}><Download size={13} /> 馬データCSV</button><button onClick={loadSapporoKinen}>札幌記念データ</button><button onClick={reset}><RotateCcw size={13} /> サンプルに戻す</button></div></div>
     <div className="manage-sortbar"><span>並び替え</span>{([ ["no", "馬番"], ["name", "馬名"], ["style", "脚質"], ["speed", "末脚"], ["stamina", "持久"], ["form", "近況"] ] as [SortKey, string][]).map(([key, label]) => <button key={key} className={sortKey === key ? "active" : ""} onClick={() => changeSort(key)}>{label}{sortMark(key)}</button>)}</div>
-    <div className="manage-table"><div className="manage-head"><span>馬番</span><span>馬名</span><span>脚質</span><span>末脚</span><span>持久</span><span>近況</span><span /></div>{filteredHorses.map((horse) => { const error = numberErrors[horse.no]; const isSaving = savingNo === horse.no; return editing === horse.no ? <div className="manage-row editing" key={horse.no}><input className={error ? "manage-number-input input-error" : "manage-number-input"} type="number" min="1" max="18" value={horse.no} aria-invalid={Boolean(error)} aria-describedby={error ? `horse-${horse.no}-error` : undefined} onChange={(event) => handleNumberChange(horse.no, event.target.value)} />{error && <span id={`horse-${horse.no}-error`} className="field-error">{error}</span>}<input value={horse.name} onChange={(event) => updateHorse(horse.no, "name", event.target.value)} /><select value={horse.style} onChange={(event) => updateHorse(horse.no, "style", event.target.value)}><option>逃げ</option><option>先行</option><option>差し</option><option>追込</option></select><input type="number" value={horse.speed} onChange={(event) => updateHorse(horse.no, "speed", event.target.value)} /><input type="number" value={horse.stamina} onChange={(event) => updateHorse(horse.no, "stamina", event.target.value)} /><input type="number" value={horse.form} onChange={(event) => updateHorse(horse.no, "form", event.target.value)} /><button disabled={Boolean(error) || isSaving} onClick={() => finishEditing(horse.no)}>{isSaving ? <><Loader2 size={13} className="animate-spin" /> 保存中</> : "保存"}</button></div> : <div className="manage-row" key={horse.no}><span className="horse-number">#{horse.no}</span><strong><i className="silk-dot" style={{ background: horse.color }} />{horse.name}</strong><span>{horse.style}</span><span>{horse.speed}</span><span>{horse.stamina}</span><span>{horse.form}</span><button onClick={() => setEditing(horse.no)}>編集</button></div>; })}</div>
+    <div className="manage-table"><div className="manage-head"><span>馬番</span><span>馬名</span><span>脚質</span><span>末脚</span><span>持久</span><span>近況</span><span /></div>{visibleHorses.map((horse) => { const error = numberErrors[horse.no]; const isSaving = savingNo === horse.no; return editing === horse.no ? <div className="manage-row editing" key={horse.no}><input className={error ? "manage-number-input input-error" : "manage-number-input"} type="number" min="1" max="18" value={horse.no} aria-invalid={Boolean(error)} aria-describedby={error ? `horse-${horse.no}-error` : undefined} onChange={(event) => handleNumberChange(horse.no, event.target.value)} />{error && <span id={`horse-${horse.no}-error`} className="field-error">{error}</span>}<input value={horse.name} onChange={(event) => updateHorse(horse.no, "name", event.target.value)} /><select value={horse.style} onChange={(event) => updateHorse(horse.no, "style", event.target.value)}><option>逃げ</option><option>先行</option><option>差し</option><option>追込</option></select><input type="number" value={horse.speed} onChange={(event) => updateHorse(horse.no, "speed", event.target.value)} /><input type="number" value={horse.stamina} onChange={(event) => updateHorse(horse.no, "stamina", event.target.value)} /><input type="number" value={horse.form} onChange={(event) => updateHorse(horse.no, "form", event.target.value)} /><button disabled={Boolean(error) || isSaving} onClick={() => finishEditing(horse.no)}>{isSaving ? <><Loader2 size={13} className="animate-spin" /> 保存中</> : "保存"}</button></div> : <div className="manage-row" key={horse.no}><span className="horse-number">#{horse.no}</span><strong><i className="silk-dot" style={{ background: horse.color }} />{horse.name}</strong><span>{horse.style}</span><span>{horse.speed}</span><span>{horse.stamina}</span><span>{horse.form}</span><button onClick={() => setEditing(horse.no)}>編集</button></div>; })}</div>
     {Object.values(numberErrors).map((message) => <p className="csv-message error" role="alert" key={message}>{message}</p>)}
+    {filteredHorses.length > pageSize && <div className="manage-pagination" aria-label="馬一覧のページ送り"><button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1}>前へ</button><span>ページ {page} / {pageCount}</span><button onClick={() => setPage((current) => Math.min(pageCount, current + 1))} disabled={page === pageCount}>次へ</button></div>}
   </div>;
 }
 

@@ -163,6 +163,10 @@ input[type=range] { width: 100%; height: 3px; appearance: none; background: line
 .manage-search input:focus { border-color:#c8a866; box-shadow:0 0 0 2px #c8a86622; }
 .manage-sortbar { display:flex; align-items:center; gap:6px; margin:9px 0 8px; color:#7f8d9e; font-size:9px; flex-wrap:wrap; }
 .manage-sortbar button { padding:5px 8px; }
+.manage-pagination { display:flex; align-items:center; justify-content:center; gap:12px; margin:14px 0 4px; color:#8997a7; font-size:10px; }
+.manage-pagination button { border:1px solid #354354; background:#121d29; color:#c8a866; padding:7px 12px; font-size:10px; cursor:pointer; }
+.manage-pagination button:hover:not(:disabled) { border-color:#c8a866; background:#182432; }
+.manage-pagination button:disabled { cursor:not-allowed; opacity:.4; }
 .manage-row.editing { position:relative; grid-template-columns:52px minmax(130px,1.5fr) 68px 54px 54px 54px 50px; background:#1a2835; }
 .manage-row.editing input, .manage-row.editing select { width:100%; min-width:0; border:1px solid #425063; background:#0e1722; color:#eff2ed; padding:6px 5px; font-size:10px; }
 .manage-row.editing > button { color:#c8a866; white-space:nowrap; }
