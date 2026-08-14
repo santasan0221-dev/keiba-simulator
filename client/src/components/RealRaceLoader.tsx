@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Database, X } from "lucide-react";
 import type { Horse } from "@/pages/Home";
-import { fetchRace, fetchRaces, toHorses, type LabRaceListItem } from "@/lib/singlePickAi";
+import {
+  fetchRace,
+  fetchRaces,
+  getApiBase,
+  setApiBase,
+  toHorses,
+  type LabRaceListItem,
+} from "@/lib/singlePickAi";
 
 // Floating loader that pulls a real race from single_pick_ai (/api/lab) and
 // seeds the simulator's horses with it. Kept self-contained so Home only needs
@@ -24,6 +31,7 @@ const panelStyle: React.CSSProperties = {
 
 export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }) {
   const [open, setOpen] = useState(false);
+  const [base, setBase] = useState(getApiBase());
   const [date, setDate] = useState(todayJst());
   const [org, setOrg] = useState<(typeof ORGS)[number]>("NAR");
   const [races, setRaces] = useState<LabRaceListItem[]>([]);
@@ -44,7 +52,7 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
     return () => {
       live = false;
     };
-  }, [open, date, org]);
+  }, [open, date, org, base]);
 
   const load = async (raceKey: string) => {
     setLoading(true);
@@ -90,6 +98,18 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
           <X size={16} />
         </button>
       </div>
+      <label style={{ display: "block", fontSize: 10, color: "#8290a1", marginBottom: 8 }}>
+        接続先 single_pick_ai(自分のPCで開くなら既定のままでOK)
+        <input
+          value={base}
+          onChange={(e) => {
+            setBase(e.target.value);
+            setApiBase(e.target.value);
+          }}
+          placeholder="http://localhost:8000"
+          style={{ width: "100%", marginTop: 4, background: "#0d1722", color: "#e7ece8", border: "1px solid #354553", borderRadius: 3, padding: 6, fontSize: 11 }}
+        />
+      </label>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
         <input
           type="date"

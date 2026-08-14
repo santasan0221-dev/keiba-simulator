@@ -11,7 +11,29 @@
 // consumes these horses is a what-if sandbox, not the validated prediction.
 import type { Going, Horse, Style } from "@/pages/Home";
 
-const BASE = (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undefined) ?? "";
+// Prediction API base, resolved at RUNTIME (not build time) so the deployed
+// site can point at whichever single_pick_ai the viewer is running — including
+// http://localhost:8000 on their own machine (browsers allow https pages to
+// call http://localhost). Overridable in the UI and remembered in localStorage.
+const DEFAULT_BASE =
+  (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undefined) || "http://localhost:8000";
+const BASE_STORAGE_KEY = "single_pick_ai_base";
+
+export function getApiBase(): string {
+  try {
+    return localStorage.getItem(BASE_STORAGE_KEY) || DEFAULT_BASE;
+  } catch {
+    return DEFAULT_BASE;
+  }
+}
+
+export function setApiBase(url: string): void {
+  try {
+    localStorage.setItem(BASE_STORAGE_KEY, url.replace(/\/+$/, ""));
+  } catch {
+    /* ignore storage failures */
+  }
+}
 
 export type LabRaceListItem = {
   race_key: string;
@@ -84,7 +106,7 @@ function toAppStyle(style: string | null): Style {
 }
 
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${BASE}${path}`);
+  const response = await fetch(`${getApiBase()}${path}`);
   if (!response.ok) throw new Error(`single_pick_ai HTTP ${response.status}`);
   return (await response.json()) as T;
 }
