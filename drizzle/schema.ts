@@ -35,6 +35,7 @@ export const raceSyncSources = mysqlTable(
     enabled: int("enabled").notNull().default(1),
     refreshMinutes: int("refreshMinutes").notNull().default(15),
     scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    syncStartedAt: timestamp("syncStartedAt"),
     lastAttemptAt: timestamp("lastAttemptAt"),
     lastSuccessAt: timestamp("lastSuccessAt"),
     nextRetryAt: timestamp("nextRetryAt"),

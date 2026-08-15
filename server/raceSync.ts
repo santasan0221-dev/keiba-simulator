@@ -35,6 +35,7 @@ export type RaceSyncDashboard = {
   source: {
     enabled: boolean;
     refreshMinutes: number;
+    syncStartedAt: string | null;
     lastAttemptAt: string | null;
     lastSuccessAt: string | null;
     nextRetryAt: string | null;
@@ -237,7 +238,8 @@ export async function runSinglePickSync(options: { taskUid?: string; bypassBacko
   if (!db) throw new Error("同期履歴データベースを利用できません");
   if (!source.enabled) return { outcome: "backoff", message: "同期は停止されています", racesChecked: 0, racesUpdated: 0 };
   if (!options.bypassBackoff && source.nextRetryAt && source.nextRetryAt > startedAt) return { outcome: "backoff", message: "指数バックオフの待機中です", racesChecked: 0, racesUpdated: 0 };
-  await db.update(raceSyncSources).set({ lastAttemptAt: startedAt, lastError: null }).where(eq(raceSyncSources.id, source.id));
+  if (source.syncStartedAt && startedAt.getTime() - source.syncStartedAt.getTime() < 20 * 60_000) return { outcome: "backoff", message: "別の同期処理が実行中です", racesChecked: 0, racesUpdated: 0 };
+  await db.update(raceSyncSources).set({ syncStartedAt: startedAt, lastAttemptAt: startedAt, lastError: null }).where(eq(raceSyncSources.id, source.id));
   try {
     const keys = await fetchRaceKeys(source);
     let updated = 0;
@@ -252,7 +254,7 @@ export async function runSinglePickSync(options: { taskUid?: string; bypassBacko
       }
     });
     const completedAt = new Date();
-    await db.update(raceSyncSources).set({ lastSuccessAt: completedAt, nextRetryAt: null, consecutiveFailures: 0, lastError: null }).where(eq(raceSyncSources.id, source.id));
+    await db.update(raceSyncSources).set({ syncStartedAt: null, lastSuccessAt: completedAt, nextRetryAt: null, consecutiveFailures: 0, lastError: null }).where(eq(raceSyncSources.id, source.id));
     const message = failed.length ? `${updated}件を同期、${failed.length}件は次回再試行します` : `${updated}件を同期しました`;
     await recordRun(source.id, failed.length ? "partial" : "success", failed.length ? `${message} / ${failed.slice(0, 3).join(" | ")}` : message, keys.length, updated, startedAt);
     return { outcome: failed.length ? "partial" : "success", message, racesChecked: keys.length, racesUpdated: updated };
@@ -261,7 +263,7 @@ export async function runSinglePickSync(options: { taskUid?: string; bypassBacko
     const failures = source.consecutiveFailures + 1;
     const delayMinutes = Math.min(RETRY_CAP_MINUTES, source.refreshMinutes * 2 ** Math.max(0, failures - 1));
     const retryAt = new Date(Date.now() + delayMinutes * 60_000);
-    await db.update(raceSyncSources).set({ consecutiveFailures: failures, lastError: message.slice(0, 1_000), nextRetryAt: retryAt }).where(eq(raceSyncSources.id, source.id));
+    await db.update(raceSyncSources).set({ syncStartedAt: null, consecutiveFailures: failures, lastError: message.slice(0, 1_000), nextRetryAt: retryAt }).where(eq(raceSyncSources.id, source.id));
     await recordRun(source.id, "failure", `${message} / 次回再試行: ${retryAt.toISOString()}`, 0, 0, startedAt);
     return { outcome: "failure", message, racesChecked: 0, racesUpdated: 0 };
   }
@@ -277,7 +279,7 @@ export async function getRaceSyncDashboard(): Promise<RaceSyncDashboard> {
     db.select().from(raceSyncRuns).where(eq(raceSyncRuns.sourceId, source.id)).orderBy(desc(raceSyncRuns.finishedAt)).limit(8),
   ]);
   return {
-    source: { enabled: Boolean(source.enabled), refreshMinutes: source.refreshMinutes, lastAttemptAt: asIso(source.lastAttemptAt), lastSuccessAt: asIso(source.lastSuccessAt), nextRetryAt: asIso(source.nextRetryAt), consecutiveFailures: source.consecutiveFailures, lastError: source.lastError ?? null },
+    source: { enabled: Boolean(source.enabled), refreshMinutes: source.refreshMinutes, syncStartedAt: asIso(source.syncStartedAt), lastAttemptAt: asIso(source.lastAttemptAt), lastSuccessAt: asIso(source.lastSuccessAt), nextRetryAt: asIso(source.nextRetryAt), consecutiveFailures: source.consecutiveFailures, lastError: source.lastError ?? null },
     races: snapshots.map(mapMetric),
     recentRuns: runs.map(run => ({ id: run.id, outcome: run.outcome, message: run.message ?? null, racesChecked: run.racesChecked, racesUpdated: run.racesUpdated, finishedAt: run.finishedAt.toISOString() })),
   };

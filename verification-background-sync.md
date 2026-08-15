@@ -18,3 +18,9 @@
 `singlePickSyncUpdate.test.ts` では、同一race_keyの未確定データにCONFIRMED結果・払戻を伴う更新が到着した場合だけ、TRUTH PANEL置換対象と判定することを確認した。既存の`TruthPanel.test.tsx`は確定結果セクションを描画し、履歴ダッシュボードは確定済みスナップショットだけを集計する。このため、公開APIがまだ`result: null`のみを返す期間も、確定結果が来るまで数値を表示しないまま、到着後には同一レースのTRUTH PANELと集計対象が更新される。
 
 バックグラウンド同期の本体はチェックポイント`488b8769`でManus本番へ公開済みである。GitHubの`main`は同じコミットを含み、状態表示と回帰テストの追補は[PR #13](https://github.com/santasan0221-dev/keiba-simulator/pull/13)（`feat/background-sync-history-dashboard`）として作成済みである。PR #13はレビュー用に未マージであり、本番にはチェックポイント版が反映されている。プロジェクト所有者Heartbeat `DNGAzBcmgCdTRPNCkPheoA` は本番の`/api/scheduled/race-sync`を15分間隔で呼び出し、実行結果はManusのスケジュール管理画面またはHeartbeatログから確認できる。
+
+## 履歴フィルター・CSV出力・同期中表示
+
+AI履歴画面では、期間（開始・終了）と競馬場で履歴を絞り込み、表示対象件数・KPI・推移・台帳を同じフィルター後データへ統一した。CSV出力はBOM付きUTF-8で、適用中の期間・競馬場・件数を先頭メタデータとして記録し、未確定レースの状態は数値に置き換えずそのまま出力する。デスクトップ1280pxとモバイル390pxで、フィルターとCSV操作が重ならないことを確認した。`syncStartedAt`が存在する場合はREAL RACE INPUTとAI履歴の双方にローディングアニメーションと「バックグラウンド同期中」を表示することを統制テストで確認した。
+
+ヘッドレスブラウザでAI履歴のCSV出力ボタンを実行し、`keiba-lab-ai-outcome-archive-2026-08-15.csv`（7.3KB）をダウンロードした。先頭には「対象期間: 開始指定なし〜終了指定なし」「競馬場: すべて」「出力件数: 48」が記録され、CSVはraceKey、開催日、競馬場、公式結果、AI本命結果、順位精度、単勝・複勝ROI、同期時刻を含む。CONFIRMEDの行と、未確定の数値欄を空欄にした行がいずれも保持され、推定値は出力されていない。

@@ -8,6 +8,13 @@
       "when": 1786792410009,
       "tag": "0000_next_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786800973130,
+      "tag": "0001_low_vulture",
+      "breakpoints": true
     }
   ]
 }

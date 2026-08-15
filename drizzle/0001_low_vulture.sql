@@ -1,0 +1,1 @@
+ALTER TABLE `race_sync_sources` ADD `syncStartedAt` timestamp;
