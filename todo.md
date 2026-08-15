@@ -129,5 +129,16 @@
 - [x] provenanceのユニットテスト、型チェック、PDF／CSV出力内容、レスポンシブ表示を確認する
 - [x] GitHub PR #10の内容をユーザーへ報告する
 
-- [ ] GitHub mainへマージ済みのprovenance対応をManus本番へ同期・再公開する
-- [ ] 本番URLで保存・出力のprovenance対応が反映されていることを確認する
+- [x] GitHub mainへマージ済みのprovenance対応をManus本番へ同期・再公開する
+- [x] 本番URLで保存・出力のprovenance対応が反映されていることを確認する
+
+- [x] 公開サイトのREAL RACE INPUTが利用可能な状態へ復旧していることを確認する
+- [x] 提供されたsingle_pick_aiのHTTPS接続先をREAL RACE INPUTへ設定する
+- [ ] 実レース一覧と読み取り専用のAI予測表示を確認して報告する
+
+- [x] ngrok経由のsingle_pick_ai APIへ必要なブラウザ警告回避ヘッダーを付与する
+- [x] ngrok接続互換性のユニットテスト、型チェック、実レース読込を確認する
+- [ ] 修正をManus本番へ再公開し、提供URLで読込結果を報告する
+- [ ] 本番URLで保存結果カードのprovenanceバッジを実データ・サンプル・未確認の各状態で確認する
+- [ ] 本番URLで実レース由来の確定結果CSVを出力し、provenanceメタデータを確認する
+- [ ] 本番URLで実レース由来の詳細PDFを出力し、出所情報と免責文言を確認する

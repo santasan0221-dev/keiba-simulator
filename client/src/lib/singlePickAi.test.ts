@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchRaces, toHorses, type LabRace } from "./singlePickAi";
+import { fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
 
 const race: LabRace = {
   race: { race_key: "jra-20260815-11", date: "2026-08-15", organization: "JRA", venue: "札幌", race_no: 11, distance: 2000, surface: "芝", going: "良", scheduled_start_at: null, status: "OPEN" },
@@ -44,5 +44,11 @@ describe("single_pick_ai toHorses", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>not an API</html>", { status: 200, headers: { "content-type": "text/html" } })));
 
     await expect(fetchRaces("2026-08-15", "JRA")).rejects.toThrow("APIがJSONを返しません");
+  });
+
+  it("adds the ngrok browser-warning bypass header only for ngrok tunnel endpoints", () => {
+    expect(getApiRequestHeaders("https://unburned-dispose-outlast.ngrok-free.dev")).toEqual({ [NGROK_SKIP_BROWSER_WARNING_HEADER]: "true" });
+    expect(getApiRequestHeaders("https://single-pick.example.com")).toBeUndefined();
+    expect(getApiRequestHeaders("")).toBeUndefined();
   });
 });

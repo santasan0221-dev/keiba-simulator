@@ -19,6 +19,7 @@ import type { Going, Horse, InputSource, Style } from "@/pages/Home";
 // used from an https page (browser mixed-content blocking).
 const DEFAULT_BASE = (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undefined) || "";
 const BASE_STORAGE_KEY = "single_pick_ai_base";
+export const NGROK_SKIP_BROWSER_WARNING_HEADER = "ngrok-skip-browser-warning";
 
 export function getApiBase(): string {
   try {
@@ -34,6 +35,18 @@ export function setApiBase(url: string): void {
   } catch {
     /* ignore storage failures */
   }
+}
+
+export function getApiRequestHeaders(base = getApiBase()): HeadersInit | undefined {
+  try {
+    const hostname = new URL(base).hostname.toLowerCase();
+    if (hostname.endsWith(".ngrok-free.dev") || hostname.endsWith(".ngrok.io")) {
+      return { [NGROK_SKIP_BROWSER_WARNING_HEADER]: "true" };
+    }
+  } catch {
+    // Same-origin and malformed values are handled by the eventual request.
+  }
+  return undefined;
 }
 
 export type LabRaceListItem = {
@@ -107,7 +120,8 @@ function toAppStyle(style: string | null): Style {
 }
 
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${getApiBase()}${path}`);
+  const base = getApiBase();
+  const response = await fetch(`${base}${path}`, { headers: getApiRequestHeaders(base) });
   if (!response.ok) throw new Error(`single_pick_ai HTTP ${response.status}`);
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
