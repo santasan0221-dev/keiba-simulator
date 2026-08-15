@@ -3,6 +3,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./replay-enhancements.css";
+@import "./sync-history.css";
+@import "./sync-status-details.css";
 
 @custom-variant dark (&:is(.dark *));
 :root { --background: #0b111a; --foreground: #f3efe5; --card: #151e2b; --card-foreground: #f3efe5; --primary: #c8a866; --primary-foreground: #0b111a; --border: #293444; --muted: #8b96a8; --accent: #1d2d3d; --radius: 0.35rem; }

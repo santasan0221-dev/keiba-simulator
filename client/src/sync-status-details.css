@@ -1,0 +1,2 @@
+.real-race-sync-state > p { grid-column:1 / -1; margin:5px 0 0; padding-top:6px; border-top:1px solid currentColor; color:#f0b2aa; font-size:8px; line-height:1.45; overflow-wrap:anywhere; }
+@media (max-width:760px) { .real-race-sync-state > p { font-size:7px; } }
