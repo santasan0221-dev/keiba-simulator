@@ -29,7 +29,21 @@ export function aiPickFinishLabel(pick: LabAiPickResult | null | undefined): str
 
 export function payoutLines(result: LabRaceResult | null | undefined): string[] {
   if (!result?.payouts || !Object.keys(result.payouts).length) return [];
-  return Object.entries(result.payouts).map(([kind, value]) => `${kind}: ${typeof value === "string" || typeof value === "number" ? value : JSON.stringify(value)}`);
+  const labels: Record<string, string> = { win: "単勝", place: "複勝" };
+  const valueOf = (value: Record<string, unknown>) => value.payout ?? value.amount ?? value.return ?? value.value ?? value.yen;
+  const format = (value: unknown): string => {
+    if (typeof value === "string" || typeof value === "number") return String(value);
+    if (Array.isArray(value)) return value.map((entry) => format(entry)).filter(Boolean).join(" / ") || "払戻形式未対応";
+    if (value && typeof value === "object") {
+      const row = value as Record<string, unknown>;
+      const horseNo = row.horse_no ?? row.horseNo ?? row.no ?? row.number;
+      const amount = valueOf(row);
+      if ((typeof horseNo === "number" || typeof horseNo === "string") && (typeof amount === "number" || typeof amount === "string")) return `#${horseNo} ¥${amount}`;
+      return "払戻形式未対応";
+    }
+    return "払戻形式未対応";
+  };
+  return Object.entries(result.payouts).map(([kind, value]) => `${labels[kind] ?? kind}: ${format(value)}`);
 }
 
 export function getConfirmedResultSummary(result: LabRaceResult | null | undefined) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aiPickFinishLabel, aiPickOutcomeLabel, getAiPickOutcome, getConfirmedResultSummary } from "./officialRaceResult";
+import { aiPickFinishLabel, aiPickOutcomeLabel, getAiPickOutcome, getConfirmedResultSummary, payoutLines } from "./officialRaceResult";
 
 const confirmed = { status: "CONFIRMED", official_order: [{ finish: 1, horse_no: 4, horse_name: "オンベイト", popularity: 1 }], payouts: null };
 
@@ -30,5 +30,11 @@ describe("official race outcome presentation", () => {
     const result = { ...confirmed, ai_pick: { horse_no: 4, horse_name: "オンベイト", ai_rank: 1, finish: 1, won: true, placed: true } };
     expect(getConfirmedResultSummary(result)).toMatchObject({ outcome: "的中（1着）", pick: "AI本命 オンベイト · 1着", order: "1着 オンベイト" });
     expect(getConfirmedResultSummary(null)).toBeNull();
+  });
+
+  it("formats known payout rows without exposing raw JSON", () => {
+    const result = { ...confirmed, payouts: { win: [{ horse_no: 4, payout: 420 }], place: [{ horse_no: 4, payout: 180 }] } };
+
+    expect(payoutLines(result)).toEqual(["単勝: #4 ¥420", "複勝: #4 ¥180"]);
   });
 });

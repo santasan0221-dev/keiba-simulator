@@ -1,5 +1,6 @@
 import type { LabRace } from "@/lib/singlePickAi";
 import { aiPickFinishLabel, aiPickOutcomeLabel, payoutLines } from "@/lib/officialRaceResult";
+import { getVirtualRoiSummary } from "@/lib/raceOutcomeAnalysis";
 
 export type ScenarioProvenance =
   | { kind: "single_pick_ai"; source: "single_pick_ai"; raceKey: string | null; venue: string | null; calibrationStatus: string | null; asOf: string | null; capturedAt: string; officialResult: LabRace["result"] }
@@ -36,6 +37,7 @@ export function provenanceBadge(provenance: ScenarioProvenance | undefined): str
 export function provenanceMetadata(provenance: ScenarioProvenance | undefined): Array<[string, string]> {
   const normalized = normalizeScenarioProvenance(provenance);
   if (normalized.kind === "single_pick_ai") {
+    const roi = getVirtualRoiSummary(normalized.officialResult);
     return [
       ["実データ元", "single_pick_ai"],
       ["race_key", normalized.raceKey ?? "未確認"],
@@ -48,19 +50,20 @@ export function provenanceMetadata(provenance: ScenarioProvenance | undefined): 
       ["AI本命着順", aiPickFinishLabel(normalized.officialResult?.ai_pick)],
       ["公式着順", normalized.officialResult?.official_order?.slice(0, 5).map((entry) => `${entry.finish}着 ${entry.horse_name}`).join(" / ") || "未確定"],
       ["払戻", payoutLines(normalized.officialResult).join(" / ") || "払戻情報なし"],
+      ["仮想ROI", roi.available ? roi.rows.filter((row) => row.returnRate !== null).map((row) => `${row.label} ${row.returnRate?.toFixed(1)}%`).join(" / ") : roi.reason ?? "算出不可"],
     ];
   }
   if (normalized.kind === "sample") return [["実データ元", "サンプルデータ（実レース未読込）"], ["保存時刻", normalized.capturedAt]];
   return [["実データ元", "未確認（旧保存形式）"]];
 }
 
-export const PROVENANCE_CSV_HEADERS = ["provenanceKind", "dataSource", "raceKey", "venue", "calibrationStatus", "asOf", "capturedAt", "officialResultStatus", "aiPickOutcome", "aiPickFinish", "officialOrder", "payouts"];
+export const PROVENANCE_CSV_HEADERS = ["provenanceKind", "dataSource", "raceKey", "venue", "calibrationStatus", "asOf", "capturedAt", "officialResultStatus", "aiPickOutcome", "aiPickFinish", "officialOrder", "payouts", "virtualRoi"];
 
 export function provenanceCsvValues(provenance: ScenarioProvenance | undefined): string[] {
   const normalized = normalizeScenarioProvenance(provenance);
-  if (normalized.kind === "single_pick_ai") return [normalized.kind, normalized.source, normalized.raceKey ?? "未確認", normalized.venue ?? "未確認", normalized.calibrationStatus ?? "未確認", normalized.asOf ?? "未確認", normalized.capturedAt, normalized.officialResult?.status ?? "未確定", aiPickOutcomeLabel(normalized.officialResult), aiPickFinishLabel(normalized.officialResult?.ai_pick), normalized.officialResult?.official_order?.slice(0, 5).map((entry) => `${entry.finish}着 ${entry.horse_name}`).join(" / ") || "未確定", payoutLines(normalized.officialResult).join(" / ") || "払戻情報なし"];
-  if (normalized.kind === "sample") return [normalized.kind, "サンプルデータ（実レース未読込）", "", "", "", "", normalized.capturedAt, "", "", "", "", ""];
-  return [normalized.kind, "未確認（旧保存形式）", "", "", "", "", "", "", "", "", "", ""];
+  if (normalized.kind === "single_pick_ai") { const roi = getVirtualRoiSummary(normalized.officialResult); return [normalized.kind, normalized.source, normalized.raceKey ?? "未確認", normalized.venue ?? "未確認", normalized.calibrationStatus ?? "未確認", normalized.asOf ?? "未確認", normalized.capturedAt, normalized.officialResult?.status ?? "未確定", aiPickOutcomeLabel(normalized.officialResult), aiPickFinishLabel(normalized.officialResult?.ai_pick), normalized.officialResult?.official_order?.slice(0, 5).map((entry) => `${entry.finish}着 ${entry.horse_name}`).join(" / ") || "未確定", payoutLines(normalized.officialResult).join(" / ") || "払戻情報なし", roi.available ? roi.rows.filter((row) => row.returnRate !== null).map((row) => `${row.kind}:${row.returnRate?.toFixed(1)}%`).join(" / ") : roi.reason ?? "算出不可"]; }
+  if (normalized.kind === "sample") return [normalized.kind, "サンプルデータ（実レース未読込）", "", "", "", "", normalized.capturedAt, "", "", "", "", "", ""];
+  return [normalized.kind, "未確認（旧保存形式）", "", "", "", "", "", "", "", "", "", "", ""];
 }
 
 export function provenanceLines(provenance: ScenarioProvenance | undefined): string[] {

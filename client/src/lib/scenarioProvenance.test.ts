@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProvenanceCsvPreamble, createScenarioProvenance, provenanceBadge, provenanceMetadata, SIMULATION_DISCLAIMER } from "./scenarioProvenance";
+import { buildProvenanceCsvPreamble, createScenarioProvenance, provenanceBadge, provenanceCsvValues, provenanceMetadata, PROVENANCE_CSV_HEADERS, SIMULATION_DISCLAIMER } from "./scenarioProvenance";
 import type { LabRace } from "./singlePickAi";
 
 const race = {
@@ -59,5 +59,14 @@ describe("scenario provenance", () => {
     expect(metadata).toContainEqual(["公式結果状態", "CONFIRMED"]);
     expect(metadata).toContainEqual(["AI本命結果", "本命の着順データなし"]);
     expect(metadata).toContainEqual(["AI本命着順", "着順データなし"]);
+  });
+
+  it("keeps the virtual ROI column aligned with the provenance CSV header", () => {
+    const provenance = createScenarioProvenance(race, "2026-08-15T01:02:03Z");
+    const values = provenanceCsvValues(provenance);
+
+    expect(PROVENANCE_CSV_HEADERS).toContain("virtualRoi");
+    expect(values).toHaveLength(PROVENANCE_CSV_HEADERS.length);
+    expect(values.at(-1)).toBe("結果はまだ確定していません");
   });
 });
