@@ -11,3 +11,7 @@
 ## 公開前提
 
 Manusの公開環境からローカルで稼働するsingle_pick_aiへは直接接続できない。そのため公開版では、APIが利用できない場合にエラーを隠さず、HTTPSの接続先設定またはサーバー公開状態を確認するよう案内する。
+
+## Manus本番確認
+
+2026年8月15日に `https://keibasim-8b2aebi6.manus.space` で確認した。REAL RACE INPUT、TRUTH PANELの未読込表示、WHAT-IF SANDBOXの区分、ならびに「single_pick_ai APIがJSONを返しません」という接続先確認エラーが表示された。これは、公開版からローカルのsingle_pick_aiへ接続できない現状をゼロ値や空欄へ置き換えず、明示していることを確認するものです。
