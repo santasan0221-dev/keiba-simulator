@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createScenarioProvenance, provenanceBadge, provenanceMetadata } from "./scenarioProvenance";
+import { buildProvenanceCsvPreamble, createScenarioProvenance, provenanceBadge, provenanceMetadata, SIMULATION_DISCLAIMER } from "./scenarioProvenance";
 import type { LabRace } from "./singlePickAi";
 
 const race = {
@@ -33,5 +33,14 @@ describe("scenario provenance", () => {
   it("treats legacy snapshots with no provenance as unknown rather than sample or real data", () => {
     expect(provenanceBadge(undefined)).toBe("出所未確認（旧保存形式）");
     expect(provenanceMetadata(undefined)).toContainEqual(["実データ元", "未確認（旧保存形式）"]);
+  });
+
+  it("puts provenance and the simulation disclaimer before CSV rows", () => {
+    const preamble = buildProvenanceCsvPreamble(createScenarioProvenance(race, "2026-08-15T01:02:03Z"));
+
+    expect(preamble.startsWith('"実データ元","single_pick_ai"')).toBe(true);
+    expect(preamble).toContain('"race_key","jra-20260815-11"');
+    expect(preamble).toContain('"校正状態","UNCALIBRATED_SHADOW_SCORE"');
+    expect(preamble).toContain(SIMULATION_DISCLAIMER);
   });
 });

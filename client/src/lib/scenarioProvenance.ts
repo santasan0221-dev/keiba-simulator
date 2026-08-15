@@ -59,3 +59,13 @@ export function provenanceCsvValues(provenance: ScenarioProvenance | undefined):
 export function provenanceLines(provenance: ScenarioProvenance | undefined): string[] {
   return provenanceMetadata(provenance).map(([label, value]) => `${label}: ${value}`);
 }
+
+function escapeCsvCell(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+export function buildProvenanceCsvPreamble(provenance: ScenarioProvenance | undefined): string {
+  return [...provenanceMetadata(provenance), ["免責", SIMULATION_DISCLAIMER]]
+    .map(([label, value]) => `${escapeCsvCell(label)},${escapeCsvCell(value)}`)
+    .join("\n");
+}
