@@ -9,7 +9,7 @@
 // calibration_status === "READY"; otherwise they are null. This module never
 // fabricates them — it surfaces what the backend provides. The simulation that
 // consumes these horses is a what-if sandbox, not the validated prediction.
-import type { Going, Horse, Style } from "@/pages/Home";
+import type { Going, Horse, InputSource, Style } from "@/pages/Home";
 
 // Prediction API base, resolved at RUNTIME (not build time).
 // Default is empty = same origin, so serving the app from single_pick_ai at
@@ -109,6 +109,10 @@ function toAppStyle(style: string | null): Style {
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${getApiBase()}${path}`);
   if (!response.ok) throw new Error(`single_pick_ai HTTP ${response.status}`);
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("single_pick_ai APIがJSONを返しません。接続先URLまたはサーバーの公開状態を確認してください。");
+  }
   return (await response.json()) as T;
 }
 
@@ -130,6 +134,7 @@ export function toHorses(race: LabRace): Horse[] {
       return typeof value === "number" && Number.isFinite(value) ? clamp(value) : GOING_FALLBACK[band];
     };
     const goingRates = Object.fromEntries(GOING_BANDS.map((band) => [band, rate(band)])) as Record<Going, number>;
+    const goingRateSources = Object.fromEntries(GOING_BANDS.map((band) => [band, typeof horse.abilities.going_rates?.[band] === "number" ? "as-of履歴実値" : "暫定値"])) as Record<Going, InputSource>;
     const record = horse.record ?? {};
     return {
       no: num(horse.no, index + 1),
@@ -149,6 +154,15 @@ export function toHorses(race: LabRace): Horse[] {
       thirdsPast: num(record["thirds"], 0),
       avgFinish: clamp(num(record["avg_finish"], 6), 1, 18),
       goingRates,
+      dataSources: {
+        speed: typeof horse.abilities.speed === "number" ? "v23k実値" : "暫定値",
+        stamina: "暫定値",
+        start: "暫定値",
+        form: "暫定値",
+        goingRates: goingRateSources,
+        record: Object.keys(record).length ? "as-of履歴実値" : "未取得",
+        mappingStatus: horse.abilities.mapping_status,
+      },
       withdrawn: horse.withdrawn || undefined,
       latestOdds:
         typeof horse.market.win_odds === "number" && horse.market.win_odds > 0
