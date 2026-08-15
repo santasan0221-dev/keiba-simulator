@@ -85,6 +85,10 @@ export type LabHorse = {
   record: Record<string, unknown>;
 };
 
+export type LabOfficialOrder = { finish: number; horse_no: number; horse_name: string; popularity: number | null };
+export type LabAiPickResult = { horse_no: number; horse_name: string; ai_rank: number; finish: number | null; won: boolean | null; placed: boolean | null };
+export type LabRaceResult = { status: string; official_order: LabOfficialOrder[]; ai_pick: LabAiPickResult | null; payouts: Record<string, unknown> | null };
+
 export type LabRace = {
   race: {
     race_key: string | null;
@@ -103,6 +107,7 @@ export type LabRace = {
   branches: Array<{ key: string; label: string; probability: number }>;
   market_ev: { note: string; status: string; rows: Array<Record<string, unknown>> };
   provenance: Record<string, unknown>;
+  result?: LabRaceResult | null;
 };
 
 const PALETTE = ["#b9c3d4", "#e7b66a", "#db7e70", "#95c6b0", "#aa9ad6", "#d7a5ca", "#8ebc83", "#9bbbd2"];

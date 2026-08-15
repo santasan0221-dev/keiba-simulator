@@ -43,4 +43,21 @@ describe("scenario provenance", () => {
     expect(preamble).toContain('"校正状態","UNCALIBRATED_SHADOW_SCORE"');
     expect(preamble).toContain(SIMULATION_DISCLAIMER);
   });
+
+  it("keeps confirmed results and a missing AI-pick finish explicit in metadata", () => {
+    const confirmedRace = {
+      ...race,
+      result: {
+        status: "CONFIRMED",
+        official_order: [{ finish: 1, horse_no: 4, horse_name: "オンベイト", popularity: 1 }],
+        ai_pick: { horse_no: 4, horse_name: "オンベイト", ai_rank: 1, finish: null, won: null, placed: null },
+        payouts: { win: { horse_no: 4, amount: 280 } },
+      },
+    } satisfies LabRace;
+    const metadata = provenanceMetadata(createScenarioProvenance(confirmedRace, "2026-08-15T01:02:03Z"));
+
+    expect(metadata).toContainEqual(["公式結果状態", "CONFIRMED"]);
+    expect(metadata).toContainEqual(["AI本命結果", "本命の着順データなし"]);
+    expect(metadata).toContainEqual(["AI本命着順", "着順データなし"]);
+  });
 });
