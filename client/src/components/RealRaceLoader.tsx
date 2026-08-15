@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Database, X } from "lucide-react";
 import type { Horse } from "@/pages/Home";
+import type { RealRaceSnapshot } from "@/lib/singlePickAi";
 import {
   fetchRace,
   fetchRaces,
@@ -15,6 +16,7 @@ import {
 // to mount <RealRaceLoader onLoad={setHorses} />.
 
 const ORGS = ["NAR", "JRA"] as const;
+const brass = "#c8a866";
 
 function todayJst(): string {
   const now = new Date();
@@ -22,14 +24,7 @@ function todayJst(): string {
   return jst.toISOString().slice(0, 10);
 }
 
-const brass = "#c8a866";
-const panelStyle: React.CSSProperties = {
-  position: "fixed", right: 20, bottom: 20, zIndex: 60, width: "min(360px, 92vw)",
-  background: "#101b27f5", border: `1px solid ${brass}77`, borderRadius: 6,
-  boxShadow: "0 24px 70px #000a", padding: 16, color: "#e7ece8", fontSize: 12,
-};
-
-export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }) {
+export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[], snapshot: RealRaceSnapshot) => void }) {
   const [open, setOpen] = useState(false);
   const [base, setBase] = useState(getApiBase());
   const [date, setDate] = useState(todayJst());
@@ -59,7 +54,7 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
     setMessage("レース読み込み中…");
     try {
       const race = await fetchRace(raceKey);
-      onLoad(toHorses(race));
+      onLoad(toHorses(race), { race: race.race, model: race.model, horses: race.horses, provenance: race.provenance, loadedAt: new Date().toISOString() });
       const cal = race.model.calibration_status;
       setMessage(
         cal === "READY"
@@ -78,12 +73,7 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
       <button
         type="button"
         onClick={() => setOpen(true)}
-        style={{
-          position: "fixed", right: 20, bottom: 20, zIndex: 60,
-          display: "inline-flex", alignItems: "center", gap: 7,
-          border: `1px solid ${brass}`, background: "#101b27", color: brass,
-          padding: "10px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer",
-        }}
+        className="real-race-trigger"
       >
         <Database size={14} /> 本物のレースを読み込む
       </button>
@@ -91,7 +81,7 @@ export function RealRaceLoader({ onLoad }: { onLoad: (horses: Horse[]) => void }
   }
 
   return (
-    <div style={panelStyle}>
+    <div className="real-race-drawer">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
         <strong style={{ color: brass, letterSpacing: ".08em" }}>SINGLE_PICK_AI 実レース</strong>
         <button type="button" onClick={() => setOpen(false)} style={{ border: 0, background: "transparent", color: "#8290a1", cursor: "pointer" }}>

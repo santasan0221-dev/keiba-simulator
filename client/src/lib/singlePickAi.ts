@@ -11,6 +11,14 @@
 // consumes these horses is a what-if sandbox, not the validated prediction.
 import type { Going, Horse, Style } from "@/pages/Home";
 
+export type RealRaceSnapshot = {
+  race: LabRace["race"];
+  model: LabRace["model"];
+  horses: LabHorse[];
+  provenance: LabRace["provenance"];
+  loadedAt: string;
+};
+
 // Prediction API base, resolved at RUNTIME (not build time).
 // Default is empty = same origin, so serving the app from single_pick_ai at
 // /sim just works (fetches /api/lab on the same host). For the standalone
@@ -154,6 +162,7 @@ export function toHorses(race: LabRace): Horse[] {
         typeof horse.market.win_odds === "number" && horse.market.win_odds > 0
           ? horse.market.win_odds
           : undefined,
+      dataLineage: { speed: "v23k実値", going: "as-of履歴実値", stamina: "暫定値", start: "暫定値", form: "暫定値", source: "single_pick_ai" },
     };
   });
 }
