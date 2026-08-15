@@ -25,3 +25,9 @@ PDF出力操作の位置を確認し、保存済み実レースシナリオの�
 選択後に `keiba-lab-detailed-report-1786786393334.pdf` を生成できた。1ページ目には `実データ元: single_pick_ai`、race_key、venue、校正状態、as_of、取得時刻、公式結果状態、払戻、`仮想ROI: 結果はまだ確定していません` が記載され、what-ifであることと実際のレース結果・利益を保証しない旨の免責も保持されていることを確認した。
 
 保存結果カードと選択後のComparison詳細にも `仮想ROI / 結果はまだ確定していません` が表示されることを確認した。API応答の `result` が未提供であるため、保存時点でも回収率数値を表示していない。
+
+Manus本番 `https://keibasim-8b2aebi6.manus.space` で、提供されたHTTPS接続先からNAR・2026年8月15日の32件のレース候補を取得できることを確認した。公開版でもREAL RACE INPUTのHTTPS制約と未読込TRUTH PANELの分離表示が有効である。
+
+本番で帯広ば1Rを読み込むと、TRUTH PANELは `SINGLE_PICK_AI / 参考・未校正`、`OFFICIAL RESULT / 未確定` を表示した。`result` が未提供のため、公式着順、RANK ACCURACY、VIRTUAL ROI、払戻を推定・代替表示していないことを確認した。
+
+本番で実レース由来のシナリオを保存すると、Comparisonには `実データ · COLLECTING` の出所バッジが表示された。同じ一覧に、既存のサンプルシナリオの `サンプルデータ` バッジも表示され、出所を区別できることを確認した。実レースシナリオを含む詳細比較CSVの出力操作を実行した。
