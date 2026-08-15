@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRaceHistoryCsv, filterRaceHistory } from "./raceHistoryTools";
+import { buildRaceHistoryCsv, buildWeeklyRaceHistoryReport, filterRaceHistory, findNewlyConfirmedRaces, normalizeRaceHistoryFilters } from "./raceHistoryTools";
 import type { RaceHistoryRace } from "@/components/RaceHistoryDashboard";
 
 const races: RaceHistoryRace[] = [
@@ -21,5 +21,23 @@ describe("raceHistoryTools", () => {
     expect(csv).toContain("NAR|2026-08-01|帯広ば|01");
     expect(csv).not.toContain("JRA|2026-08-12|札幌|11");
     expect(csv).toContain("resultStatus");
+  });
+
+  it("保存済みフィルターを安全に正規化し、期間が逆転した場合は補正する", () => {
+    expect(normalizeRaceHistoryFilters({ from: "2026-08-12", to: "2026-08-01", venue: "札幌" })).toEqual({ from: "2026-08-01", to: "2026-08-12", venue: "札幌" });
+    expect(normalizeRaceHistoryFilters({ from: 10, venue: ["札幌"] })).toEqual({ from: "", to: "", venue: "" });
+  });
+
+  it("週次レポートは確定済み結果だけを集計し、払戻不明をROIへ混ぜない", () => {
+    const laterConfirmed: RaceHistoryRace = { ...races[0], raceKey: "NAR|2026-08-08|帯広ば|02", raceDate: "2026-08-08", raceNo: 2, comparedCount: 5, exactMatches: 2, meanAbsoluteRankError: 1.2, winReturnRate: 0, placeReturnRate: null };
+    const report = buildWeeklyRaceHistoryReport([...races, laterConfirmed]);
+    expect(report).toHaveLength(2);
+    expect(report[0]).toMatchObject({ weekKey: "2026-07-27", confirmedRaces: 1, rankAccuracy: 60, averageRoi: 180, roiSampleCount: 2 });
+    expect(report[1]).toMatchObject({ weekKey: "2026-08-03", confirmedRaces: 1, rankAccuracy: 40, averageRoi: 0, roiSampleCount: 1 });
+  });
+
+  it("未確認のCONFIRMEDレースだけを結果確定通知の対象にする", () => {
+    expect(findNewlyConfirmedRaces(races, [])).toEqual([races[0]]);
+    expect(findNewlyConfirmedRaces(races, [races[0].raceKey])).toEqual([]);
   });
 });

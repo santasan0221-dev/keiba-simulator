@@ -29,4 +29,11 @@ describe("Race sync confirmed flow", () => {
     expect(markup).toContain("バックグラウンド同期中");
     expect(markup).toContain("spin");
   });
+
+  it("新たに確定した結果と週次レポートを誤認なく表示する", () => {
+    const markup = renderToStaticMarkup(<RaceHistoryDashboardView data={confirmedHistory} newlyConfirmedRaces={confirmedHistory.races} />);
+    expect(markup).toContain("新たに1件のレース結果が確定しました");
+    expect(markup).toContain("WEEKLY PERFORMANCE REPORT");
+    expect(markup).toContain("2026/08/10〜08/16");
+  });
 });
