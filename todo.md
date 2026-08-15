@@ -128,3 +128,6 @@
 - [x] HTTPSトンネル接続の説明をQUICK TOURまたは操作案内へ追加する
 - [x] provenanceのユニットテスト、型チェック、PDF／CSV出力内容、レスポンシブ表示を確認する
 - [x] GitHub PR #10の内容をユーザーへ報告する
+
+- [ ] GitHub mainへマージ済みのprovenance対応をManus本番へ同期・再公開する
+- [ ] 本番URLで保存・出力のprovenance対応が反映されていることを確認する
