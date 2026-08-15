@@ -5,6 +5,7 @@ import { RealRaceLoader, type RealRaceLoad } from "@/components/RealRaceLoader";
 import { TruthPanel } from "@/components/TruthPanel";
 import type { LabRace } from "@/lib/singlePickAi";
 import { trpc } from "@/lib/trpc";
+import { shouldApplySyncedRace, syncedRaceNotice } from "@/lib/singlePickSyncUpdate";
 import { MANAGEMENT_PAGE_SIZES, type ManagementPageSize, getManagementPageCount, getManagementPageItems } from "@/lib/managementPagination";
 import { toast } from "sonner";
 import { deriveFinishMargins, derivePreviousFinishMargins, generateRaceFrames, type RaceFrame } from "@/lib/racePlayback";
@@ -213,11 +214,8 @@ export default function Home() {
     const latest = syncedRace.data;
     if (!latest?.race.race_key) return;
     setRealRace(current => {
-      if (current?.race.race_key !== latest.race.race_key) return current;
-      const previousResult = JSON.stringify(current.result ?? null);
-      const nextResult = JSON.stringify(latest.result ?? null);
-      if (previousResult === nextResult && current.model.as_of === latest.model.as_of) return current;
-      if (previousResult !== nextResult) toast.success(latest.result?.status === "CONFIRMED" ? "公式結果・払戻の同期を反映しました。" : "実レースの同期データを更新しました。");
+      if (!shouldApplySyncedRace(current, latest)) return current;
+      if (JSON.stringify(current?.result ?? null) !== JSON.stringify(latest.result ?? null)) toast.success(syncedRaceNotice(latest));
       return latest;
     });
   }, [syncedRace.data]);
