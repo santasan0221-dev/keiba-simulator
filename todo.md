@@ -120,3 +120,11 @@
 - [x] 専用ブランチからGitHubプルリクエストを作成し、公開内容を報告する
 - [x] WHAT-IFランキングの各馬に実データシードとv23k出所を明示する
 - [x] Manus本番公開URLでTRUTH PANELと未接続時エラー表示を確認する
+
+- [x] 保存・比較・PDF・CSV出力におけるrealRace provenanceの既存経路を監査する
+- [x] 実レース／サンプルを明示するSnapshot provenanceデータモデルを設計する
+- [x] 保存結果カードとComparison表示へprovenanceバッジを追加する
+- [x] 詳細PDFと確定結果CSVへ実データ元またはサンプルデータの出所を記載する
+- [x] HTTPSトンネル接続の説明をQUICK TOURまたは操作案内へ追加する
+- [ ] provenanceのユニットテスト、型チェック、出力内容、レスポンシブ表示、本番公開を確認する
+- [ ] 専用ブランチからGitHubプルリクエストを作成し、公開内容を報告する
