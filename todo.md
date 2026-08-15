@@ -149,6 +149,7 @@
 - [x] TRUTH PANELへ公式結果、AI本命の結果バッジ、払戻、未確定表示を実装する
 - [x] 公式結果をSnapshot provenance、Comparison、PDF、CSVへ引き継ぐ
 - [x] 型チェック、ユニットテスト、出力内容、デスクトップ／モバイル表示を検証する
-- [ ] 専用ブランチからGitHubプルリクエストを作成し、変更内容を報告する
+- [x] 専用ブランチからGitHubプルリクエストを作成し、変更内容を報告する
 - [x] Comparison保存結果カードで、Snapshot由来のAI本命結果と公式着順要約を確定時のみ表示する
 - [x] Comparisonの公式結果要約がSnapshot provenance由来であることをテストまたは画面検証で確認する
+- [x] GitHub PR #11のURL・ブランチ名・主要変更点・検証結果をユーザーへ報告する
