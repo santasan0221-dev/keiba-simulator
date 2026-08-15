@@ -123,4 +123,4 @@
 - [x] デスクトップ表示、型チェック、テスト、ビルドを検証する。
 - [ ] モバイル実機幅でTruth PanelとRealRaceLoaderを追加確認する。
 - [ ] 作業ブランチへコミットし、PRを作成する。
-- [ ] Manus公開の可否と、single_pick_ai APIを公開先から接続するための条件を整理する。
+- [x] Manus公開の可否と、single_pick_ai APIを公開先から接続するための条件を整理する。
