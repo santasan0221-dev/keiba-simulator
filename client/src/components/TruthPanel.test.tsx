@@ -33,4 +33,18 @@ describe("TruthPanel", () => {
     expect(markup).not.toContain("VIRTUAL ROI");
     expect(markup).toContain("結果はまだ確定していません");
   });
+
+  it("withholds numeric probabilities unless each horse is explicitly READY", () => {
+    const markup = renderToStaticMarkup(<TruthPanel race={{ ...confirmedRace, horses: confirmedRace.horses.map((horse) => ({ ...horse, model: { ...horse.model, prob_status: "UNCALIBRATED_SHADOW_SCORE" } })) }} />);
+    expect(markup).toContain("校正済み確率は表示しません");
+    expect(markup).not.toContain("0.3");
+    expect(markup).not.toContain("0.6");
+  });
+
+  it("withholds out-of-range probability payloads", () => {
+    const markup = renderToStaticMarkup(<TruthPanel race={{ ...confirmedRace, horses: confirmedRace.horses.map((horse) => ({ ...horse, model: { ...horse.model, win_prob_calibrated: 1.2, top3_prob: -0.1 } })) }} />);
+    expect(markup).toContain("校正済み確率は表示しません");
+    expect(markup).not.toContain("win_prob_calibrated");
+    expect(markup).not.toContain("top3_prob");
+  });
 });

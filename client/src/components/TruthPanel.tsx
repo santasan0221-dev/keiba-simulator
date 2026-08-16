@@ -4,14 +4,14 @@ import type { LabHorse, LabRace } from "@/lib/singlePickAi";
 import { aiPickFinishLabel, aiPickOutcomeLabel, getAiPickOutcome, payoutLines } from "@/lib/officialRaceResult";
 import { getRankAccuracySummary, getVirtualRoiSummary } from "@/lib/raceOutcomeAnalysis";
 
-const rawProbability = (value: number | null) => typeof value === "number" && Number.isFinite(value) ? String(value) : null;
+const rawProbability = (value: number | null) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? String(value) : null;
 
 function displayStatus(status: string | null | undefined) {
   return status?.trim() || "STATUS_UNKNOWN";
 }
 
 function hasCalibratedProbability(horse: LabHorse) {
-  return typeof horse.model.win_prob_calibrated === "number" || typeof horse.model.top3_prob === "number";
+  return horse.model.prob_status === "READY" && (rawProbability(horse.model.win_prob_calibrated) !== null || rawProbability(horse.model.top3_prob) !== null);
 }
 
 export function TruthPanel({ race }: { race: LabRace | null }) {
