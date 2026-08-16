@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getBranches, runSimulation, type Horse } from "./Home";
+import { formatWinRate, getSimulationCalibration } from "@/lib/simulationCalibration";
 
 // Regression coverage for the 2026-08-16 noise calibration fix: WHAT-IF
 // win rates were collapsing toward 100%/0% whenever a field had one
@@ -53,5 +54,18 @@ describe("runSimulation noise calibration", () => {
     expect(results[0].winRate).toBeLessThan(30);
     // ...but should still track the real speed ordering on average.
     expect(results[0].winRate).toBeGreaterThan(results[results.length - 1].winRate);
+  });
+
+  it("widens uncertainty when ability provenance is mostly provisional", () => {
+    const horse = makeHorse(1, 85);
+    const complete = { ...horse, dataSources: { speed: "v23k実値", stamina: "as-of履歴実値", start: "as-of履歴実値", form: "as-of履歴実値", goingRates: { 良: "as-of履歴実値", 稍重: "as-of履歴実値", 重: "as-of履歴実値", 不良: "as-of履歴実値" }, record: "as-of履歴実値" } } as Horse;
+    const provisional = { ...horse, dataSources: { speed: "v23k実値", stamina: "暫定値", start: "暫定値", form: "暫定値", goingRates: { 良: "暫定値", 稍重: "暫定値", 重: "暫定値", 不良: "暫定値" }, record: "as-of履歴実値" } } as Horse;
+    expect(getSimulationCalibration(provisional).noiseMagnitude).toBeGreaterThan(getSimulationCalibration(complete).noiseMagnitude);
+  });
+
+  it("makes sub-tenth-percent output distinguishable from zero", () => {
+    expect(formatWinRate(0)).toBe("<0.1");
+    expect(formatWinRate(0.04)).toBe("<0.1");
+    expect(formatWinRate(0.1)).toBe("0.1");
   });
 });
