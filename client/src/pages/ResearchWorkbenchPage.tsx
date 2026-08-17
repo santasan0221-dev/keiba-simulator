@@ -1,7 +1,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Activity, AlertTriangle, ArrowLeft, BarChart3, FileSpreadsheet, FlaskConical, ShieldCheck, Upload } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 
 /**
  * Research-only workspace. It never writes to the scenario archive, never calls
@@ -9,7 +9,7 @@ import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, Respons
  * PANEL probabilities. It is deliberately a separate route from WHAT-IF.
  */
 type ProbabilityKind = "truth_calibrated" | "shadow_score" | "what_if" | "unknown";
-type FieldKey = "date" | "raceId" | "venue" | "modelId" | "probabilityKind" | "probability" | "odds" | "won" | "payout";
+type FieldKey = "date" | "raceId" | "venue" | "modelId" | "probabilityKind" | "probability" | "shadowScore" | "odds" | "won" | "payout";
 type Mapping = Record<FieldKey, string>;
 type RawRow = Record<string, string>;
 type ResearchRow = {
@@ -19,6 +19,7 @@ type ResearchRow = {
   modelId: string;
   probabilityKind: ProbabilityKind;
   probability: number;
+  shadowScore: number | null;
   odds: number | null;
   won: boolean;
   payout: number | null;
@@ -30,7 +31,8 @@ const fieldLabels: { key: FieldKey; label: string; required: boolean }[] = [
   { key: "venue", label: "競馬場", required: false },
   { key: "modelId", label: "モデルID", required: false },
   { key: "probabilityKind", label: "確率種別", required: true },
-  { key: "probability", label: "予測確率", required: true },
+  { key: "probability", label: "予測確率（校正済み / WHAT-IF）", required: true },
+  { key: "shadowScore", label: "未校正shadow score（比較用）", required: false },
   { key: "odds", label: "発走前単勝オッズ", required: false },
   { key: "won", label: "確定1着フラグ", required: true },
   { key: "payout", label: "確定単勝払戻倍率（任意）", required: false },
@@ -43,6 +45,7 @@ const aliases: Record<FieldKey, string[]> = {
   modelId: ["model_id", "model", "prediction_version", "モデルid"],
   probabilityKind: ["probability_kind", "probability_source", "prediction_type", "確率種別", "確率ソース"],
   probability: ["win_prob_calibrated", "probability", "pred_prob", "prediction", "win_rate", "予測確率", "勝率"],
+  shadowScore: ["shadow_score", "raw_score", "uncalibrated_score", "shadow", "未校正スコア", "shadow score"],
   odds: ["odds", "win_odds", "decimal_odds", "単勝オッズ"],
   won: ["won", "is_winner", "winner", "finish_position", "着順", "結果"],
   payout: ["win_payout", "payout_multiplier", "単勝払戻倍率", "払戻倍率"],
@@ -117,6 +120,7 @@ function normaliseRows(rows: RawRow[], mapping: Mapping): { valid: ResearchRow[]
       modelId: mapping.modelId === "__none" ? "未指定" : row[mapping.modelId] || "未指定",
       probabilityKind: kind,
       probability,
+      shadowScore: toNumber(row[mapping.shadowScore]),
       odds: odds && odds > 1 ? odds : null,
       won: isWinner(row[mapping.won]),
       payout: payout && payout > 0 ? payout : null,
@@ -156,6 +160,20 @@ function analyze(rows: ResearchRow[], fractionalKelly: number) {
   };
 }
 
+function scoreComparison(rows: ResearchRow[]) {
+  const paired = rows.filter((row) => row.probabilityKind === "truth_calibrated" && row.shadowScore !== null);
+  if (!paired.length) return { paired, summary: null };
+  const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const scores = paired.map((row) => row.shadowScore as number);
+  const probabilities = paired.map((row) => row.probability);
+  const scoreMean = mean(scores); const probabilityMean = mean(probabilities);
+  const covariance = scores.reduce((sum, score, index) => sum + (score - scoreMean) * (probabilities[index] - probabilityMean), 0);
+  const scoreVariance = scores.reduce((sum, score) => sum + (score - scoreMean) ** 2, 0);
+  const probabilityVariance = probabilities.reduce((sum, probability) => sum + (probability - probabilityMean) ** 2, 0);
+  const correlation = scoreVariance && probabilityVariance ? covariance / Math.sqrt(scoreVariance * probabilityVariance) : null;
+  return { paired, summary: { count: paired.length, scoreMean, probabilityMean, correlation, observedRate: paired.filter((row) => row.won).length / paired.length } };
+}
+
 function calibration(rows: ResearchRow[]) {
   return Array.from({ length: 10 }, (_, index) => {
     const low = index / 10; const high = (index + 1) / 10;
@@ -187,6 +205,7 @@ export default function ResearchWorkbenchPage() {
   const filtered = useMemo(() => imported.valid.filter((row) => row.probabilityKind === kind && (venue === "all" || row.venue === venue) && (modelId === "all" || row.modelId === modelId)), [imported.valid, kind, venue, modelId]);
   const metrics = useMemo(() => analyze(filtered, fractionalKelly), [filtered, fractionalKelly]);
   const calibrationData = useMemo(() => calibration(filtered), [filtered]);
+  const comparison = useMemo(() => scoreComparison(imported.valid), [imported.valid]);
   const requiredMissing = fieldLabels.filter((field) => field.required && (!mapping[field.key] || mapping[field.key] === "__none"));
   const chartData = metrics.curve.map((row) => ({ date: row.date, capital: row.capital, drawdown: Number((row.drawdown * 100).toFixed(2)) }));
 
@@ -223,6 +242,8 @@ export default function ResearchWorkbenchPage() {
         <section className="grid gap-5 xl:grid-cols-2"><article className="rounded-lg border border-[#315247] bg-[#17211f] p-5"><div className="flex items-center gap-2"><Activity size={17} className="text-[#8cc4a0]" /><div><h2 className="font-semibold">確率校正曲線</h2><p className="text-xs text-[#aebbb2]">{kindLabel[kind]}のみを表示</p></div></div><div className="mt-4 h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data={calibrationData}><CartesianGrid stroke="#315247" strokeDasharray="3 3" /><XAxis dataKey="label" tick={{ fill: "#aebbb2", fontSize: 11 }} /><YAxis domain={[0, 1]} tick={{ fill: "#aebbb2", fontSize: 11 }} tickFormatter={(value) => `${Math.round(value * 100)}%`} /><Tooltip contentStyle={{ background: "#101719", border: "1px solid #456357" }} formatter={(value: number) => `${(value * 100).toFixed(1)}%`} /><Line type="monotone" dataKey="predicted" name="平均予測確率" stroke="#e7bc62" strokeWidth={2} connectNulls /><Line type="monotone" dataKey="observed" name="実績的中率" stroke="#68c197" strokeWidth={2} connectNulls /></LineChart></ResponsiveContainer></div><p className="mt-2 text-xs text-[#91a59a]">確率帯ごとの件数: {calibrationData.map((row) => row.count).join(" / ") || "データなし"}</p></article>
           <article className="rounded-lg border border-[#315247] bg-[#17211f] p-5"><div className="flex items-center gap-2"><BarChart3 size={17} className="text-[#8cc4a0]" /><div><h2 className="font-semibold">資金・ドローダウン</h2><p className="text-xs text-[#aebbb2]">払戻データのある履歴のみ</p></div></div><div className="mt-4 h-72">{metrics.payoutCoverage ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><CartesianGrid stroke="#315247" strokeDasharray="3 3" /><XAxis dataKey="date" tick={{ fill: "#aebbb2", fontSize: 10 }} /><YAxis yAxisId="capital" tick={{ fill: "#aebbb2", fontSize: 11 }} /><YAxis yAxisId="dd" orientation="right" tick={{ fill: "#aebbb2", fontSize: 11 }} tickFormatter={(value) => `${value}%`} /><Tooltip contentStyle={{ background: "#101719", border: "1px solid #456357" }} /><ReferenceLine yAxisId="dd" y={0} stroke="#6d8477" /><Area yAxisId="capital" type="monotone" dataKey="capital" name="資金" stroke="#68c197" fill="#68c197" fillOpacity={0.12} /><Area yAxisId="dd" type="monotone" dataKey="drawdown" name="DD%" stroke="#d67a68" fill="#d67a68" fillOpacity={0.15} /></AreaChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-[#aebbb2]">確定単勝払戻倍率を読み込むと資金曲線を表示します。</div>}</div></article>
         </section>
+
+        <section className="rounded-lg border border-[#315247] bg-[#17211f] p-5"><div className="flex items-start gap-2"><FlaskConical size={17} className="mt-0.5 text-[#8cc4a0]" /><div><h2 className="font-semibold">TRUTH PANEL × shadow score 比較</h2><p className="mt-1 text-xs leading-5 text-[#aebbb2]">同一行にある <code>win_prob_calibrated</code> と <code>shadow_score</code> を比較します。shadow scoreは未校正の順位・分離確認用スコアであり、確率・Brier・Log loss・ROIの計算には使用しません。</p></div></div>{comparison.summary ? <><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{[["ペア行数", comparison.summary.count.toLocaleString()], ["校正済み確率平均", `${(comparison.summary.probabilityMean * 100).toFixed(1)}%`], ["shadow score平均", comparison.summary.scoreMean.toFixed(3)], ["順位相関の参考値", comparison.summary.correlation === null ? "算出不可" : comparison.summary.correlation.toFixed(3)], ["ペア行の実績的中率", `${(comparison.summary.observedRate * 100).toFixed(1)}%`]].map(([label, value]) => <div key={label} className="rounded border border-[#315247] bg-[#101719] p-3"><p className="text-xs text-[#9bb0a4]">{label}</p><p className="mt-1 text-lg font-semibold">{value}</p></div>)}</div><div className="mt-4 h-72"><ResponsiveContainer width="100%" height="100%"><ScatterChart margin={{ top: 12, right: 16, bottom: 10, left: 0 }}><CartesianGrid stroke="#315247" strokeDasharray="3 3" /><XAxis type="number" dataKey="shadowScore" name="未校正shadow score" tick={{ fill: "#aebbb2", fontSize: 11 }} /><YAxis type="number" dataKey="probability" name="校正済み確率" domain={[0, 1]} tick={{ fill: "#aebbb2", fontSize: 11 }} tickFormatter={(value) => `${Math.round(value * 100)}%`} /><ZAxis range={[45, 45]} /><Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={{ background: "#101719", border: "1px solid #456357" }} formatter={(value: number, name: string) => name === "校正済み確率" ? `${(value * 100).toFixed(1)}%` : value.toFixed(3)} /><Scatter name="校正済み確率とshadow score" data={comparison.paired} fill="#e7bc62" /></ScatterChart></ResponsiveContainer></div></> : <p className="mt-4 rounded border border-dashed border-[#456357] px-4 py-5 text-sm text-[#aebbb2]">比較対象はありません。確率種別を <code>truth_calibrated</code> とし、同一行へ <code>shadow_score</code> 列をマッピングしてください。</p>}</section>
       </>}
 
       {headers.length === 0 && <section className="rounded-lg border border-dashed border-[#456357] bg-[#17211f] p-10 text-center"><AlertTriangle className="mx-auto text-[#e7bc62]" /><h2 className="mt-3 font-semibold">CSVを選択すると研究用分析を開始できます</h2><p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#aebbb2]">JRA-VAN等から正当に取得・エクスポートした履歴を利用してください。ここでの分析は研究・検証用であり、単一の指標や短期のROIだけでモデル優位性を判断しません。</p></section>}
