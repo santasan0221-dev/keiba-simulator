@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { sdk } from "./sdk";
 import { serveStatic, setupVite } from "./vite";
 import { isRegisteredRaceSyncTask, runSinglePickSync } from "../raceSync";
+import { getJob, getResultHealth, isOpsConfigured, startResultJob } from "../resultOps";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,58 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  app.use("/api/ops", (req, res, next) => {
+    const allowedOrigin = process.env.KEIBA_LAB_ORIGIN;
+    const requestOrigin = req.get("origin");
+    if (requestOrigin && (!allowedOrigin || requestOrigin !== allowedOrigin)) return res.status(403).json({ error: "origin-not-allowed" });
+    if (allowedOrigin && requestOrigin === allowedOrigin) res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Vary", "Origin");
+    next();
+  });
+  app.post("/api/ops/results", async (req, res) => {
+    let user;
+    try { user = await sdk.authenticateRequest(req); } catch { return res.status(401).json({ error: "authentication-required" }); }
+    try {
+      if (!user || user.role !== "admin") return res.status(403).json({ error: "admin-auth-required" });
+      const job = await startResultJob(String(req.body?.race_date ?? ""), user.openId);
+      return res.status(202).json({ status: "started", job_id: job.jobId });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message === "LOCAL_RESULT_OPS_NOT_CONFIGURED") return res.status(503).json({ error: "local-result-ops-not-configured" });
+      if (message.startsWith("RESULT_JOB_ALREADY_RUNNING:")) return res.status(409).json({ error: "job-already-running", job_id: message.split(":")[1] });
+      if (message.includes("race_date")) return res.status(400).json({ error: message });
+      return res.status(500).json({ error: "result-job-start-failed" });
+    }
+  });
+  app.get("/api/ops/jobs/:jobId", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user || user.role !== "admin") return res.status(403).json({ error: "admin-auth-required" });
+      const job = getJob(req.params.jobId);
+      return job ? res.json(job) : res.status(404).json({ error: "job-not-found" });
+    } catch {
+      return res.status(403).json({ error: "admin-auth-required" });
+    }
+  });
+  app.get("/api/ops/result-health", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user || user.role !== "admin") return res.status(403).json({ error: "admin-auth-required" });
+      return res.json(getResultHealth(String(req.query.race_date ?? "")));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return res.status(message.includes("race_date") ? 400 : 403).json({ error: message });
+    }
+  });
+  app.get("/api/ops/capability", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user || user.role !== "admin") return res.status(403).json({ error: "admin-auth-required" });
+      return res.json({ configured: isOpsConfigured() });
+    } catch {
+      return res.status(403).json({ error: "admin-auth-required" });
+    }
+  });
   app.post("/api/scheduled/race-sync", async (req, res) => {
     try {
       const user = await sdk.authenticateRequest(req);
