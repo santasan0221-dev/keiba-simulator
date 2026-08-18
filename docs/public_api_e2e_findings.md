@@ -34,3 +34,14 @@ Manus本番origin `https://keibasim-8b2aebi6.manus.space` をOriginヘッダー�
 3. 公開Manus URLで最新日が`2026-08-18`となることを確認する。
 4. 2026-08-17 NARで44件の結果、`DEAD_HEAT`、馬番top3、`NOT_REQUIRED_READ_ONLY`を確認する。
 5. 390px viewportで横スクロール結果一覧、公式結果取得ボタンdisabled、console error 0件を確認する。
+
+## レスポンシブ視覚確認（ローカル・未接続fail-closed状態）
+
+`http://localhost:3000/ai-history`をChromium headlessで確認した。localhostはCORS allowlist外のため正本APIは意図どおり`Failed to fetch`となり、UIは値を0で補完せず`取得不能`を表示した。
+
+| Viewport | 確認結果 |
+|---|---|
+| 390×844 | 日次運用表示は2列に折り返され、接続診断ボタン、CSVボタン、更新ボタン、日付・主催・競馬場の各入力に重なりは確認されなかった。 |
+| 1440×1000 | 日次運用表示は横一列、フィルターとKPIは整列し、はみ出しや重なりは確認されなかった。 |
+
+スクリーンショットは`artifacts/ai-history-390.png`と`artifacts/ai-history-desktop.png`に保存した。これらはCORS fail-closed状態のレイアウト確認であり、正本API成功時のUI E2EはPR #21のデプロイ後に公開Manus originから再確認する必要がある。
