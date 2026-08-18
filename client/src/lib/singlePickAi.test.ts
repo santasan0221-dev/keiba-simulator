@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+import { fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
 
 const race: LabRace = {
   race: { race_key: "jra-20260815-11", date: "2026-08-15", organization: "JRA", venue: "札幌", race_no: 11, distance: 2000, surface: "芝", going: "良", scheduled_start_at: null, status: "OPEN" },
@@ -44,6 +44,23 @@ describe("single_pick_ai toHorses", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>not an API</html>", { status: 200, headers: { "content-type": "text/html" } })));
 
     await expect(fetchRaces("2026-08-15", "JRA")).rejects.toThrow("APIがJSONを返しません");
+  });
+
+  it("uses the fixed read-only daily, results, available-dates and health endpoints", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchDailyOperations("2026-08-17");
+    await fetchLabResults({ date: "2026-08-17", organization: "NAR", venue: "帯広" });
+    await fetchAvailablePredictionDates();
+    await fetchLabHealth();
+
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      "/api/lab/operations/daily?date=2026-08-17",
+      "/api/lab/results?date=2026-08-17&organization=NAR&venue=%E5%B8%AF%E5%BA%83",
+      "/api/lab/available-dates?kind=prediction",
+      "/api/lab/health",
+    ]);
   });
 
   it("adds the ngrok browser-warning bypass header only for ngrok tunnel endpoints", () => {
