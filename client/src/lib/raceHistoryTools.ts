@@ -1,8 +1,8 @@
 import type { RaceHistoryRace } from "@/components/RaceHistoryDashboard";
 
-export type RaceHistoryFilters = { from: string; to: string; venue: string };
+export type RaceHistoryFilters = { from: string; to: string; venue: string; organization?: "" | "JRA" | "NAR" };
 
-export const DEFAULT_RACE_HISTORY_FILTERS: RaceHistoryFilters = { from: "", to: "", venue: "" };
+export const DEFAULT_RACE_HISTORY_FILTERS: RaceHistoryFilters = { from: "", to: "", venue: "", organization: "" };
 export const RACE_HISTORY_FILTERS_STORAGE_KEY = "keiba-lab.race-history.filters.v1";
 export const RACE_HISTORY_CONFIRMED_KEYS_STORAGE_KEY = "keiba-lab.race-history.confirmed-keys.v1";
 
@@ -18,7 +18,9 @@ export function normalizeRaceHistoryFilters(value: unknown): RaceHistoryFilters 
   const from = typeof candidate.from === "string" && isDateInput(candidate.from) ? candidate.from : "";
   const to = typeof candidate.to === "string" && isDateInput(candidate.to) ? candidate.to : "";
   const venue = typeof candidate.venue === "string" && candidate.venue.length <= 80 ? candidate.venue : "";
-  return from && to && from > to ? { from: to, to: from, venue } : { from, to, venue };
+  const organization = candidate.organization === "JRA" || candidate.organization === "NAR" ? candidate.organization : "";
+  const normalized = organization ? { from, to, venue, organization } : { from, to, venue };
+  return from && to && from > to ? { ...normalized, from: to, to: from } : normalized;
 }
 
 export function readRaceHistoryFilters(): RaceHistoryFilters {
@@ -60,6 +62,7 @@ export function persistConfirmedRaceKeys(keys: string[]): void {
 
 export function filterRaceHistory(races: RaceHistoryRace[], filters: RaceHistoryFilters): RaceHistoryRace[] {
   return races.filter((race) => {
+    if (filters.organization && race.organization !== filters.organization) return false;
     if (filters.venue && race.venue !== filters.venue) return false;
     if (filters.from && (!race.raceDate || race.raceDate < filters.from)) return false;
     if (filters.to && (!race.raceDate || race.raceDate > filters.to)) return false;
@@ -124,6 +127,7 @@ export function buildRaceHistoryCsv(races: RaceHistoryRace[], filters: RaceHisto
   const rows = [
     ["AI OUTCOME ARCHIVE", "履歴エクスポート"],
     ["対象期間", period],
+    ["主催", filters.organization || "すべて"],
     ["競馬場", filters.venue || "すべて"],
     ["出力件数", races.length],
     [],

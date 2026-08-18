@@ -29,6 +29,10 @@ export type SyncedRaceMetric = {
   placeReturnRate: number | null;
   lastSyncedAt: string;
   confirmedAt: string | null;
+  predictionId: string | null;
+  predictedTop3: Array<{ rank: number; horseNo: number; horseName: string }>;
+  officialTop3: Array<{ finish: number; horseNo: number; horseName: string }>;
+  top3Coverage: number | null;
 };
 
 export type RaceSyncDashboard = {
@@ -143,6 +147,31 @@ function metricsFrom(race: LabRace): ComputedMetrics {
 }
 
 function mapMetric(row: typeof raceSyncSnapshots.$inferSelect): SyncedRaceMetric {
+  let predictionId: string | null = null;
+  let predictedTop3: Array<{ rank: number; horseNo: number; horseName: string }> = [];
+  let officialTop3: Array<{ finish: number; horseNo: number; horseName: string }> = [];
+  let top3Coverage: number | null = null;
+  try {
+    const payload = JSON.parse(row.payloadJson) as LabRace;
+    const provenance = payload.provenance && typeof payload.provenance === "object" ? payload.provenance as Record<string, unknown> : {};
+    const candidatePredictionId = provenance.prediction_id ?? provenance.predictionId;
+    predictionId = typeof candidatePredictionId === "string" ? candidatePredictionId : null;
+    predictedTop3 = payload.horses
+      .filter(horse => typeof horse.no === "number" && typeof horse.model.ai_rank === "number")
+      .sort((left, right) => (left.model.ai_rank as number) - (right.model.ai_rank as number))
+      .slice(0, 3)
+      .map(horse => ({ rank: horse.model.ai_rank as number, horseNo: horse.no as number, horseName: horse.name ?? `#${horse.no}` }));
+    officialTop3 = (payload.result?.official_order ?? [])
+      .filter(entry => entry.finish >= 1 && entry.finish <= 3)
+      .sort((left, right) => left.finish - right.finish)
+      .map(entry => ({ finish: entry.finish, horseNo: entry.horse_no, horseName: entry.horse_name }));
+    if (payload.result?.status === "CONFIRMED" && officialTop3.length) {
+      const officialNos = new Set(officialTop3.map(entry => entry.horseNo));
+      top3Coverage = predictedTop3.length ? predictedTop3.filter(entry => officialNos.has(entry.horseNo)).length / Math.min(3, officialTop3.length) : null;
+    }
+  } catch {
+    // Corrupt or legacy payloads remain visible with explicit unavailable fields.
+  }
   return {
     raceKey: row.raceKey,
     raceDate: row.raceDate ?? null,
@@ -162,6 +191,10 @@ function mapMetric(row: typeof raceSyncSnapshots.$inferSelect): SyncedRaceMetric
     placeReturnRate: row.placeReturnRate ?? null,
     lastSyncedAt: row.lastSyncedAt.toISOString(),
     confirmedAt: asIso(row.confirmedAt),
+    predictionId,
+    predictedTop3,
+    officialTop3,
+    top3Coverage,
   };
 }
 
