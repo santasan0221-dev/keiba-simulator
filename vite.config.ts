@@ -186,6 +186,10 @@ export default defineConfig({
       "/api/lab": {
         target: process.env.SINGLE_PICK_AI_URL ?? "http://127.0.0.1:8000",
         changeOrigin: true,
+        // Mirrors the browser client's ngrok bypass header. It is harmless for
+        // non-ngrok development origins and prevents the HTML interstitial from
+        // being mistaken for a JSON API response during local CORS-free testing.
+        headers: { "ngrok-skip-browser-warning": "true" },
       },
     },
     allowedHosts: [

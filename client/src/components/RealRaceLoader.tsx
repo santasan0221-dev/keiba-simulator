@@ -2,36 +2,17 @@ import { useEffect, useState } from "react";
 import { Database, History, LoaderCircle, RefreshCw, TriangleAlert } from "lucide-react";
 import { Link } from "wouter";
 import type { Horse } from "@/pages/Home";
-import { fetchRace, fetchRaces, getApiBase, setApiBase, toHorses, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
+import { fetchAvailablePredictionDates, fetchLabHealth, fetchRace, fetchRaces, getApiBase, setApiBase, toHorses, type LabHealth, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { retrySinglePick } from "@/lib/singlePickRetry";
-import { describeLastSync, describeNextSync, describeSyncError } from "@/lib/singlePickSyncStatus";
 import { fetchOfficialResultJob, fetchOpsCapability, fetchResultHealth, startOfficialResultJob, type OfficialResultJob, type ResultHealth } from "@/lib/officialResultOps";
-import { trpc } from "@/lib/trpc";
 
 const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
 export type RealRaceLoadStatus = "API未接続" | "認証エラー" | "選択日の予測なし" | "結果待ち" | "API応答エラー" | "正常読込済み";
 
-function todayJst(): string {
-  const now = new Date();
-  const jst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60_000);
-  return jst.toISOString().slice(0, 10);
-}
-function previousDate(date: string) {
-  const value = new Date(`${date}T00:00:00Z`);
-  value.setUTCDate(value.getUTCDate() - 1);
-  return value.toISOString().slice(0, 10);
-}
-async function findLatestPredictionDate(org: string) {
-  let candidate = todayJst();
-  for (let i = 0; i < 21; i += 1) {
-    try {
-      const result = await fetchRaces(candidate, org);
-      if (result.races.length) return candidate;
-    } catch { /* initial capability is reported by the main loader */ }
-    candidate = previousDate(candidate);
-  }
-  return "";
+async function findLatestPredictionDate() {
+  const result = await fetchAvailablePredictionDates();
+  return result.latest_prediction_date ?? "";
 }
 
 const jobLabel: Record<OfficialResultJob["status"], string> = {
@@ -52,7 +33,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
   const [opsMessage, setOpsMessage] = useState("運用APIの認証が必要です。");
   const [resultJob, setResultJob] = useState<OfficialResultJob | null>(null);
   const [resultHealth, setResultHealth] = useState<ResultHealth | null>(null);
-  const syncStatus = trpc.raceSync.dashboard.useQuery(undefined, { refetchInterval: 60_000, refetchOnWindowFocus: true });
+  const [labHealth, setLabHealth] = useState<LabHealth | null>(null);
 
   const refresh = () => {
     if (!date) return;
@@ -73,14 +54,15 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
 
   useEffect(() => {
     let active = true;
-    void findLatestPredictionDate(org).then((latest) => { if (active) setDate(latest); });
+    void findLatestPredictionDate().then((latest) => { if (active) setDate(latest); }).catch(() => { if (active) setDate(""); });
+    void fetchLabHealth().then((health) => { if (active) setLabHealth(health); }).catch(() => { if (active) setLabHealth(null); });
     void fetchOpsCapability().then((capability) => {
       if (!active) return;
       setOpsReady(capability.configured);
       setOpsMessage(capability.configured ? "認証済み運用API。公式結果取得は正本SQLiteへ記録します。" : "ローカル運用APIへの認証・実行環境が必要です。ボタンは実行できません。");
     }).catch(() => { if (active) { setOpsReady(false); setOpsMessage("認証エラー。ローカル運用APIへ接続できません。"); } });
     return () => { active = false; };
-  }, [org]);
+  }, [base]);
   useEffect(() => { refresh(); }, [date, org, base]);
   useEffect(() => {
     if (!date) return;
@@ -97,7 +79,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
       setNotice("公式結果とpost-result analysisが完了しました。表示を再読み込みしています。");
       refresh();
       if (selectedRaceKey) void loadRace(selectedRaceKey);
-      syncStatus.refetch();
+      void fetchLabHealth().then(setLabHealth).catch(() => setLabHealth(null));
       window.dispatchEvent(new Event("keiba:official-results-updated"));
     } else {
       setError(`公式結果取得は${jobLabel[resultJob.status]}です。${resultJob.error ?? "未確定または要確認の項目があります。"}`);
@@ -122,17 +104,17 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     setError(""); setNotice("公式結果取得ジョブを開始しています。");
     void startOfficialResultJob(date).then(({ job_id }) => fetchOfficialResultJob(job_id)).then(setResultJob).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : String(reason)));
   };
-  const backgroundSyncing = Boolean(syncStatus.data?.source?.syncStartedAt);
   const jobRunning = Boolean(resultJob && ["QUEUED", "RUNNING"].includes(resultJob.status));
-  const healthState = resultHealth?.status === "COMPLETE" ? "正常" : resultHealth?.status === "NO_RUN" ? "注意" : "異常";
+  const resultHealthState = resultHealth?.status === "COMPLETE" ? "正常" : resultHealth?.status === "NO_RUN" ? "注意" : "異常";
+  const labHealthNormal = labHealth?.reachable === true && labHealth.schema_version === "lab-api-v2" && labHealth.auth_state === "NOT_REQUIRED_READ_ONLY";
 
   return <section className="real-race-loader" aria-label="single_pick_ai実レース入力">
     <div className="real-race-heading"><div><span className="eyebrow">REAL RACE INPUT</span><h2>実レースを取り込む。</h2></div><div className="real-race-heading-actions"><Link href="/ai-history" className="real-race-history-link"><History size={14} /> AI履歴</Link><Database size={17} /></div></div>
     <p className="real-race-intro">single_pick_aiのread-only APIから実データを読み込みます。読み込んだAI予測と、条件変更後のwhat-ifは混ぜずに表示します。</p>
     <label className="real-race-base"><span>接続先 single_pick_ai</span><input value={base} onChange={(event) => updateBase(event.target.value)} placeholder="空欄: 同一オリジン /api/lab" /><small>公開版ではHTTPSの接続先が必要です。ローカルのHTTP URLは利用できません。</small></label>
     <div className="real-race-controls"><label><span>開催日</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><div className="real-race-org" aria-label="主催"><span>主催</span><div>{ORGS.map((value) => <button type="button" key={value} className={org === value ? "selected" : ""} onClick={() => setOrg(value)}>{value}</button>)}</div></div><button className="real-race-refresh" type="button" onClick={refresh} disabled={loadingRaces || !date}>{loadingRaces ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />} 更新</button></div>
-    <div className="real-race-ops" aria-label="運用"><div className="real-race-ops-heading"><span>運用</span><small>{opsMessage}</small></div><button type="button" className="real-race-result-button" onClick={fetchOfficialResults} disabled={!opsReady || !date || jobRunning}>{jobRunning ? <LoaderCircle className="spin" size={14} /> : <Database size={14} />} 公式結果を取得</button>{resultJob && <div className="real-race-ops-grid"><span>対象日<strong>{resultJob.raceDate}</strong></span><span>状態<strong>{jobLabel[resultJob.status]}</strong></span><span>selected_races<strong>{resultJob.selectedRaces ?? "—"}</strong></span><span>result_count<strong>{resultJob.resultCount ?? "—"}</strong></span><span>already_recorded<strong>{resultJob.alreadyRecorded ?? "—"}</strong></span><span>retryable_failures<strong>{resultJob.retryableFailures ?? "—"}</strong></span><span>review_required<strong>{resultJob.reviewRequiredFailures ?? "—"}</strong></span><span>batch_status<strong>{resultJob.batchStatus ?? "—"}</strong></span><span>最終成功<strong>{resultJob.lastSuccessAt ? new Date(resultJob.lastSuccessAt).toLocaleString("ja-JP") : "—"}</strong></span>{resultJob.error && <span className="real-race-ops-error">エラー<strong>{resultJob.error}</strong></span>}</div>}<div className="real-race-health">結果健全性: <b>{healthState}</b> / 予測済み {resultHealth?.predictedRaces ?? "—"} / 取得済み {resultHealth?.resultFetchedRaces ?? "—"} / 未確定 {resultHealth?.pendingRaces ?? "—"} / 要確認 {resultHealth?.reviewRequired ?? "—"}</div></div>
-    <div className={backgroundSyncing ? "real-race-sync-state is-running" : syncStatus.data?.source?.lastError ? "real-race-sync-state is-error" : "real-race-sync-state"}><span>{backgroundSyncing && <LoaderCircle className="spin" size={11} />} BG SYNC</span><strong>{backgroundSyncing ? "バックグラウンド同期中" : describeLastSync(syncStatus.data?.source)}</strong><small>{backgroundSyncing ? "公式結果・払戻・履歴を更新しています。" : describeNextSync(syncStatus.data?.source)}</small>{describeSyncError(syncStatus.data?.source) && <p>{describeSyncError(syncStatus.data?.source)}</p>}</div>
+    <div className="real-race-ops" aria-label="運用"><div className="real-race-ops-heading"><span>運用</span><small>{opsMessage}</small></div><button type="button" className="real-race-result-button" onClick={fetchOfficialResults} disabled={!opsReady || !date || jobRunning}>{jobRunning ? <LoaderCircle className="spin" size={14} /> : <Database size={14} />} 公式結果を取得</button>{resultJob && <div className="real-race-ops-grid"><span>対象日<strong>{resultJob.raceDate}</strong></span><span>状態<strong>{jobLabel[resultJob.status]}</strong></span><span>selected_races<strong>{resultJob.selectedRaces ?? "—"}</strong></span><span>result_count<strong>{resultJob.resultCount ?? "—"}</strong></span><span>already_recorded<strong>{resultJob.alreadyRecorded ?? "—"}</strong></span><span>retryable_failures<strong>{resultJob.retryableFailures ?? "—"}</strong></span><span>review_required<strong>{resultJob.reviewRequiredFailures ?? "—"}</strong></span><span>batch_status<strong>{resultJob.batchStatus ?? "—"}</strong></span><span>最終成功<strong>{resultJob.lastSuccessAt ? new Date(resultJob.lastSuccessAt).toLocaleString("ja-JP") : "—"}</strong></span>{resultJob.error && <span className="real-race-ops-error">エラー<strong>{resultJob.error}</strong></span>}</div>}<div className="real-race-health">結果健全性: <b>{resultHealthState}</b> / 予測済み {resultHealth?.predictedRaces ?? "—"} / 取得済み {resultHealth?.resultFetchedRaces ?? "—"} / 未確定 {resultHealth?.pendingRaces ?? "—"} / 要確認 {resultHealth?.reviewRequired ?? "—"}</div></div>
+    <div className={labHealthNormal ? "real-race-sync-state" : "real-race-sync-state is-error"}><span>API HEALTH</span><strong>{labHealthNormal ? "正本read-only APIは正常です" : "正本read-only APIを確認できません"}</strong><small>{labHealth ? `schema ${labHealth.schema_version ?? "取得不能"} · ${labHealth.auth_state ?? "取得不能"} · 最終更新 ${labHealth.last_updated_at ? new Date(labHealth.last_updated_at).toLocaleString("ja-JP") : "取得不能"}` : "health APIの応答を取得できません。"}</small>{!labHealthNormal && <p>接続失敗時は同期成功や0件へ置き換えず、取得不能として扱います。</p>}</div>
     {error && <div className="real-race-status real-race-status--error" role="alert"><TriangleAlert size={14} /><span>{error}</span></div>}{notice && !error && <p className="real-race-status" aria-live="polite">{notice}</p>}
     <div className="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : races.length ? races.map((race) => <button key={race.race_key} type="button" disabled={loadingRaceKey !== null} className="real-race-option" onClick={() => loadRace(race.race_key)}><b>{race.race_no ?? "—"}R</b><span><strong>{race.venue ?? race.race_key}</strong><small>{race.distance ? `${race.distance.toLocaleString()}m` : "距離未取得"} · {race.surface ?? "馬場種別未取得"} · {race.status}</small></span>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={15} /> : <em>{race.top_pick?.name ?? ""}</em>}</button>) : <div className="real-race-empty">{date ? "取得できるレースがありません" : "予測可能日を確認しています"}</div>}</div>
     <p className="real-race-provenance"><strong>能力値の出所:</strong> 末脚はv23k実値。as-of履歴として明示される項目のみ履歴実値、それ以外の補助能力は暫定値です。詳細は出走馬タブで確認できます。</p>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
 
 const race: LabRace = {
   race: { race_key: "jra-20260815-11", date: "2026-08-15", organization: "JRA", venue: "札幌", race_no: 11, distance: 2000, surface: "芝", going: "良", scheduled_start_at: null, status: "OPEN" },
@@ -61,6 +61,15 @@ describe("single_pick_ai toHorses", () => {
       "/api/lab/available-dates?kind=prediction",
       "/api/lab/health",
     ]);
+  });
+
+  it("preserves canonical 422 and 503 error payloads instead of treating them as empty data", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "invalid date", detail: "date must be YYYY-MM-DD" }), { status: 422, headers: { "content-type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "source unavailable", detail: "canonical store is not ready" }), { status: 503, headers: { "content-type": "application/json" } })));
+
+    await expect(fetchDailyOperations("not-a-date")).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 422, message: "invalid date", detail: "date must be YYYY-MM-DD" });
+    await expect(fetchLabResults({ date: "2026-08-19" })).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 503, message: "source unavailable", detail: "canonical store is not ready" });
   });
 
   it("adds the ngrok browser-warning bypass header only for ngrok tunnel endpoints", () => {
