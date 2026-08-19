@@ -49,6 +49,18 @@ export function getApiRequestHeaders(base = getApiBase()): HeadersInit | undefin
   return undefined;
 }
 
+export class LabApiError extends Error {
+  readonly status: number;
+  readonly detail: string | null;
+
+  constructor(status: number, message: string, detail: string | null = null) {
+    super(message);
+    this.name = "LabApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 export type LabRaceListItem = {
   race_key: string;
   organization: string;
@@ -127,12 +139,20 @@ function toAppStyle(style: string | null): Style {
 async function getJson<T>(path: string): Promise<T> {
   const base = getApiBase();
   const response = await fetch(`${base}${path}`, { headers: getApiRequestHeaders(base) });
-  if (!response.ok) throw new Error(`single_pick_ai HTTP ${response.status}`);
   const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    throw new Error("single_pick_ai APIがJSONを返しません。接続先URLまたはサーバーの公開状態を確認してください。");
+  const isJson = contentType.includes("application/json");
+  const body: unknown = isJson ? await response.json().catch(() => null) : null;
+
+  if (!response.ok) {
+    const errorBody = body && typeof body === "object" ? body as { error?: unknown; detail?: unknown } : null;
+    const message = typeof errorBody?.error === "string" ? errorBody.error : `single_pick_ai HTTP ${response.status}`;
+    const detail = typeof errorBody?.detail === "string" ? errorBody.detail : null;
+    throw new LabApiError(response.status, message, detail);
   }
-  return (await response.json()) as T;
+  if (!isJson || body === null) {
+    throw new LabApiError(0, "single_pick_ai APIがJSONを返しません。接続先URLまたはサーバーの公開状態を確認してください。");
+  }
+  return body as T;
 }
 
 export function fetchRaces(date: string, organization?: string): Promise<{ date: string; races: LabRaceListItem[] }> {
@@ -201,7 +221,7 @@ export type LabDailyOperations = {
   last_prediction_at: string | null;
   last_result_at: string | null;
   last_pdca_at: string | null;
-  automation_status: "NORMAL" | "WARNING" | "ERROR" | string | null;
+  automation_status: "NORMAL" | "WAITING" | "REVIEW_REQUIRED" | string | null;
   next_scheduled_at: string | null;
 };
 
