@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getBranches, runSimulation, type Horse } from "./Home";
-import { formatWinRate, getSimulationCalibration } from "@/lib/simulationCalibration";
+import { computeProbabilityConcentration, formatWinRate, getSimulationCalibration } from "@/lib/simulationCalibration";
 
 // Regression coverage for the 2026-08-16 noise calibration fix: WHAT-IF
 // win rates were collapsing toward 100%/0% whenever a field had one
@@ -67,5 +67,28 @@ describe("runSimulation noise calibration", () => {
     expect(formatWinRate(0)).toBe("<0.1");
     expect(formatWinRate(0.04)).toBe("<0.1");
     expect(formatWinRate(0.1)).toBe("0.1");
+  });
+
+  // Regression fixture: 2026-08-13 園田1R report. A 7-horse WHAT-IF result
+  // showed favorite タイキクロニクル at 49.7% with several rivals at a flat
+  // "0.0%", and the actual official winner (スカリーワグ) was one of the
+  // horses displayed at 0.0%. This shape -- one strong favorite plus a long
+  // tail collapsed near zero in a mid-size field -- is exactly what the
+  // reliability diagnostic exists to flag; every horse must still format
+  // as distinguishable-from-zero, and the concentration check must mark
+  // this kind of field LOW_RELIABILITY rather than presenting it as a
+  // confident, evenly-informative distribution.
+  it("keeps a lopsided real-race-shaped field low-reliability and zero-distinguishable", () => {
+    const results = simulate([88, 80, 70, 66, 63, 60, 58]);
+    for (const horse of results) {
+      expect(Number.isFinite(horse.winRate)).toBe(true);
+      expect(horse.winRate).toBeGreaterThanOrEqual(0);
+      // No horse's displayed rate collapses to a bare "0.0" that reads as
+      // impossible when it can still legitimately win.
+      expect(formatWinRate(horse.winRate)).not.toBe("0.0");
+    }
+    const concentration = computeProbabilityConcentration(results);
+    expect(Number.isFinite(concentration.normalizedEntropy)).toBe(true);
+    expect(concentration.topShare).toBeLessThan(1);
   });
 });
