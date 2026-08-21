@@ -1,25 +1,26 @@
 import React from "react";
 import { BadgeCheck, CircleAlert, CircleCheck, CircleX, Database, ShieldCheck, Trophy } from "lucide-react";
 import type { LabHorse, LabRace } from "@/lib/singlePickAi";
+import type { RealRaceLoadStatus } from "@/components/RealRaceLoader";
 import { aiPickFinishLabel, aiPickOutcomeLabel, getAiPickOutcome, payoutLines } from "@/lib/officialRaceResult";
 import { getRankAccuracySummary, getVirtualRoiSummary } from "@/lib/raceOutcomeAnalysis";
 
-const rawProbability = (value: number | null) => typeof value === "number" && Number.isFinite(value) ? String(value) : null;
+const rawProbability = (value: number | null) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? String(value) : null;
 
 function displayStatus(status: string | null | undefined) {
   return status?.trim() || "STATUS_UNKNOWN";
 }
 
 function hasCalibratedProbability(horse: LabHorse) {
-  return typeof horse.model.win_prob_calibrated === "number" || typeof horse.model.top3_prob === "number";
+  return horse.model.prob_status === "READY" && (rawProbability(horse.model.win_prob_calibrated) !== null || rawProbability(horse.model.top3_prob) !== null);
 }
 
-export function TruthPanel({ race }: { race: LabRace | null }) {
+export function TruthPanel({ race, loadStatus = "選択日の予測なし" }: { race: LabRace | null; loadStatus?: RealRaceLoadStatus }) {
   if (!race) {
     return <section className="truth-panel truth-panel--empty" aria-label="実AI予測">
       <div className="truth-panel-heading"><span className="eyebrow">AI TRUTH PANEL</span><Database size={15} /></div>
-      <h3>実AI予測は未読込です。</h3>
-      <p>左側の「REAL RACE INPUT」からsingle_pick_aiのレースを読み込むと、承認済みの校正確率だけをここに表示します。ブラウザ内のwhat-if結果は別セクションで表示されます。</p>
+      <h3>実AI予測：{loadStatus}</h3>
+      <p>{loadStatus === "正常読込済み" ? "single_pick_aiから正常に読み込まれています。" : loadStatus === "結果待ち" ? "予測は読み込み済みです。公式結果はまだ確定していません。" : loadStatus === "選択日の予測なし" ? "選択日に予測データがありません。開催日を変更してください。" : loadStatus === "認証エラー" ? "single_pick_aiの認証が必要です。" : loadStatus === "API未接続" ? "single_pick_aiへ接続できません。接続先とネットワークを確認してください。" : "single_pick_ai APIの応答を確認できません。"} 校正済みの確率だけを表示し、what-if結果とは分離しています。</p>
     </section>;
   }
 

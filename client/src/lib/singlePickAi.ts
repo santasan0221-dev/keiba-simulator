@@ -49,6 +49,18 @@ export function getApiRequestHeaders(base = getApiBase()): HeadersInit | undefin
   return undefined;
 }
 
+export class LabApiError extends Error {
+  readonly status: number;
+  readonly detail: string | null;
+
+  constructor(status: number, message: string, detail: string | null = null) {
+    super(message);
+    this.name = "LabApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 export type LabRaceListItem = {
   race_key: string;
   organization: string;
@@ -127,12 +139,20 @@ function toAppStyle(style: string | null): Style {
 async function getJson<T>(path: string): Promise<T> {
   const base = getApiBase();
   const response = await fetch(`${base}${path}`, { headers: getApiRequestHeaders(base) });
-  if (!response.ok) throw new Error(`single_pick_ai HTTP ${response.status}`);
   const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    throw new Error("single_pick_ai APIがJSONを返しません。接続先URLまたはサーバーの公開状態を確認してください。");
+  const isJson = contentType.includes("application/json");
+  const body: unknown = isJson ? await response.json().catch(() => null) : null;
+
+  if (!response.ok) {
+    const errorBody = body && typeof body === "object" ? body as { error?: unknown; detail?: unknown } : null;
+    const message = typeof errorBody?.error === "string" ? errorBody.error : `single_pick_ai HTTP ${response.status}`;
+    const detail = typeof errorBody?.detail === "string" ? errorBody.detail : null;
+    throw new LabApiError(response.status, message, detail);
   }
-  return (await response.json()) as T;
+  if (!isJson || body === null) {
+    throw new LabApiError(0, "single_pick_ai APIがJSONを返しません。接続先URLまたはサーバーの公開状態を確認してください。");
+  }
+  return body as T;
 }
 
 export function fetchRaces(date: string, organization?: string): Promise<{ date: string; races: LabRaceListItem[] }> {
@@ -189,4 +209,72 @@ export function toHorses(race: LabRace): Horse[] {
           : undefined,
     };
   });
+}
+
+
+export type LabDailyOperations = {
+  race_date: string;
+  prediction_counts: { JRA: number | null; NAR: number | null } | null;
+  official_result_count: number | null;
+  pending_count: number | null;
+  review_required_count: number | null;
+  last_prediction_at: string | null;
+  last_result_at: string | null;
+  last_pdca_at: string | null;
+  automation_status: "NORMAL" | "WAITING" | "REVIEW_REQUIRED" | string | null;
+  next_scheduled_at: string | null;
+};
+
+export type LabAvailableDates = {
+  latest_prediction_date: string | null;
+  available_dates: string[] | null;
+};
+
+export type LabHealth = {
+  origin: string | null;
+  reachable: boolean | null;
+  schema_version: string | null;
+  auth_state: string | null;
+  last_updated_at: string | null;
+  features: string[] | null;
+};
+
+export type LabResultStatus = "CONFIRMED" | "DEAD_HEAT" | "PENDING" | "REVIEW_REQUIRED" | "FAILED" | "RACE_STOPPED" | string;
+export type LabResultHorse = number | { finish: number | null; horse_no: number | null; horse_name: string | null };
+export type LabResultPredictionHorse = number | { rank: number | null; horse_no: number | null; horse_name: string | null };
+export type LabResultListItem = {
+  race_key: string;
+  race_date: string | null;
+  organization: string | null;
+  venue: string | null;
+  race_no: number | null;
+  scheduled_start_at: string | null;
+  prediction_id: string | null;
+  prediction_created_at: string | null;
+  predicted_top3: LabResultPredictionHorse[] | null;
+  official_top3: LabResultHorse[] | null;
+  ai_pick_finish: number | null;
+  top3_coverage: number | null;
+  result_status: LabResultStatus | null;
+  special_statuses: string[] | null;
+  result_fetched_at: string | null;
+};
+
+export async function fetchDailyOperations(date: string): Promise<LabDailyOperations> {
+  return getJson(`/api/lab/operations/daily?date=${encodeURIComponent(date)}`);
+}
+
+export async function fetchAvailablePredictionDates(): Promise<LabAvailableDates> {
+  return getJson(`/api/lab/available-dates?kind=prediction`);
+}
+
+export async function fetchLabHealth(): Promise<LabHealth> {
+  return getJson(`/api/lab/health`);
+}
+
+export async function fetchLabResults(params: { date: string; organization?: "JRA" | "NAR"; venue?: string }): Promise<{ date?: string; race_date?: string; results: LabResultListItem[] }> {
+  const search = new URLSearchParams({ date: params.date });
+  if (params.organization) search.set("organization", params.organization);
+  if (params.venue) search.set("venue", params.venue);
+  return getJson(`/api/lab/results?${search.toString()}`);
 }
