@@ -5,12 +5,12 @@
 - [x] 型検査を実行して成功を確認する
 - [x] Vitestを実行して成功を確認する
 - [x] production buildを実行して成功を確認する
-- [ ] 指定コミットと環境変数設定を含む新checkpointを作成する
-- [ ] 既存公開URL `https://keibasim-8b2aebi6.manus.space` へPublishする
-- [ ] 公開後に `/` を表示確認する
-- [ ] 公開後に `/ai-history` を表示確認する
-- [ ] 公開後に `/free` を表示確認する
-- [ ] 公開後に `/betting-candidates` を表示確認する
-- [ ] 公開後に `/performance-analysis` を表示確認する
-- [ ] 公開後に `/member` を表示確認する
-- [ ] 公開後、FREE/MEMBER状態が0件・0%へ変換されていないことを確認して報告する
+- [x] 指定コミットと環境変数設定を含む新checkpointを作成する
+- [x] 既存公開URL `https://keibasim-8b2aebi6.manus.space` へPublishする
+- [x] 公開後に `/` を表示確認する
+- [x] 公開後に `/ai-history` を表示確認する
+- [x] 公開後に `/free` を表示確認する
+- [x] 公開後に `/betting-candidates` を表示確認する
+- [x] 公開後に `/performance-analysis` を表示確認する
+- [x] 公開後に `/member` を表示確認する
+- [x] 公開後、FREE/MEMBER状態が0件・0%へ変換されていないことを確認して報告する
