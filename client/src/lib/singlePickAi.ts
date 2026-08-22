@@ -136,7 +136,7 @@ function toAppStyle(style: string | null): Style {
   return "差し";
 }
 
-async function getJson<T>(path: string): Promise<T> {
+export async function getJson<T>(path: string): Promise<T> {
   const base = getApiBase();
   const response = await fetch(`${base}${path}`, { headers: getApiRequestHeaders(base) });
   const contentType = response.headers.get("content-type") ?? "";

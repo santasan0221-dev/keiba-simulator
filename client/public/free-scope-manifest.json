@@ -1,0 +1,9 @@
+{
+  "schema_version": "free-scope-v1",
+  "rule_id": "free_prerace_v1",
+  "target_week": null,
+  "locked_at": null,
+  "input_snapshot_sha256": null,
+  "status": "NOT_PUBLISHED",
+  "entries": []
+}
