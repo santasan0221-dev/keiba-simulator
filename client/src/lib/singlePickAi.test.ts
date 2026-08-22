@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiBase, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
 
 const race: LabRace = {
   race: { race_key: "jra-20260815-11", date: "2026-08-15", organization: "JRA", venue: "札幌", race_no: 11, distance: 2000, surface: "芝", going: "良", scheduled_start_at: null, status: "OPEN" },
@@ -55,11 +55,12 @@ describe("single_pick_ai toHorses", () => {
     await fetchAvailablePredictionDates();
     await fetchLabHealth();
 
+    const base = getApiBase();
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
-      "/api/lab/operations/daily?date=2026-08-17",
-      "/api/lab/results?date=2026-08-17&organization=NAR&venue=%E5%B8%AF%E5%BA%83",
-      "/api/lab/available-dates?kind=prediction",
-      "/api/lab/health",
+      `${base}/api/lab/operations/daily?date=2026-08-17`,
+      `${base}/api/lab/results?date=2026-08-17&organization=NAR&venue=%E5%B8%AF%E5%BA%83`,
+      `${base}/api/lab/available-dates?kind=prediction`,
+      `${base}/api/lab/health`,
     ]);
   });
 
