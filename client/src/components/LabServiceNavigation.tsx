@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BarChart3, History, LineChart, LockKeyhole, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { AccessTierBadge } from "@/components/AccessTierUI";
+import { publicAssetUrl } from "@/lib/publicAsset";
 
 type ServicePage = "today" | "betting" | "analysis" | "history" | "member";
 
@@ -28,7 +29,7 @@ export function PublicLabHeader({ active, eyebrow, title, description, children 
   return <div className="app-shell lab-public-shell">
     <header className="topbar lab-public-topbar">
       <Link href="/" className="brand-lockup lab-brand-link" aria-label="KEIBA LAB 本日の予想へ">
-        <div className="brand-mark"><img src="/manus-storage/keiba-track-mark_68c4cb74.png" alt="KEIBA LAB" /></div>
+        <div className="brand-mark"><img src={publicAssetUrl("media/keiba-lab-mark.png")} alt="KEIBA LAB" /></div>
         <div><div className="brand-name">KEIBA <span>LAB</span></div><div className="brand-caption">RACE INTELLIGENCE STUDIO</div></div>
       </Link>
       <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" />CANONICAL READ-ONLY</div>
