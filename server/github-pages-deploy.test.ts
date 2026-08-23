@@ -19,6 +19,9 @@ describe("GitHub Pages deployment contract", () => {
   });
 
   it("publishes an SPA fallback alongside index.html", () => {
+    expect(workflow).toContain(
+      "sed -i '/%VITE_ANALYTICS_ENDPOINT%/d' dist/public/index.html",
+    );
     expect(workflow).toContain("cp dist/public/index.html dist/public/404.html");
     expect(workflow).toContain("path: dist/public");
   });
