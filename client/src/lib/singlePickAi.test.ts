@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiBase, getApiRequestHeaders, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiBase, getApiRequestHeaders, getDefaultApiBase, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+
+const BASE_STORAGE_KEY = "single_pick_ai_base";
 
 const race: LabRace = {
   race: { race_key: "jra-20260815-11", date: "2026-08-15", organization: "JRA", venue: "札幌", race_no: 11, distance: 2000, surface: "芝", going: "良", scheduled_start_at: null, status: "OPEN" },
@@ -77,5 +79,61 @@ describe("single_pick_ai toHorses", () => {
     expect(getApiRequestHeaders("https://unburned-dispose-outlast.ngrok-free.dev")).toEqual({ [NGROK_SKIP_BROWSER_WARNING_HEADER]: "true" });
     expect(getApiRequestHeaders("https://single-pick.example.com")).toBeUndefined();
     expect(getApiRequestHeaders("")).toBeUndefined();
+  });
+});
+
+function fakeLocalStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+    clear: () => void store.clear(),
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+    get length() { return store.size; },
+  };
+}
+
+describe("single_pick_ai getApiBase stale-endpoint fallback", () => {
+  beforeEach(() => vi.stubGlobal("localStorage", fakeLocalStorage()));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns the production default when nothing is stored", () => {
+    expect(getApiBase()).toBe(getDefaultApiBase());
+  });
+
+  it("falls back to the production default when a stale ngrok URL is stored, and migrates storage", () => {
+    localStorage.setItem(BASE_STORAGE_KEY, "https://unburned-dispose-outlast.ngrok-free.dev");
+
+    expect(getApiBase()).toBe(getDefaultApiBase());
+    expect(localStorage.getItem(BASE_STORAGE_KEY)).toBe(getDefaultApiBase());
+  });
+
+  it("keeps a legitimate http://localhost development endpoint intact", () => {
+    localStorage.setItem(BASE_STORAGE_KEY, "http://localhost:8001");
+
+    expect(getApiBase()).toBe("http://localhost:8001");
+    expect(localStorage.getItem(BASE_STORAGE_KEY)).toBe("http://localhost:8001");
+  });
+
+  it("never overwrites a user-configured valid HTTPS endpoint", () => {
+    localStorage.setItem(BASE_STORAGE_KEY, "https://single-pick.example.com");
+
+    expect(getApiBase()).toBe("https://single-pick.example.com");
+    expect(localStorage.getItem(BASE_STORAGE_KEY)).toBe("https://single-pick.example.com");
+  });
+
+  it("falls back to the production default for a malformed stored value", () => {
+    localStorage.setItem(BASE_STORAGE_KEY, "not a url");
+
+    expect(getApiBase()).toBe(getDefaultApiBase());
+    expect(localStorage.getItem(BASE_STORAGE_KEY)).toBe(getDefaultApiBase());
+  });
+
+  it("falls back to the production default for a non-loopback plain-HTTP URL", () => {
+    localStorage.setItem(BASE_STORAGE_KEY, "http://single-pick.example.com");
+
+    expect(getApiBase()).toBe(getDefaultApiBase());
+    expect(localStorage.getItem(BASE_STORAGE_KEY)).toBe(getDefaultApiBase());
   });
 });

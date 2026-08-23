@@ -21,9 +21,52 @@ const DEFAULT_BASE = (import.meta.env.VITE_SINGLE_PICK_AI_BASE as string | undef
 const BASE_STORAGE_KEY = "single_pick_ai_base";
 export const NGROK_SKIP_BROWSER_WARNING_HEADER = "ngrok-skip-browser-warning";
 
+// Hostnames retired now that the fixed Cloudflare Tunnel domain is production.
+// A value stored here from before that migration must never silently keep
+// overriding the new default, on any viewer's browser, forever.
+const KNOWN_DEPRECATED_BASE_HOST_SUFFIXES = [".ngrok-free.dev", ".ngrok.io"];
+
+function isLoopbackHostname(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+}
+
+/** Export for tests: what a fresh browser with no saved override resolves to. */
+export function getDefaultApiBase(): string {
+  return DEFAULT_BASE;
+}
+
+/**
+ * A stored endpoint is valid only if it's a well-formed http(s) URL, isn't a
+ * plain-HTTP URL pointed at a non-loopback host (mixed-content on the HTTPS
+ * public site, and never actually reachable from it), and isn't a known
+ * deprecated host (e.g. an old ngrok tunnel) now that the tunnel domain is
+ * the fixed production endpoint.
+ */
+export function isValidApiBase(value: string): boolean {
+  if (!value) return false;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+  const hostname = url.hostname.toLowerCase();
+  if (url.protocol === "http:" && !isLoopbackHostname(hostname)) return false;
+  if (KNOWN_DEPRECATED_BASE_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) return false;
+  return true;
+}
+
 export function getApiBase(): string {
   try {
-    return localStorage.getItem(BASE_STORAGE_KEY) || DEFAULT_BASE;
+    const stored = localStorage.getItem(BASE_STORAGE_KEY);
+    if (!stored) return DEFAULT_BASE;
+    if (isValidApiBase(stored)) return stored;
+    // Stale endpoint (old ngrok URL, deprecated host, malformed, or a
+    // non-loopback http URL): fall back to production and migrate storage so
+    // this browser doesn't keep re-triggering the fallback on every read.
+    try { localStorage.setItem(BASE_STORAGE_KEY, DEFAULT_BASE); } catch { /* ignore storage failures */ }
+    return DEFAULT_BASE;
   } catch {
     return DEFAULT_BASE;
   }
