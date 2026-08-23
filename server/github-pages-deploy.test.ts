@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +6,11 @@ const workflow = readFileSync(
   resolve(import.meta.dirname, "..", ".github", "workflows", "deploy-pages.yml"),
   "utf8",
 );
+const clientSources = [
+  "client/index.html",
+  "client/src/components/LabServiceNavigation.tsx",
+  "client/src/pages/Home.tsx",
+].map((file) => readFileSync(resolve(import.meta.dirname, "..", file), "utf8"));
 
 describe("GitHub Pages deployment contract", () => {
   it("builds the project Pages artifact with the production API origin", () => {
@@ -16,5 +21,21 @@ describe("GitHub Pages deployment contract", () => {
   it("publishes an SPA fallback alongside index.html", () => {
     expect(workflow).toContain("cp dist/public/index.html dist/public/404.html");
     expect(workflow).toContain("path: dist/public");
+  });
+
+  it("does not depend on Manus-only static asset routes", () => {
+    expect(clientSources.join("\n")).not.toContain("/manus-storage/");
+    expect(
+      existsSync(
+        resolve(
+          import.meta.dirname,
+          "..",
+          "client",
+          "public",
+          "media",
+          "keiba-racecourse-night.png",
+        ),
+      ),
+    ).toBe(true);
   });
 });
