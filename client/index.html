@@ -10,6 +10,19 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (() => {
+        const redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (!redirect) return;
+
+        const target = new URL(redirect);
+        const basePath = "%BASE_URL%";
+        if (target.origin === location.origin && target.pathname.startsWith(basePath)) {
+          history.replaceState(null, "", target.pathname + target.search + target.hash);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script defer src="%VITE_ANALYTICS_ENDPOINT%/umami" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
   </body>
