@@ -1,6 +1,7 @@
 import { Check, CircleAlert, LockKeyhole } from "lucide-react";
 import { MemberGate, NoteExternalLink, WeekendPassPanel } from "@/components/AccessTierUI";
 import { PublicLabHeader } from "@/components/LabServiceNavigation";
+import { Link } from "wouter";
 
 const rows = [
   ["本日のレース情報", "FREEで表示", "FREEで表示"],
@@ -33,7 +34,7 @@ export default function MemberPage() {
     </section>
 
     <div className="lab-member-links"><NoteExternalLink kind="membership" /><WeekendPassPanel /></div>
-    <p className="lab-access-code-link"><a href="/access-code">アクセスコード機能（準備中）を見る</a></p>
+    <p className="lab-access-code-link"><Link href="/access-code">アクセスコード機能（準備中）を見る</Link></p>
     <MemberGate />
   </PublicLabHeader>;
 }

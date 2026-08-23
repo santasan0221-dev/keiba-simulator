@@ -46,7 +46,7 @@ describe("GitHub Pages deployment contract", () => {
 
   it("routes internal links through the configured Wouter base", () => {
     expect(clientSources.join("\n")).not.toMatch(
-      /href=["']\/(?:free|access-code)["']/,
+      /<a\b[^>]*href=["']\/(?:free|access-code)?["']/,
     );
   });
 });

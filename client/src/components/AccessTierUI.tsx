@@ -1,5 +1,6 @@
 import { ExternalLink, KeyRound, LockKeyhole, ShieldCheck, Timer, UserRoundCheck } from "lucide-react";
 import { ACCESS_TIER_NOTICE, FREE_PUBLICATION_RULE_NOTICE, noteLinks } from "@/lib/accessTier";
+import { Link } from "wouter";
 
 type NoteKind = "membership" | "weekendPass";
 
@@ -28,7 +29,7 @@ export function FreeScopeStrip() {
     </div>
     <div className="free-scope-actions">
       <span>{FREE_PUBLICATION_RULE_NOTICE.sourceState}</span>
-      <a href="/free">今週のFREE公開を見る</a>
+      <Link href="/free">今週のFREE公開を見る</Link>
       <button type="button" onClick={scrollToMemberGate}>MEMBERの閲覧範囲を見る</button>
     </div>
   </section>;
@@ -77,7 +78,7 @@ export function MemberGate() {
     <div className="member-gate-actions">
       <NoteExternalLink kind="membership" />
       <NoteExternalLink kind="weekendPass" />
-      <a className="access-code-link" href="/access-code"><KeyRound size={14} /> アクセスコードを入力</a>
+      <Link className="access-code-link" href="/access-code"><KeyRound size={14} /> アクセスコードを入力</Link>
       <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>FREE公開へ戻る</button>
     </div>
   </section>;
@@ -96,7 +97,7 @@ export function AccessCodeForm() {
       <p id="access-code-help" className="access-code-status">{ACCESS_TIER_NOTICE.accessCodeStatus}。コードの可否は判定していません。</p>
       <div className="access-code-actions">
         <NoteExternalLink kind="membership" compact />
-        <a href="/">FREE公開へ戻る</a>
+        <Link href="/">FREE公開へ戻る</Link>
       </div>
     </section>
   </main>;
