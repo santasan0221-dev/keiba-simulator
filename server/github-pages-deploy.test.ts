@@ -6,6 +6,17 @@ const workflow = readFileSync(
   resolve(import.meta.dirname, "..", ".github", "workflows", "deploy-pages.yml"),
   "utf8",
 );
+const indexHtml = readFileSync(
+  resolve(import.meta.dirname, "..", "client", "index.html"),
+  "utf8",
+);
+const fallbackHtmlPath = resolve(
+  import.meta.dirname,
+  "..",
+  "client",
+  "public",
+  "404.html",
+);
 const clientSources = [
   "client/index.html",
   "client/src/components/AccessTierUI.tsx",
@@ -24,7 +35,10 @@ describe("GitHub Pages deployment contract", () => {
     expect(workflow).toContain(
       "sed -i '/%VITE_ANALYTICS_ENDPOINT%/d' dist/public/index.html",
     );
-    expect(workflow).toContain("cp dist/public/index.html dist/public/404.html");
+    expect(workflow).not.toContain("cp dist/public/index.html dist/public/404.html");
+    expect(existsSync(fallbackHtmlPath)).toBe(true);
+    expect(readFileSync(fallbackHtmlPath, "utf8")).toContain("sessionStorage.redirect");
+    expect(indexHtml).toContain("sessionStorage.redirect");
     expect(workflow).toContain("path: dist/public");
   });
 
