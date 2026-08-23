@@ -10,6 +10,16 @@ const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
 export type RealRaceLoadStatus = "API未接続" | "認証エラー" | "選択日の予測なし" | "結果待ち" | "API応答エラー" | "正常読込済み";
 
+function formatStartTime(iso: string | null): string {
+  if (!iso) return "発走時刻未取得";
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "発走時刻未取得" : date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatCalibratedPercent(value: number | null): string {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "未校正";
+}
+
 async function findLatestPredictionDate() {
   const result = await fetchAvailablePredictionDates();
   return result.latest_prediction_date ?? "";
@@ -116,7 +126,16 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     <div className="real-race-ops" aria-label="運用"><div className="real-race-ops-heading"><span>運用</span><small>{opsMessage}</small></div><button type="button" className="real-race-result-button" onClick={fetchOfficialResults} disabled={!opsReady || !date || jobRunning}>{jobRunning ? <LoaderCircle className="spin" size={14} /> : <Database size={14} />} 公式結果を取得</button>{resultJob && <div className="real-race-ops-grid"><span>対象日<strong>{resultJob.raceDate}</strong></span><span>状態<strong>{jobLabel[resultJob.status]}</strong></span><span>selected_races<strong>{resultJob.selectedRaces ?? "—"}</strong></span><span>result_count<strong>{resultJob.resultCount ?? "—"}</strong></span><span>already_recorded<strong>{resultJob.alreadyRecorded ?? "—"}</strong></span><span>retryable_failures<strong>{resultJob.retryableFailures ?? "—"}</strong></span><span>review_required<strong>{resultJob.reviewRequiredFailures ?? "—"}</strong></span><span>batch_status<strong>{resultJob.batchStatus ?? "—"}</strong></span><span>最終成功<strong>{resultJob.lastSuccessAt ? new Date(resultJob.lastSuccessAt).toLocaleString("ja-JP") : "—"}</strong></span>{resultJob.error && <span className="real-race-ops-error">エラー<strong>{resultJob.error}</strong></span>}</div>}<div className="real-race-health">結果健全性: <b>{resultHealthState}</b> / 予測済み {resultHealth?.predictedRaces ?? "—"} / 取得済み {resultHealth?.resultFetchedRaces ?? "—"} / 未確定 {resultHealth?.pendingRaces ?? "—"} / 要確認 {resultHealth?.reviewRequired ?? "—"}</div></div>
     <div className={labHealthNormal ? "real-race-sync-state" : "real-race-sync-state is-error"}><span>API HEALTH</span><strong>{labHealthNormal ? "正本read-only APIは正常です" : "正本read-only APIを確認できません"}</strong><small>{labHealth ? `schema ${labHealth.schema_version ?? "取得不能"} · ${labHealth.auth_state ?? "取得不能"} · 最終更新 ${labHealth.last_updated_at ? new Date(labHealth.last_updated_at).toLocaleString("ja-JP") : "取得不能"}` : "health APIの応答を取得できません。"}</small>{!labHealthNormal && <p>接続失敗時は同期成功や0件へ置き換えず、取得不能として扱います。</p>}</div>
     {error && <div className="real-race-status real-race-status--error" role="alert"><TriangleAlert size={14} /><span>{error}</span></div>}{notice && !error && <p className="real-race-status" aria-live="polite">{notice}</p>}
-    <div className="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : races.length ? races.map((race) => <button key={race.race_key} type="button" disabled={loadingRaceKey !== null} className="real-race-option" onClick={() => loadRace(race.race_key)}><b>{race.race_no ?? "—"}R</b><span><strong>{race.venue ?? race.race_key}</strong><small>{race.distance ? `${race.distance.toLocaleString()}m` : "距離未取得"} · {race.surface ?? "馬場種別未取得"} · {race.status}</small></span>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={15} /> : <em>{race.top_pick?.name ?? ""}</em>}</button>) : <div className="real-race-empty">{date ? "取得できるレースがありません" : "予測可能日を確認しています"}</div>}</div>
+    <div className="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : races.length ? races.map((race) => {
+      const pick = race.top_pick;
+      const calibrated = pick?.prob_status === "CALIBRATED";
+      return <div key={race.race_key} className="real-race-card">
+        <div className="real-race-card-head"><strong>{race.venue ?? race.race_key}{race.race_no ? ` ${race.race_no}R` : ""}</strong><span>{formatStartTime(race.scheduled_start_at)}</span></div>
+        <div className="real-race-card-pick"><span className="real-race-pick-name">{pick?.name ?? "本命未確定"}</span>{pick?.ai_rank ? <em className="real-race-pick-rank">AI{pick.ai_rank}位</em> : null}</div>
+        <div className="real-race-card-probs"><span>勝率 <b>{calibrated ? formatCalibratedPercent(pick.win_prob_calibrated) : "未校正"}</b></span><span>複勝率 <b>{calibrated ? formatCalibratedPercent(pick.top3_prob) : "未校正"}</b></span></div>
+        <button type="button" className="real-race-detail-button" disabled={loadingRaceKey !== null} onClick={() => loadRace(race.race_key)}>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={14} /> : "詳細を見る"}</button>
+      </div>;
+    }) : <div className="real-race-empty">{date ? "取得できるレースがありません" : "予測可能日を確認しています"}</div>}</div>
     <p className="real-race-provenance"><strong>能力値の出所:</strong> 末脚はv23k実値。as-of履歴として明示される項目のみ履歴実値、それ以外の補助能力は暫定値です。詳細は出走馬タブで確認できます。</p>
   </section>;
 }

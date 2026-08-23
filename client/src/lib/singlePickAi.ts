@@ -113,7 +113,14 @@ export type LabRaceListItem = {
   status: string;
   distance: number | null;
   surface: string | null;
-  top_pick: { no: number | null; name: string | null } | null;
+  top_pick: {
+    no: number | null;
+    name: string | null;
+    ai_rank: number | null;
+    win_prob_calibrated: number | null;
+    top3_prob: number | null;
+    prob_status: string;
+  } | null;
 };
 
 export type LabHorse = {

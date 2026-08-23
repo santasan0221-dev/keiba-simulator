@@ -12,6 +12,9 @@
 .free-scope-actions span { color: #6f8093; font-size: 8px; letter-spacing: .08em; }
 .free-scope-actions button, .member-gate-actions button { border: 1px solid #c8a86688; background: transparent; color: #e4c987; padding: 8px 10px; font-size: 9px; }
 .free-scope-actions button:hover, .member-gate-actions button:hover { background: #c8a866; color: #101820; }
+.free-scope-strip--compact { grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr) auto; padding: 10px 18px; }
+.free-scope-strip--compact .free-scope-heading h2 { font-size: 14px; }
+.free-scope-note { margin: 0; color: #8091a1; font-size: 9px; line-height: 1.5; }
 .member-gate { display: grid; grid-template-columns: auto minmax(0, 1fr) 230px; gap: 18px; align-items: start; margin: 18px 0; padding: 18px; border: 1px solid #c8a86688; background: linear-gradient(130deg, #151d26, #101721 62%, #171813); scroll-margin-top: 92px; }
 .member-gate-symbol { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #c8a86699; color: #e1c67f; background: #c8a8660c; }
 .member-gate-copy h2 { margin: 4px 0 7px; color: #f1e5c9; font-family: 'DM Serif Display', serif; font-size: 25px; font-weight: 400; }
@@ -19,6 +22,10 @@
 .member-gate-scope { display: grid; gap: 6px; margin-top: 12px; color: #b9c3ce; font-size: 9px; }
 .member-gate-scope span { display: flex; align-items: center; gap: 6px; }
 .member-gate-scope svg { color: #c8a866; }
+.member-gate--compact { grid-template-columns: auto minmax(0, 1fr) auto; padding: 12px 16px; margin: 12px 0; }
+.member-gate--compact .member-gate-symbol { width: 28px; height: 28px; }
+.member-gate--compact .member-gate-copy h2 { margin: 3px 0 6px; font-size: 15px; }
+.member-gate--compact .member-gate-actions { grid-auto-flow: column; align-content: center; }
 .member-gate-actions { display: grid; gap: 7px; align-content: start; }
 .note-external-link, .access-code-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #c8a866aa; color: #edcf8b; background: #c8a8660d; padding: 9px 10px; font-size: 9px; line-height: 1.35; text-decoration: none; text-align: center; }
 .note-external-link { flex-wrap: wrap; }

@@ -18,19 +18,12 @@ export function AccessTierBadge() {
 }
 
 export function FreeScopeStrip() {
-  return <section className="free-scope-strip" aria-labelledby="free-scope-title">
-    <div className="free-scope-heading">
-      <span className="eyebrow">FREE / OPEN SCOPE</span>
-      <h2 id="free-scope-title">FREE公開は、事前固定の自動選定ruleに従います。</h2>
-    </div>
-    <div className="free-scope-details">
-      <span className="scope-pill">FREE OPEN</span>
-      <p>{FREE_PUBLICATION_RULE_NOTICE.description}</p>
-    </div>
+  return <section className="free-scope-strip free-scope-strip--compact" aria-labelledby="free-scope-title">
+    <div className="free-scope-heading"><span className="eyebrow">FREE</span><h2 id="free-scope-title">FREE公開対象は事前固定ruleで自動選定。</h2></div>
+    <p className="free-scope-note">{FREE_PUBLICATION_RULE_NOTICE.description}</p>
     <div className="free-scope-actions">
-      <span>{FREE_PUBLICATION_RULE_NOTICE.sourceState}</span>
-      <Link href="/free">今週のFREE公開を見る</Link>
-      <button type="button" onClick={scrollToMemberGate}>MEMBERの閲覧範囲を見る</button>
+      <Link href="/free">FREE公開を見る</Link>
+      <button type="button" onClick={scrollToMemberGate}>MEMBERを見る</button>
     </div>
   </section>;
 }
@@ -67,19 +60,16 @@ export function WeekendPassPanel() {
 }
 
 export function MemberGate() {
-  return <section id="member-gate" className="member-gate" aria-labelledby="member-gate-title">
-    <div className="member-gate-symbol"><LockKeyhole size={20} /></div>
+  return <section id="member-gate" className="member-gate member-gate--compact" aria-labelledby="member-gate-title">
+    <div className="member-gate-symbol"><LockKeyhole size={16} /></div>
     <div className="member-gate-copy">
-      <span className="eyebrow">MEMBER ONLY / PRE-RACE ANALYSIS</span>
+      <span className="eyebrow">MEMBER</span>
       <h2 id="member-gate-title">MEMBER機能は準備中です。</h2>
-      <p>将来的には、全JRAレースの発走前閲覧と詳細分析を提供します。現在は認証backendが未接続のため、MEMBER限定情報は表示・配信しません。</p>
-      <div className="member-gate-scope"><span><ShieldCheck size={14} /> FREE: 一部発走前公開 ＋ 全レース事後公開</span><span><UserRoundCheck size={14} /> MEMBER: 全JRA発走前閲覧 ＋ 詳細分析（準備中）</span></div>
+      <div className="member-gate-scope"><span><ShieldCheck size={13} /> FREE: 一部発走前＋全事後公開</span><span><UserRoundCheck size={13} /> MEMBER: 全発走前＋詳細分析（準備中）</span></div>
     </div>
     <div className="member-gate-actions">
-      <NoteExternalLink kind="membership" />
-      <NoteExternalLink kind="weekendPass" />
-      <Link className="access-code-link" href="/access-code"><KeyRound size={14} /> アクセスコードを入力</Link>
-      <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>FREE公開へ戻る</button>
+      <NoteExternalLink kind="membership" compact />
+      <Link className="access-code-link" href="/access-code"><KeyRound size={13} /> アクセスコード</Link>
     </div>
   </section>;
 }
