@@ -8,7 +8,9 @@ const workflow = readFileSync(
 );
 const clientSources = [
   "client/index.html",
+  "client/src/components/AccessTierUI.tsx",
   "client/src/components/LabServiceNavigation.tsx",
+  "client/src/pages/MemberPage.tsx",
   "client/src/pages/Home.tsx",
 ].map((file) => readFileSync(resolve(import.meta.dirname, "..", file), "utf8"));
 
@@ -40,5 +42,11 @@ describe("GitHub Pages deployment contract", () => {
         ),
       ),
     ).toBe(true);
+  });
+
+  it("routes internal links through the configured Wouter base", () => {
+    expect(clientSources.join("\n")).not.toMatch(
+      /href=["']\/(?:free|access-code)["']/,
+    );
   });
 });
