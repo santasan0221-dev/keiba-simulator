@@ -2,8 +2,7 @@ name: Deploy simulator to GitHub Pages
 
 # Builds the client (static) and publishes it to GitHub Pages on every push to
 # main. The simulator works standalone with sample data; the "load real race"
-# feature calls single_pick_ai only if the repo variable SINGLE_PICK_AI_BASE is
-# set to its public URL (Settings > Secrets and variables > Actions > Variables).
+# feature calls the public, read-only single_pick_ai API through Cloudflare.
 on:
   push:
     branches: [main]
@@ -31,8 +30,10 @@ jobs:
       - run: pnpm install --no-frozen-lockfile
       - name: Build (base path = repo name for project Pages)
         env:
-          VITE_SINGLE_PICK_AI_BASE: ${{ vars.SINGLE_PICK_AI_BASE }}
+          VITE_SINGLE_PICK_AI_BASE: https://api.keibalab.net
         run: pnpm exec vite build --base=/${{ github.event.repository.name }}/
+      - name: Add SPA fallback for direct route requests
+        run: cp dist/public/index.html dist/public/404.html
       - uses: actions/configure-pages@v5
         with:
           enablement: true
