@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRaces, getApiBase, getApiRequestHeaders, getDefaultApiBase, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
+import { LabApiError, fetchAvailablePredictionDates, fetchDailyOperations, fetchLabHealth, fetchLabResults, fetchRace, fetchRaces, getApiBase, getApiRequestHeaders, getDefaultApiBase, NGROK_SKIP_BROWSER_WARNING_HEADER, toHorses, type LabRace } from "./singlePickAi";
 
 const BASE_STORAGE_KEY = "single_pick_ai_base";
 
@@ -73,6 +73,18 @@ describe("single_pick_ai toHorses", () => {
 
     await expect(fetchDailyOperations("not-a-date")).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 422, message: "invalid date", detail: "date must be YYYY-MM-DD" });
     await expect(fetchLabResults({ date: "2026-08-19" })).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 503, message: "source unavailable", detail: "canonical store is not ready" });
+  });
+
+  it("surfaces a race_key 404 as a distinguishable LabApiError (drives the race page's not_found state, not unavailable)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "race not found" }), { status: 404, headers: { "content-type": "application/json" } })));
+
+    await expect(fetchRace("JRA|2099-01-01|nonexistent|99")).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 404 });
+  });
+
+  it("surfaces a non-404 race fetch failure as a LabApiError the race page must treat as unavailable, not empty", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "source unavailable" }), { status: 503, headers: { "content-type": "application/json" } })));
+
+    await expect(fetchRace("JRA|2026-08-23|札幌|12")).rejects.toMatchObject<Partial<LabApiError>>({ name: "LabApiError", status: 503 });
   });
 
   it("adds the ngrok browser-warning bypass header only for ngrok tunnel endpoints", () => {

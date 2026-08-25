@@ -14,7 +14,7 @@ type LoadState =
   | { kind: "unavailable"; raceKey: string; message: string }
   | { kind: "ready"; race: LabRace };
 
-async function shareRace(raceKey: string) {
+export async function shareRace(raceKey: string) {
   const url = absoluteRaceUrl(raceKey);
   if (!url) return;
   const shareData = { title: "KEIBA LAB", text: "AI視点でこのレースを確認する", url };
