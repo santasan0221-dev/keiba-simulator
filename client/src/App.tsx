@@ -7,6 +7,7 @@ import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import RacePage from "./pages/RacePage";
 import FreeRacesPage from "./pages/FreeRacesPage";
 import RaceHistoryPage from "./pages/RaceHistoryPage";
 import ResearchWorkbenchPage from "./pages/ResearchWorkbenchPage";
@@ -18,7 +19,7 @@ function Router() {
   // Base path follows Vite's build base so the app works both at the site root
   // and when served under a sub-path (e.g. single_pick_ai serves it at /sim/).
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  return <WouterRouter base={base}><Switch><Route path="/" component={Home} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></WouterRouter>;
+  return <WouterRouter base={base}><Switch><Route path="/" component={Home} /><Route path="/race/:org/:date/:venue/:no" component={RacePage} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></WouterRouter>;
 }
 
 export default function App() {

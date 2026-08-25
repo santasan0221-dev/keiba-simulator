@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Database, History, LoaderCircle, RefreshCw, TriangleAlert } from "lucide-react";
+import { Database, History, LoaderCircle, RefreshCw, Share2, TriangleAlert } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 import type { Horse } from "@/pages/Home";
 import { fetchAvailablePredictionDates, fetchLabHealth, fetchRace, fetchRaces, getApiBase, setApiBase, toHorses, type LabHealth, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { retrySinglePick } from "@/lib/singlePickRetry";
 import { fetchOfficialResultJob, fetchOpsCapability, fetchResultHealth, startOfficialResultJob, type OfficialResultJob, type ResultHealth } from "@/lib/officialResultOps";
+import { absoluteRaceUrl, raceKeyToPath } from "@/lib/raceShareUrl";
 
 const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
@@ -18,6 +20,25 @@ function formatStartTime(iso: string | null): string {
 
 function formatCalibratedPercent(value: number | null): string {
   return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "未校正";
+}
+
+async function shareRace(raceKey: string) {
+  const url = absoluteRaceUrl(raceKey);
+  if (!url) return;
+  if (typeof navigator !== "undefined" && "share" in navigator) {
+    try {
+      await navigator.share({ title: "KEIBA LAB", text: "AI視点でこのレースを確認する", url });
+      return;
+    } catch {
+      // Cancelled or unsupported by the platform -- fall back to clipboard.
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success("URLをコピーしました。");
+  } catch {
+    toast.error("URLのコピーに失敗しました。", { description: url });
+  }
 }
 
 async function findLatestPredictionDate() {
@@ -118,7 +139,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
   const resultHealthState = resultHealth?.status === "COMPLETE" ? "正常" : resultHealth?.status === "NO_RUN" ? "注意" : "異常";
   const labHealthNormal = labHealth?.reachable === true && labHealth.schema_version === "lab-api-v2" && labHealth.auth_state === "NOT_REQUIRED_READ_ONLY";
 
-  return <section className="real-race-loader" aria-label="single_pick_ai実レース入力">
+  return <section id="real-race-input" className="real-race-loader" aria-label="single_pick_ai実レース入力">
     <div className="real-race-heading"><div><span className="eyebrow">REAL RACE INPUT</span><h2>実レースを取り込む。</h2></div><div className="real-race-heading-actions"><Link href="/ai-history" className="real-race-history-link"><History size={14} /> AI履歴</Link><Database size={17} /></div></div>
     <p className="real-race-intro">single_pick_aiのread-only APIから実データを読み込みます。読み込んだAI予測と、条件変更後のwhat-ifは混ぜずに表示します。</p>
     <label className="real-race-base"><span>接続先 single_pick_ai</span><input value={base} onChange={(event) => updateBase(event.target.value)} placeholder="空欄: 同一オリジン /api/lab" /><small>公開版ではHTTPSの接続先が必要です。ローカルのHTTP URLは利用できません。</small></label>
@@ -129,11 +150,16 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     <div className="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : races.length ? races.map((race) => {
       const pick = race.top_pick;
       const calibrated = pick?.prob_status === "CALIBRATED";
+      const raceUrlPath = raceKeyToPath(race.race_key);
       return <div key={race.race_key} className="real-race-card">
         <div className="real-race-card-head"><strong>{race.venue ?? race.race_key}{race.race_no ? ` ${race.race_no}R` : ""}</strong><span>{formatStartTime(race.scheduled_start_at)}</span></div>
         <div className="real-race-card-pick"><span className="real-race-pick-name">{pick?.name ?? "本命未確定"}</span>{pick?.ai_rank ? <em className="real-race-pick-rank">AI{pick.ai_rank}位</em> : null}</div>
         <div className="real-race-card-probs"><span>勝率 <b>{calibrated ? formatCalibratedPercent(pick.win_prob_calibrated) : "未校正"}</b></span><span>複勝率 <b>{calibrated ? formatCalibratedPercent(pick.top3_prob) : "未校正"}</b></span></div>
-        <button type="button" className="real-race-detail-button" disabled={loadingRaceKey !== null} onClick={() => loadRace(race.race_key)}>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={14} /> : "詳細を見る"}</button>
+        <div className="real-race-card-actions">
+          <button type="button" className="real-race-detail-button" disabled={loadingRaceKey !== null} onClick={() => loadRace(race.race_key)}>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={14} /> : "詳細を見る"}</button>
+          {raceUrlPath && <Link href={raceUrlPath} className="real-race-page-link">共有ページ</Link>}
+          {raceUrlPath && <button type="button" className="real-race-share-button" aria-label="このレースを共有" onClick={() => void shareRace(race.race_key)}><Share2 size={13} /></button>}
+        </div>
       </div>;
     }) : <div className="real-race-empty">{date ? "取得できるレースがありません" : "予測可能日を確認しています"}</div>}</div>
     <p className="real-race-provenance"><strong>能力値の出所:</strong> 末脚はv23k実値。as-of履歴として明示される項目のみ履歴実値、それ以外の補助能力は暫定値です。詳細は出走馬タブで確認できます。</p>
