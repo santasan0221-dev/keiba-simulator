@@ -23,7 +23,7 @@ describe("official race outcome presentation", () => {
     const outside = { ...confirmed, ai_pick: { horse_no: 4, horse_name: "オンベイト", ai_rank: 1, finish: 6, won: false, placed: false } };
 
     expect(aiPickOutcomeLabel(placed)).toBe("複勝圏内（3着以内）");
-    expect(aiPickOutcomeLabel(outside)).toBe("見送り（圏外）");
+    expect(aiPickOutcomeLabel(outside)).toBe("複勝圏外");
   });
 
   it("returns a comparison summary only from confirmed Snapshot result data", () => {

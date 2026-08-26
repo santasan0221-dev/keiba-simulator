@@ -17,7 +17,7 @@ export function aiPickOutcomeLabel(result: LabRaceResult | null | undefined): st
   if (outcome === "pending") return "結果はまだ確定していません";
   if (outcome === "hit") return "的中（1着）";
   if (outcome === "placed") return "複勝圏内（3着以内）";
-  if (outcome === "outside") return "見送り（圏外）";
+  if (outcome === "outside") return "複勝圏外";
   if (outcome === "missing_finish") return "本命の着順データなし";
   return "本命結果は未確認";
 }

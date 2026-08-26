@@ -117,10 +117,33 @@ export type LabRaceListItem = {
     no: number | null;
     name: string | null;
     ai_rank: number | null;
+    v23k_rank?: number | null;
+    final_mark?: string | null;
+    selection_basis?: string | null;
     win_prob_calibrated: number | null;
     top3_prob: number | null;
     prob_status: string;
   } | null;
+  decision?: LabPredictionDecision;
+};
+
+export type LabDisplayBet = {
+  bet_type: string | null;
+  picks: number[] | null;
+  pick_names: string[] | null;
+  stake: number | null;
+  odds: number | null;
+  odds_source: string | null;
+  multi_bets: Array<Record<string, unknown>> | null;
+};
+
+export type LabPredictionDecision = {
+  status: "BET" | "NO_BET" | "UNKNOWN" | string;
+  raw_status: string;
+  reason: string | null;
+  gate_status: string | null;
+  gate_reason: string | null;
+  bet: LabDisplayBet | null;
 };
 
 export type LabHorse = {
@@ -143,12 +166,22 @@ export type LabHorse = {
     top3_prob: number | null;
     prob_status: string;
   };
+  display?: {
+    base_mark: string | null;
+    final_mark: string | null;
+    v23k_rank: number | null;
+    mark_adjustment_reason: string | null;
+    anxiety_tags: string[];
+    plus_tags: string[];
+    dismiss_reason_tags: string[];
+    danger_score: number | null;
+  };
   market: { popularity: number | null; win_odds: number | null; slot: string | null; captured_at: string | null };
   record: Record<string, unknown>;
 };
 
 export type LabOfficialOrder = { finish: number; horse_no: number; horse_name: string; popularity: number | null };
-export type LabAiPickResult = { horse_no: number; horse_name: string; ai_rank: number; finish: number | null; won: boolean | null; placed: boolean | null };
+export type LabAiPickResult = { horse_no: number; horse_name: string; ai_rank: number | null; final_mark?: string | null; selection_basis?: string | null; finish: number | null; won: boolean | null; placed: boolean | null };
 export type LabRaceResult = { status: string; official_order: LabOfficialOrder[]; ai_pick: LabAiPickResult | null; payouts: Record<string, unknown> | null };
 
 export type LabRace = {
@@ -166,6 +199,7 @@ export type LabRace = {
   };
   model: { champion_id: string | null; calibration_status: string; disclaimer: string; as_of: string | null };
   horses: LabHorse[];
+  decision?: LabPredictionDecision;
   branches: Array<{ key: string; label: string; probability: number }>;
   market_ev: { note: string; status: string; rows: Array<Record<string, unknown>> };
   provenance: Record<string, unknown>;

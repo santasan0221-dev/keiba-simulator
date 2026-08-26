@@ -157,7 +157,8 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
       const raceUrlPath = raceKeyToPath(race.race_key);
       return <div key={race.race_key} className="real-race-card">
         <div className="real-race-card-head"><strong>{race.venue ?? race.race_key}{race.race_no ? ` ${race.race_no}R` : ""}</strong><span>{formatStartTime(race.scheduled_start_at)}</span></div>
-        <div className="real-race-card-pick"><span className="real-race-pick-name">{pick?.name ?? "本命未確定"}</span>{pick?.ai_rank ? <em className="real-race-pick-rank">AI{pick.ai_rank}位</em> : null}</div>
+        <div className="real-race-card-pick"><span className="real-race-pick-name">{pick?.name ? `◎ ${pick.name}` : "AI本命取得不能"}</span>{pick?.selection_basis === "FINAL_MARK_HONMEI" ? <em className="real-race-pick-rank">AI本命</em> : null}</div>
+        <div className={`real-race-card-decision real-race-card-decision--${race.decision?.status?.toLowerCase() ?? "unknown"}`}>{race.decision?.status === "BET" ? "BET" : race.decision?.status === "NO_BET" ? "見送り" : "判定データなし"}</div>
         <div className="real-race-card-probs"><span>勝率 <b>{calibrated ? formatCalibratedPercent(pick.win_prob_calibrated) : "未校正"}</b></span><span>複勝率 <b>{calibrated ? formatCalibratedPercent(pick.top3_prob) : "未校正"}</b></span></div>
         <div className="real-race-card-actions">
           <button type="button" className="real-race-detail-button" disabled={loadingRaceKey !== null} onClick={() => loadRace(race.race_key)}>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={14} /> : "詳細を見る"}</button>
