@@ -380,3 +380,21 @@ input[type=range] { width: 100%; height: 3px; appearance: none; background: line
 .ticket-card .live-pill { background: #4d4640; color: #e1d6c6; }
 .ticket-card .card-label span:first-child { color: #d7c29b; }
 @media (max-width: 760px) { .what-if-formal-separation, .what-if-diagnostic-shell { grid-template-columns: 1fr; } .what-if-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.beta-survey-trigger { position: fixed; right: 18px; bottom: 18px; z-index: 80; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid #b89346; background: #111a25; color: #f2e3b4; font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.34); }
+.beta-survey { position: fixed; right: 18px; bottom: 18px; z-index: 80; width: min(390px, calc(100vw - 28px)); max-height: calc(100vh - 32px); overflow-y: auto; border: 1px solid #506172; background: #101925; color: #dce5ec; padding: 16px; box-shadow: 0 14px 40px rgba(0,0,0,.48); }
+.beta-survey header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid #2b3948; padding-bottom: 10px; }
+.beta-survey header span { color: #c4a156; font-size: 9px; }
+.beta-survey h2 { margin: 3px 0 0; font-size: 17px; }
+.beta-survey header button { width: 44px; height: 44px; border: 0; background: transparent; color: #aebac6; cursor: pointer; }
+.beta-survey > p { color: #95a4b2; font-size: 11px; }
+.beta-survey fieldset { margin: 14px 0 0; padding: 0; border: 0; }
+.beta-survey legend { margin-bottom: 8px; font-size: 12px; font-weight: 700; }
+.beta-survey fieldset > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.beta-survey label { position: relative; }
+.beta-survey label input { position: absolute; opacity: 0; pointer-events: none; }
+.beta-survey label span { display: inline-flex; align-items: center; min-height: 40px; border: 1px solid #3b4a59; padding: 0 10px; color: #bdc8d1; font-size: 11px; cursor: pointer; }
+.beta-survey label input:checked + span { border-color: #c4a156; background: #25251f; color: #f0dfa9; }
+.beta-survey label input:focus-visible + span { outline: 2px solid #e0bd6d; outline-offset: 2px; }
+.beta-survey-submit { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 44px; margin-top: 16px; border: 1px solid #c4a156; background: #c4a156; color: #10151b; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.beta-survey-submit:disabled { opacity: .42; cursor: not-allowed; }
+@media (max-width: 520px) { .beta-survey-trigger, .beta-survey { right: 14px; bottom: 14px; } .beta-survey { width: calc(100vw - 28px); } }

@@ -6,6 +6,7 @@ import { TruthPanel } from "@/components/TruthPanel";
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { fetchRace, LabApiError, type LabRace } from "@/lib/singlePickAi";
 import { absoluteRaceUrl, paramsToRaceKey, type RaceUrlParams } from "@/lib/raceShareUrl";
+import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 
 type LoadState =
   | { kind: "loading" }
@@ -21,6 +22,7 @@ export async function shareRace(raceKey: string) {
   if (typeof navigator !== "undefined" && "share" in navigator) {
     try {
       await navigator.share(shareData);
+      trackBetaEvent({ name: "beta_share", properties: { organization: organizationFromRaceKey(raceKey), method: "native" } });
       return;
     } catch {
       // User cancelled the native share sheet, or the platform rejected it --
@@ -29,6 +31,7 @@ export async function shareRace(raceKey: string) {
   }
   try {
     await navigator.clipboard.writeText(url);
+    trackBetaEvent({ name: "beta_share", properties: { organization: organizationFromRaceKey(raceKey), method: "clipboard" } });
     toast.success("URLをコピーしました。");
   } catch {
     toast.error("URLのコピーに失敗しました。手動でコピーしてください。", { description: url });

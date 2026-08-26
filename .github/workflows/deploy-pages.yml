@@ -31,9 +31,9 @@ jobs:
       - name: Build (base path = repo name for project Pages)
         env:
           VITE_SINGLE_PICK_AI_BASE: https://api.keibalab.net
+          VITE_ANALYTICS_ENDPOINT: ${{ secrets.VITE_ANALYTICS_ENDPOINT }}
+          VITE_ANALYTICS_WEBSITE_ID: ${{ secrets.VITE_ANALYTICS_WEBSITE_ID }}
         run: pnpm exec vite build --base=/${{ github.event.repository.name }}/
-      - name: Remove unavailable Manus analytics hook from Pages
-        run: sed -i '/%VITE_ANALYTICS_ENDPOINT%/d' dist/public/index.html
       - uses: actions/configure-pages@v5
         with:
           enablement: true

@@ -1,0 +1,31 @@
+name: Public beta two-week summary
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build aggregate-only beta report
+        env:
+          BETA_START_AT: ${{ vars.BETA_START_AT }}
+          UMAMI_API_URL: ${{ secrets.UMAMI_API_URL }}
+          UMAMI_WEBSITE_ID: ${{ secrets.UMAMI_WEBSITE_ID }}
+          UMAMI_API_TOKEN: ${{ secrets.UMAMI_API_TOKEN }}
+        run: pnpm exec tsx scripts/summarizePublicBetaAnalytics.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-beta-summary
+          path: artifacts/public-beta
+          retention-days: 30

@@ -28,13 +28,14 @@ const clientSources = [
 describe("GitHub Pages deployment contract", () => {
   it("builds the project Pages artifact with the production API origin", () => {
     expect(workflow).toContain("VITE_SINGLE_PICK_AI_BASE: https://api.keibalab.net");
+    expect(workflow).toContain("VITE_ANALYTICS_ENDPOINT: ${{ secrets.VITE_ANALYTICS_ENDPOINT }}");
+    expect(workflow).toContain("VITE_ANALYTICS_WEBSITE_ID: ${{ secrets.VITE_ANALYTICS_WEBSITE_ID }}");
     expect(workflow).toContain("pnpm exec vite build --base=/${{ github.event.repository.name }}/");
   });
 
   it("publishes an SPA fallback alongside index.html", () => {
-    expect(workflow).toContain(
-      "sed -i '/%VITE_ANALYTICS_ENDPOINT%/d' dist/public/index.html",
-    );
+    expect(workflow).not.toContain("%VITE_ANALYTICS_ENDPOINT%");
+    expect(indexHtml).not.toContain("%VITE_ANALYTICS_ENDPOINT%");
     expect(workflow).not.toContain("cp dist/public/index.html dist/public/404.html");
     expect(existsSync(fallbackHtmlPath)).toBe(true);
     expect(readFileSync(fallbackHtmlPath, "utf8")).toContain("sessionStorage.redirect");

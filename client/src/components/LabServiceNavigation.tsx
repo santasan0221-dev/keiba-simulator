@@ -3,6 +3,7 @@ import { BarChart3, History, LineChart, LockKeyhole, Sparkles } from "lucide-rea
 import { Link } from "wouter";
 import { AccessTierBadge } from "@/components/AccessTierUI";
 import { publicAssetUrl } from "@/lib/publicAsset";
+import { trackBetaEvent } from "@/lib/betaAnalytics";
 
 type ServicePage = "today" | "betting" | "analysis" | "history" | "member";
 
@@ -17,7 +18,7 @@ const links: Array<{ key: ServicePage; href: string; label: string; icon: typeof
 export function LabServiceNavigation({ active }: { active: ServicePage }) {
   return <nav className="lab-service-nav" aria-label="KEIBA LAB サービスナビゲーション">
     <div className="lab-service-nav-inner">
-      {links.map(({ key, href, label, icon: Icon }) => <Link key={key} href={href} className={`lab-service-link ${active === key ? "is-active" : ""}`} aria-current={active === key ? "page" : undefined}>
+      {links.map(({ key, href, label, icon: Icon }) => <Link key={key} href={href} className={`lab-service-link ${active === key ? "is-active" : ""}`} aria-current={active === key ? "page" : undefined} onClick={() => { if (key === "member") trackBetaEvent({ name: "beta_member_click", properties: { source: "main_nav" } }); }}>
         <Icon size={13} strokeWidth={1.8} />
         <span>{label}</span>
       </Link>)}

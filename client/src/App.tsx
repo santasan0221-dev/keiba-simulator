@@ -14,12 +14,14 @@ import ResearchWorkbenchPage from "./pages/ResearchWorkbenchPage";
 import BettingCandidatesPage from "./pages/BettingCandidatesPage";
 import PerformanceAnalysisPage from "./pages/PerformanceAnalysisPage";
 import MemberPage from "./pages/MemberPage";
+import { BetaAnalyticsObserver } from "./components/BetaAnalyticsObserver";
+import { BetaSurvey } from "./components/BetaSurvey";
 
 function Router() {
   // Base path follows Vite's build base so the app works both at the site root
   // and when served under a sub-path (e.g. single_pick_ai serves it at /sim/).
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  return <WouterRouter base={base}><Switch><Route path="/" component={Home} /><Route path="/race/:org/:date/:venue/:no" component={RacePage} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></WouterRouter>;
+  return <WouterRouter base={base}><BetaAnalyticsObserver /><Switch><Route path="/" component={Home} /><Route path="/race/:org/:date/:venue/:no" component={RacePage} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch><BetaSurvey /></WouterRouter>;
 }
 
 export default function App() {

@@ -7,6 +7,7 @@ import { fetchAvailablePredictionDates, fetchLabHealth, fetchRace, fetchRaces, g
 import { retrySinglePick } from "@/lib/singlePickRetry";
 import { fetchOfficialResultJob, fetchOpsCapability, fetchResultHealth, startOfficialResultJob, type OfficialResultJob, type ResultHealth } from "@/lib/officialResultOps";
 import { absoluteRaceUrl, raceKeyToPath } from "@/lib/raceShareUrl";
+import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 
 const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
@@ -28,6 +29,7 @@ async function shareRace(raceKey: string) {
   if (typeof navigator !== "undefined" && "share" in navigator) {
     try {
       await navigator.share({ title: "KEIBA LAB", text: "AI視点でこのレースを確認する", url });
+      trackBetaEvent({ name: "beta_share", properties: { organization: organizationFromRaceKey(raceKey), method: "native" } });
       return;
     } catch {
       // Cancelled or unsupported by the platform -- fall back to clipboard.
@@ -35,6 +37,7 @@ async function shareRace(raceKey: string) {
   }
   try {
     await navigator.clipboard.writeText(url);
+    trackBetaEvent({ name: "beta_share", properties: { organization: organizationFromRaceKey(raceKey), method: "clipboard" } });
     toast.success("URLをコピーしました。");
   } catch {
     toast.error("URLのコピーに失敗しました。", { description: url });
@@ -119,6 +122,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
 
   const updateBase = (value: string) => { setBase(value); setApiBase(value); };
   const loadRace = async (raceKey: string) => {
+    trackBetaEvent({ name: "beta_race_select", properties: { organization: organizationFromRaceKey(raceKey), source: "catalog" } });
     setLoadingRaceKey(raceKey); setSelectedRaceKey(raceKey); setError(""); setNotice("実レースの入力データを確認しています。");
     try {
       const race = await retrySinglePick(() => fetchRace(raceKey), { onRetry: ({ attempt, maxAttempts, nextDelayMs }) => setNotice(`実レースの取得を再試行しています（${attempt + 1}/${maxAttempts}回・${(nextDelayMs / 1000).toFixed(1)}秒後）。`) });
@@ -143,7 +147,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     <div className="real-race-heading"><div><span className="eyebrow">REAL RACE INPUT</span><h2>実レースを取り込む。</h2></div><div className="real-race-heading-actions"><Link href="/ai-history" className="real-race-history-link"><History size={14} /> AI履歴</Link><Database size={17} /></div></div>
     <p className="real-race-intro">single_pick_aiのread-only APIから実データを読み込みます。読み込んだAI予測と、条件変更後のwhat-ifは混ぜずに表示します。</p>
     <label className="real-race-base"><span>接続先 single_pick_ai</span><input value={base} onChange={(event) => updateBase(event.target.value)} placeholder="空欄: 同一オリジン /api/lab" /><small>公開版ではHTTPSの接続先が必要です。ローカルのHTTP URLは利用できません。</small></label>
-    <div className="real-race-controls"><label><span>開催日</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><div className="real-race-org" aria-label="主催"><span>主催</span><div>{ORGS.map((value) => <button type="button" key={value} className={org === value ? "selected" : ""} onClick={() => setOrg(value)}>{value}</button>)}</div></div><button className="real-race-refresh" type="button" onClick={refresh} disabled={loadingRaces || !date}>{loadingRaces ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />} 更新</button></div>
+    <div className="real-race-controls"><label><span>開催日</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><div className="real-race-org" aria-label="主催"><span>主催</span><div>{ORGS.map((value) => <button type="button" key={value} className={org === value ? "selected" : ""} onClick={() => { if (value !== org) trackBetaEvent({ name: "beta_org_switch", properties: { organization: value, source: "catalog" } }); setOrg(value); }}>{value}</button>)}</div></div><button className="real-race-refresh" type="button" onClick={refresh} disabled={loadingRaces || !date}>{loadingRaces ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />} 更新</button></div>
     <div className="real-race-ops" aria-label="運用"><div className="real-race-ops-heading"><span>運用</span><small>{opsMessage}</small></div><button type="button" className="real-race-result-button" onClick={fetchOfficialResults} disabled={!opsReady || !date || jobRunning}>{jobRunning ? <LoaderCircle className="spin" size={14} /> : <Database size={14} />} 公式結果を取得</button>{resultJob && <div className="real-race-ops-grid"><span>対象日<strong>{resultJob.raceDate}</strong></span><span>状態<strong>{jobLabel[resultJob.status]}</strong></span><span>selected_races<strong>{resultJob.selectedRaces ?? "—"}</strong></span><span>result_count<strong>{resultJob.resultCount ?? "—"}</strong></span><span>already_recorded<strong>{resultJob.alreadyRecorded ?? "—"}</strong></span><span>retryable_failures<strong>{resultJob.retryableFailures ?? "—"}</strong></span><span>review_required<strong>{resultJob.reviewRequiredFailures ?? "—"}</strong></span><span>batch_status<strong>{resultJob.batchStatus ?? "—"}</strong></span><span>最終成功<strong>{resultJob.lastSuccessAt ? new Date(resultJob.lastSuccessAt).toLocaleString("ja-JP") : "—"}</strong></span>{resultJob.error && <span className="real-race-ops-error">エラー<strong>{resultJob.error}</strong></span>}</div>}<div className="real-race-health">結果健全性: <b>{resultHealthState}</b> / 予測済み {resultHealth?.predictedRaces ?? "—"} / 取得済み {resultHealth?.resultFetchedRaces ?? "—"} / 未確定 {resultHealth?.pendingRaces ?? "—"} / 要確認 {resultHealth?.reviewRequired ?? "—"}</div></div>
     <div className={labHealthNormal ? "real-race-sync-state" : "real-race-sync-state is-error"}><span>API HEALTH</span><strong>{labHealthNormal ? "正本read-only APIは正常です" : "正本read-only APIを確認できません"}</strong><small>{labHealth ? `schema ${labHealth.schema_version ?? "取得不能"} · ${labHealth.auth_state ?? "取得不能"} · 最終更新 ${labHealth.last_updated_at ? new Date(labHealth.last_updated_at).toLocaleString("ja-JP") : "取得不能"}` : "health APIの応答を取得できません。"}</small>{!labHealthNormal && <p>接続失敗時は同期成功や0件へ置き換えず、取得不能として扱います。</p>}</div>
     {error && <div className="real-race-status real-race-status--error" role="alert"><TriangleAlert size={14} /><span>{error}</span></div>}{notice && !error && <p className="real-race-status" aria-live="polite">{notice}</p>}

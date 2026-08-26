@@ -1,11 +1,23 @@
 import { ExternalLink, KeyRound, LockKeyhole, ShieldCheck, Timer, UserRoundCheck } from "lucide-react";
 import { ACCESS_TIER_NOTICE, FREE_PUBLICATION_RULE_NOTICE, noteLinks } from "@/lib/accessTier";
 import { Link } from "wouter";
+import { memberSourceForPath, trackBetaEvent } from "@/lib/betaAnalytics";
 
 type NoteKind = "membership" | "weekendPass";
 
 function scrollToMemberGate() {
+  trackBetaEvent({
+    name: "beta_member_click",
+    properties: { source: memberSourceForPath(window.location.pathname, import.meta.env.BASE_URL) },
+  });
   document.getElementById("member-gate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function trackMemberFunnel() {
+  trackBetaEvent({
+    name: "beta_member_click",
+    properties: { source: memberSourceForPath(window.location.pathname, import.meta.env.BASE_URL) },
+  });
 }
 
 export function AccessTierBadge() {
@@ -41,7 +53,7 @@ export function NoteExternalLink({ kind, compact = false }: { kind: NoteKind; co
     </span>;
   }
 
-  return <a className={`note-external-link${compact ? " compact" : ""}`} href={href} target="_blank" rel="noreferrer">
+  return <a className={`note-external-link${compact ? " compact" : ""}`} href={href} target="_blank" rel="noreferrer" onClick={trackMemberFunnel}>
     <span>{label}</span><ExternalLink size={13} aria-hidden="true" />
     {!compact && <small>{description}</small>}
   </a>;
@@ -69,7 +81,7 @@ export function MemberGate() {
     </div>
     <div className="member-gate-actions">
       <NoteExternalLink kind="membership" compact />
-      <Link className="access-code-link" href="/access-code"><KeyRound size={13} /> アクセスコード</Link>
+      <Link className="access-code-link" href="/access-code" onClick={trackMemberFunnel}><KeyRound size={13} /> アクセスコード</Link>
     </div>
   </section>;
 }
