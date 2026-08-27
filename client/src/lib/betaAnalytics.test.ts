@@ -107,7 +107,7 @@ describe("public beta analytics privacy contract", () => {
       website: "site-1",
       url: "/public-beta-event",
       referrer: "",
-      title: "KEIBA LAB Public Beta",
+      title: "KEIBA TRACE Public Beta",
       name: "beta_page_view",
       data: { route: "race_detail" },
     });

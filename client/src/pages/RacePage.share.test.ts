@@ -28,7 +28,7 @@ describe("RacePage shareRace", () => {
     await shareRace(RACE_KEY_JRA);
 
     expect(share).toHaveBeenCalledWith({
-      title: "KEIBA LAB",
+      title: "KEIBA TRACE",
       text: "AI視点でこのレースを確認する",
       url: `https://santasan0221-dev.github.io/race/${encodeURIComponent("JRA")}/2026-08-23/${encodeURIComponent("札幌")}/12`,
     });

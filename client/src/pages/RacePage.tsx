@@ -18,7 +18,7 @@ type LoadState =
 export async function shareRace(raceKey: string) {
   const url = absoluteRaceUrl(raceKey);
   if (!url) return;
-  const shareData = { title: "KEIBA LAB", text: "AI視点でこのレースを確認する", url };
+  const shareData = { title: "KEIBA TRACE", text: "AI視点でこのレースを確認する", url };
   if (typeof navigator !== "undefined" && "share" in navigator) {
     try {
       await navigator.share(shareData);

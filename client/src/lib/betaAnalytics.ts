@@ -95,7 +95,7 @@ export function sanitizeUmamiPayload(payload: Record<string, unknown>) {
   delete sanitized.distinctId;
   sanitized.url = "/public-beta-event";
   sanitized.referrer = "";
-  sanitized.title = "KEIBA LAB Public Beta";
+  sanitized.title = "KEIBA TRACE Public Beta";
   return sanitized;
 }
 

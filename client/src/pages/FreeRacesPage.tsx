@@ -36,6 +36,6 @@ export default function FreeRacesPage() {
       <div><span className="eyebrow">POST-RACE OPEN</span><h2>全レースの事後公開は運用ダッシュボードで確認できます。</h2><p>未確定・同着・取消・要確認は正本statusのまま表示します。FREE対象外のレースを発走前に代替表示することはありません。</p></div>
       <a href="/ai-history">全レースの事後公開を見る</a>
     </section>
-    <a className="free-races-back" href="/"><ArrowLeft size={14} /> KEIBA LABへ戻る</a>
+    <a className="free-races-back" href="/"><ArrowLeft size={14} /> KEIBA TRACEへ戻る</a>
   </main>;
 }

@@ -28,7 +28,7 @@ async function shareRace(raceKey: string) {
   if (!url) return;
   if (typeof navigator !== "undefined" && "share" in navigator) {
     try {
-      await navigator.share({ title: "KEIBA LAB", text: "AI視点でこのレースを確認する", url });
+      await navigator.share({ title: "KEIBA TRACE", text: "AI視点でこのレースを確認する", url });
       trackBetaEvent({ name: "beta_share", properties: { organization: organizationFromRaceKey(raceKey), method: "native" } });
       return;
     } catch {

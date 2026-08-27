@@ -7,7 +7,7 @@
  * AI perspective," never "wins" or "profits."
  */
 export function LabValueStrip() {
-  return <section className="lab-value-strip" aria-label="KEIBA LABについて">
+  return <section className="lab-value-strip" aria-label="KEIBA TRACEについて">
     <div className="lab-value-strip-head">
       <h1>今日のレースを、AI視点で整理する。<span className="lab-free-badge">無料で見られます</span></h1>
       <span>JRA・地方競馬(NAR)対応</span>
