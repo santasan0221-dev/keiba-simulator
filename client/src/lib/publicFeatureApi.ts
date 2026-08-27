@@ -1,4 +1,5 @@
 import { fetchAvailablePredictionDates, getJson, LabApiError } from "@/lib/singlePickAi";
+import { featureStateLabel } from "@/lib/labels";
 
 export type PublicFeatureState = "AVAILABLE" | "READY" | "EMPTY" | "PENDING_DATA" | "INSUFFICIENT_SAMPLE" | "NOT_APPLICABLE" | "UNAVAILABLE" | "MEMBER_LOCKED" | "NOT_YET_GENERATED" | string;
 
@@ -219,7 +220,7 @@ export async function fetchFreeRace(): Promise<FeatureResult<FreeRacePayload>> {
 }
 
 export function metricText(metric: CanonicalMetric, digits = 1, asPercent = false): string {
-  if (metric.state !== "AVAILABLE" || metric.value === null) return metric.state;
+  if (metric.state !== "AVAILABLE" || metric.value === null) return featureStateLabel(metric.state);
   const value = asPercent ? (metric.value <= 1 ? metric.value * 100 : metric.value) : metric.value;
   return `${value.toFixed(digits)}${asPercent ? "%" : ""}`;
 }

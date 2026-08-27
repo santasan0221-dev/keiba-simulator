@@ -15,11 +15,11 @@ export function statusText(status: string | null): string {
     CONFIRMED: "確定",
     DEAD_HEAT: "同着",
     PENDING: "未確定",
-    REVIEW_REQUIRED: "要人手確認",
+    REVIEW_REQUIRED: "確認中",
     FAILED: "取得失敗",
     RACE_STOPPED: "競走中止",
   };
-  return labels[status] ? `${status} / ${labels[status]}` : status;
+  return labels[status] ?? status;
 }
 
 function horseLabel(value: unknown, fallbackRank: number): string | null {
@@ -53,7 +53,7 @@ function ResultRow({ item }: { item: LabResultListItem }) {
     <div><span>公式1〜3着</span><strong>{official.length ? official.join(" / ") : item.special_statuses?.length ? item.special_statuses.join(" / ") : item.result_status === "PENDING" ? "未確定" : "取得不能"}</strong></div>
     <div><span>◎着順 / top3 coverage</span><strong>{requestedResultValue(item.result_status, item.ai_pick_finish, "finish")} / {requestedResultValue(item.result_status, item.top3_coverage, "coverage")}</strong></div>
     <div><span>結果状態</span><strong>{statusText(item.result_status)}{item.special_statuses?.length ? ` · ${item.special_statuses.join(" / ")}` : ""}</strong></div>
-    <div><span>prediction_id</span><strong>{item.prediction_id ?? "取得不能"}</strong><small>結果取得 {dateTime(item.result_fetched_at)}</small></div>
+    <div><span>結果取得</span><strong>{dateTime(item.result_fetched_at)}</strong><details className="ops-result-id"><summary>詳細ID</summary><small>{item.prediction_id ?? "取得不能"}</small></details></div>
   </article>;
 }
 
@@ -129,7 +129,7 @@ export function OperationsDashboard() {
   return <section className="ops-dashboard" aria-label="公式結果の運用ダッシュボード">
     <DailyOperationsStrip selectedDate={selectedDate} onLatestDate={date => setSelectedDate(date)} />
     <header className="ops-dashboard-heading">
-      <div><span className="eyebrow">CANONICAL RESULT OPERATIONS</span><h2>予測と公式結果</h2><p>single_pick_ai正本APIが返した予測時点と結果確定後の情報を同じレコードで示します。WHAT-IF結果や推定値は混在させません。</p></div>
+      <div><span className="eyebrow">検証記録</span><h2>予測と公式結果</h2><p>single_pick_ai正本APIが返した予測時点と結果確定後の情報を同じレコードで示します。WHAT-IF結果や推定値は混在させません。</p></div>
       <button type="button" className="ops-dashboard-refresh" onClick={() => { void refreshDates(); void loadResults(true); }} disabled={refreshing}><RefreshCw className={refreshing ? "spin" : ""} size={15} /> {refreshing ? "更新中" : "更新"}</button>
     </header>
 
@@ -146,7 +146,7 @@ export function OperationsDashboard() {
       <span><small>対象レース</small><b>{summary ? summary.total : "取得不能"}</b></span>
       <span><small>確定 / 同着を含む</small><b>{summary ? summary.confirmed : "取得不能"}</b></span>
       <span><small>未確定</small><b>{summary ? summary.pending : "取得不能"}</b></span>
-      <span><small>REVIEW_REQUIRED</small><b>{summary ? summary.review : "取得不能"}</b></span>
+      <span><small>確認中</small><b>{summary ? summary.review : "取得不能"}</b></span>
     </div>
 
     <section className="ops-result-table-wrap" aria-label="予測と公式結果一覧">

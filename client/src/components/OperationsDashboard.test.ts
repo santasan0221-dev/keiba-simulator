@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import { requestedResultValue, statusText } from "./OperationsDashboard";
 
 describe("OperationsDashboard result-state presentation", () => {
-  it("keeps canonical result vocabulary visible without converting special states to wins or losses", () => {
-    expect(statusText("DEAD_HEAT")).toBe("DEAD_HEAT / 同着");
-    expect(statusText("PENDING")).toBe("PENDING / 未確定");
-    expect(statusText("REVIEW_REQUIRED")).toBe("REVIEW_REQUIRED / 要人手確認");
+  it("shows consumer-facing Japanese labels, never a raw enum, without converting special states to wins or losses", () => {
+    expect(statusText("DEAD_HEAT")).toBe("同着");
+    expect(statusText("PENDING")).toBe("未確定");
+    expect(statusText("REVIEW_REQUIRED")).toBe("確認中");
+    // Genuinely unmapped statuses still fall back to the raw value rather
+    // than fabricating a label -- this is the one case where showing the
+    // raw string is more honest than guessing a translation.
     expect(statusText("CANCELLED")).toBe("CANCELLED");
     expect(statusText("EXCLUDED")).toBe("EXCLUDED");
   });

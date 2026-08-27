@@ -33,7 +33,7 @@ export function PublicLabHeader({ active, eyebrow, title, description, children 
         <div className="brand-mark"><img src={publicAssetUrl("media/keiba-lab-mark.png")} alt="KEIBA TRACE" /></div>
         <div><div className="brand-name">KEIBA <span>TRACE</span></div><div className="brand-caption">AI予想を、結果まで追う。</div></div>
       </Link>
-      <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" />CANONICAL READ-ONLY</div>
+      <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" />閲覧専用</div>
     </header>
     <LabServiceNavigation active={active} />
     <main className="lab-public-page">

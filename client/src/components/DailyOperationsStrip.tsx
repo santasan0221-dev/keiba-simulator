@@ -88,7 +88,7 @@ export function DailyOperationsStrip({ selectedDate, onLatestDate }: Props) {
 
   return <section className="daily-operations-strip" aria-label="日次運用ステータス">
     <div className="daily-operations-heading">
-      <div><span className="eyebrow">DAILY OPERATIONS</span><strong>{requestedDate} · 正本APIレスポンス基準</strong></div>
+      <div><span className="eyebrow">日別の予想記録</span><strong>{requestedDate} · 正本APIレスポンス基準</strong></div>
       <div className="daily-operations-actions">
         {availableDates?.latest_prediction_date ? <button type="button" onClick={() => onLatestDate?.(availableDates.latest_prediction_date!)}><RefreshCw size={13} /> 最新開催日へ移動</button> : null}
         <button type="button" onClick={() => void refreshAll()}><Activity size={13} /> 接続診断を更新</button>
@@ -97,10 +97,10 @@ export function DailyOperationsStrip({ selectedDate, onLatestDate }: Props) {
     <div className="daily-operations-grid">
       <span><small>本日の予測 JRA / NAR</small><b>{daily?.prediction_counts ? `${daily.prediction_counts.JRA ?? "取得不能"} / ${daily.prediction_counts.NAR ?? "取得不能"}` : "取得不能"}</b></span>
       <span><small>公式結果取得数</small><b>{daily?.official_result_count ?? "取得不能"}</b></span>
-      <span><small>未確定 / REVIEW_REQUIRED</small><b>{daily ? `${daily.pending_count ?? "取得不能"} / ${daily.review_required_count ?? "取得不能"}` : "取得不能"}</b></span>
+      <span><small>未確定 / 確認中</small><b>{daily ? `${daily.pending_count ?? "取得不能"} / ${daily.review_required_count ?? "取得不能"}` : "取得不能"}</b></span>
       <span><small>最終予測日時</small><b>{fmt(daily?.last_prediction_at)}</b></span>
       <span><small>最終結果取得日時</small><b>{fmt(daily?.last_result_at)}</b></span>
-      <span><small>最終PDCA更新日時</small><b>{fmt(daily?.last_pdca_at)}</b></span>
+      <span><small>最終検証日時</small><b>{fmt(daily?.last_pdca_at)}</b></span>
       <span><small>自動処理</small><b className={automation.className}>{automation.label}</b><small>次回: {daily?.next_scheduled_at ? fmt(daily.next_scheduled_at) : "未定"}</small></span>
     </div>
     {dailyError ? <details className="daily-error-detail" open><summary><AlertTriangle size={13} /> 日次運用データを取得できません</summary><p>件数・時刻は0件へ置き換えず、取得不能として表示しています。</p><pre>{errorText(dailyError)}{apiErrorDetail ? `\n${apiErrorDetail}` : ""}</pre></details> : null}

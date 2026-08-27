@@ -7,6 +7,7 @@ vi.mock("@/lib/singlePickAi", async (importActual) => {
 
 import { fetchAvailablePredictionDates, getJson } from "@/lib/singlePickAi";
 import { fetchFreeRace, fetchModelComparison, fetchModelDetail, fetchOfficialBettingCandidates, metricText } from "@/lib/publicFeatureApi";
+import { featureStateLabel } from "@/lib/labels";
 
 const getJsonMock = vi.mocked(getJson);
 const availableDatesMock = vi.mocked(fetchAvailablePredictionDates);
@@ -91,7 +92,7 @@ describe("public feature API fail-closed boundary", () => {
     expect(result.state).toBe("AVAILABLE");
     expect(result.data?.[0].predictionCount).toEqual({ state: "PENDING_DATA", value: 0 });
     expect(result.data?.[0].top1HitRate).toEqual({ state: "PENDING_DATA", value: null });
-    expect(metricText({ state: "PENDING_DATA", value: 0 }, 3, true)).toBe("PENDING_DATA");
+    expect(metricText({ state: "PENDING_DATA", value: 0 }, 3, true)).toBe(featureStateLabel("PENDING_DATA"));
   });
 
   it("preserves a FREE model-detail lock and does not return detail data", async () => {

@@ -85,6 +85,26 @@ describe("TruthPanel", () => {
     expect(unselected).not.toContain("正式買い目");
   });
 
+  it("does not show the honmei/formal-bet mismatch note when they reference the same horse", () => {
+    // confirmedRace: honmei is #4, formal bet picks are [4] -- same horse.
+    const markup = renderToStaticMarkup(<TruthPanel race={confirmedRace} />);
+    expect(markup).not.toContain("AI本命と買い目は異なる場合があります");
+  });
+
+  it("shows the honmei/formal-bet mismatch note only when they reference different horses", () => {
+    const mismatched = {
+      ...confirmedRace,
+      decision: {
+        ...confirmedRace.decision,
+        bet: { bet_type: "単勝", picks: [5], pick_names: ["ラクリメ"], stake: 100, odds: 9, odds_source: "official", multi_bets: null },
+      },
+    } satisfies LabRace;
+    const markup = renderToStaticMarkup(<TruthPanel race={mismatched} />);
+    expect(markup).toContain("◎ #4 オンベイト");
+    expect(markup).toContain("正式買い目");
+    expect(markup).toContain("AI本命と買い目は異なる場合があります");
+  });
+
   it("does not fall back to ai_rank when final honmei is missing or duplicated", () => {
     const missing = confirmedRace.horses.map((horse) => ({ ...horse, display: { ...horse.display, final_mark: null } }));
     const duplicated = confirmedRace.horses.map((horse) => ({ ...horse, display: { ...horse.display, final_mark: "◎" } }));
