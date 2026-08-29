@@ -12,6 +12,7 @@ const rebrandedClientSources: Record<string, string> = {
   "client/src/components/LabServiceNavigation.tsx": read("client", "src", "components", "LabServiceNavigation.tsx"),
   "client/src/components/LabValueStrip.tsx": read("client", "src", "components", "LabValueStrip.tsx"),
   "client/src/pages/Home.tsx": read("client", "src", "pages", "Home.tsx"),
+  "client/src/pages/SimulatorPage.tsx": read("client", "src", "pages", "SimulatorPage.tsx"),
   "client/src/pages/RacePage.tsx": read("client", "src", "pages", "RacePage.tsx"),
   "client/src/pages/FreeRacesPage.tsx": read("client", "src", "pages", "FreeRacesPage.tsx"),
   "client/src/pages/RaceHistoryPage.tsx": read("client", "src", "pages", "RaceHistoryPage.tsx"),
@@ -62,8 +63,11 @@ describe("KEIBA TRACE rebrand -- protected internal identifiers are untouched", 
 
   it("the brand-mark asset path and localStorage-backed backup format tag are untouched", () => {
     expect(indexHtml).toContain("media/keiba-lab-mark.png");
-    const home = rebrandedClientSources["client/src/pages/Home.tsx"];
-    expect(home).toContain('"keiba-lab-backup"');
-    expect(home).toContain('localStorage.setItem("keiba-lab-distance"');
+    // The simulator (what-if sandbox) owns local-storage-backed state and the
+    // backup/export format tag since the Home/SimulatorPage product split --
+    // Home.tsx itself holds no simulator state any more.
+    const simulator = rebrandedClientSources["client/src/pages/SimulatorPage.tsx"];
+    expect(simulator).toContain('"keiba-lab-backup"');
+    expect(simulator).toContain('localStorage.setItem("keiba-lab-distance"');
   });
 });
