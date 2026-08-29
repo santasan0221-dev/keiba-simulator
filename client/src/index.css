@@ -94,6 +94,18 @@ input[type=range] { width: 100%; height: 3px; appearance: none; background: line
    semantically isolated from the what-if sandbox in .dashboard-grid below
    (same isolation principle as the rest of this file's single_pick_ai rules). */
 .race-catalog { max-width: 1500px; margin: 0 auto; padding: 0 4vw; }
+/* Home real-prediction full-width sections (TRUTH PANEL, related links,
+   compact MEMBER gate) below the race catalog -- same width rhythm as
+   .race-catalog, kept as its own class since it wraps different content. */
+.lab-section-width { max-width: 1500px; margin: 0 auto; padding: 0 4vw; }
+.lab-related-links { display: flex; flex-wrap: wrap; gap: 20px; margin: 6px 0 4px; }
+/* /simulator page intro banner -- deliberately plain-language "this is a
+   what-if sandbox with sample data" framing, distinct from the real
+   prediction product's copy register. */
+.simulator-intro { margin: 22px auto 6px; }
+.simulator-intro h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin: 8px 0 10px; color: #f0e7d4; letter-spacing: -.01em; }
+.simulator-intro p { margin: 0 0 4px; color: #8c98a8; font-size: 12px; line-height: 1.7; max-width: 760px; }
+@media (max-width: 760px) { .lab-section-width { padding: 0 18px; } .simulator-intro h1 { font-size: 24px; } }
 .race-catalog-panel { margin: 24px 0 26px; padding: 18px 22px 24px; border: 1px solid #3a4757; background: linear-gradient(145deg, #121e2a, #0d151e); box-shadow: inset 2px 0 #c8a866; }
 .race-catalog-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .race-catalog-heading svg { color: #c8a866; }

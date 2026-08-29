@@ -130,6 +130,7 @@ export function routeName(pathname: string, basePath = "") {
   if (path === "/member") return "member";
   if (path === "/ai-history") return "history";
   if (path === "/access-code") return "access_code";
+  if (path === "/simulator") return "simulator";
   return "other";
 }
 

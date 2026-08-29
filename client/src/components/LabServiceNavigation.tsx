@@ -1,17 +1,22 @@
-import type { ReactNode } from "react";
-import { BarChart3, History, LineChart, LockKeyhole, Sparkles } from "lucide-react";
+import React, { type ReactNode } from "react";
+import { BarChart3, FlaskConical, History, LineChart, LockKeyhole, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { AccessTierBadge } from "@/components/AccessTierUI";
 import { publicAssetUrl } from "@/lib/publicAsset";
 import { trackBetaEvent } from "@/lib/betaAnalytics";
 
-type ServicePage = "today" | "betting" | "analysis" | "history" | "member";
+type ServicePage = "today" | "betting" | "analysis" | "history" | "simulator" | "member";
 
+// "simulator" is deliberately placed after the real-prediction pages (today /
+// betting / analysis / history) and before MEMBER -- it's a secondary, opt-in
+// what-if tool, not the site's primary product, so it must never read as
+// more prominent than the real AI prediction pages.
 const links: Array<{ key: ServicePage; href: string; label: string; icon: typeof Sparkles }> = [
   { key: "today", href: "/", label: "本日の予想", icon: Sparkles },
   { key: "betting", href: "/betting-candidates", label: "買い目候補", icon: LineChart },
   { key: "analysis", href: "/performance-analysis", label: "実績・分析", icon: BarChart3 },
   { key: "history", href: "/ai-history", label: "AI履歴", icon: History },
+  { key: "simulator", href: "/simulator", label: "シミュレーター", icon: FlaskConical },
   { key: "member", href: "/member", label: "MEMBER", icon: LockKeyhole },
 ];
 
