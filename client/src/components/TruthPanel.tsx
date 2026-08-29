@@ -4,7 +4,7 @@ import type { LabDisplayBet, LabHorse, LabRace } from "@/lib/singlePickAi";
 import type { RealRaceLoadStatus } from "@/components/RealRaceLoader";
 import { aiPickFinishLabel, aiPickOutcomeLabel, getAiPickOutcome, payoutLines } from "@/lib/officialRaceResult";
 import { getRankAccuracySummary, getVirtualRoiSummary } from "@/lib/raceOutcomeAnalysis";
-import { calibrationStatusLabel, decisionLabel } from "@/lib/labels";
+import { calibrationStatusLabel, decisionLabel, normalizeDecisionStatus } from "@/lib/labels";
 
 const rawProbability = (value: number | null) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? String(value) : null;
 
@@ -55,7 +55,7 @@ export function TruthPanel({ race, loadStatus = "選択日の予測なし" }: { 
   const honmei = honmeiRows.length === 1 ? honmeiRows[0] : null;
   const secondaryRows = race.horses.filter((horse) => secondaryLabel(horse.display?.final_mark));
   const advancedRows = [...race.horses].sort((left, right) => (left.model.ai_rank ?? Number.MAX_SAFE_INTEGER) - (right.model.ai_rank ?? Number.MAX_SAFE_INTEGER));
-  const decisionStatus = race.decision?.status === "BET" || race.decision?.status === "NO_BET" ? race.decision.status : "UNKNOWN";
+  const decisionStatus = normalizeDecisionStatus(race.decision?.status);
   const formalBet = decisionStatus === "BET" && race.decision?.gate_status === "selected" ? race.decision.bet : null;
   const honmeiOutsideFormalBet = Boolean(formalBet && honmei && honmei.no !== null && !(formalBet.picks?.includes(honmei.no) ?? false));
   const statuses = Array.from(new Set(race.horses.map((horse) => displayStatus(horse.model.prob_status))));

@@ -43,8 +43,9 @@ describe("KEIBA TRACE rebrand -- user-facing surfaces", () => {
   it("header/logo lockup and share text present the new brand", () => {
     expect(rebrandedClientSources["client/src/components/LabServiceNavigation.tsx"]).toContain("KEIBA <span>TRACE</span>");
     expect(rebrandedClientSources["client/src/pages/Home.tsx"]).toContain("KEIBA <span>TRACE</span>");
+    // Sharing is a detail-page-only affordance (RacePage.tsx); the race
+    // catalog list (RealRaceLoader.tsx) intentionally has no share button.
     expect(rebrandedClientSources["client/src/pages/RacePage.tsx"]).toContain('title: "KEIBA TRACE"');
-    expect(rebrandedClientSources["client/src/components/RealRaceLoader.tsx"]).toContain('title: "KEIBA TRACE"');
   });
 });
 
