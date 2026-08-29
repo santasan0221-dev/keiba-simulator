@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CircleCheck, Database, History, Hourglass, LoaderCircle, Minus, RefreshCw, TriangleAlert } from "lucide-react";
 import { Link } from "wouter";
-import type { Horse } from "@/pages/Home";
+import type { Horse } from "@/lib/horseTypes";
 import { fetchAvailablePredictionDates, fetchRace, fetchRaces, getApiBase, toHorses, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { retrySinglePick } from "@/lib/singlePickRetry";
 import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";

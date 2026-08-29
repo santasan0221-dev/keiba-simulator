@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getBranches, runSimulation, type Horse } from "./Home";
+import { getBranches, runSimulation, type Horse } from "./horseTypes";
 import { computeProbabilityConcentration, formatWinRate, getSimulationCalibration } from "@/lib/simulationCalibration";
 
 // Regression coverage for the 2026-08-16 noise calibration fix: WHAT-IF
@@ -8,7 +8,7 @@ import { computeProbabilityConcentration, formatWinRate, getSimulationCalibratio
 // start/form stay flat 暫定値 placeholders until P2 lands), because the
 // old noise magnitude (9) was too small next to the real score gap it
 // had to compete against. See the calibration comment above
-// SIMULATION_NOISE_MAGNITUDE in Home.tsx for the full rationale.
+// runSimulation in horseTypes.ts for the full rationale.
 
 function makeHorse(no: number, speed: number): Horse {
   return {

@@ -9,7 +9,7 @@
 // calibration_status === "READY"; otherwise they are null. This module never
 // fabricates them — it surfaces what the backend provides. The simulation that
 // consumes these horses is a what-if sandbox, not the validated prediction.
-import type { Going, Horse, InputSource, Style } from "@/pages/Home";
+import type { Going, Horse, InputSource, Style } from "@/lib/horseTypes";
 
 // Prediction API base, resolved at RUNTIME (not build time).
 // Default is empty = same origin, so serving the app from single_pick_ai at

@@ -1,4 +1,4 @@
-import type { Horse, HorseDataSources, InputSource } from "@/pages/Home";
+import type { Horse, HorseDataSources, InputSource } from "@/lib/horseTypes";
 import type { ScenarioProvenance } from "@/lib/scenarioProvenance";
 
 export type SimulationCalibration = {

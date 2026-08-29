@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyBackupSelections, backupFieldGroups, captureBackupSelections, deleteBackupSelectionPreset, detailedCsvColumnOptions, normalizeTemplateTags, PAST_PERFORMANCE_HEADER, parsePastPerformanceCsv, saveBackupSelectionPreset, selectableHorseFields } from "../pages/Home";
+import { applyBackupSelections, backupFieldGroups, captureBackupSelections, deleteBackupSelectionPreset, detailedCsvColumnOptions, normalizeTemplateTags, PAST_PERFORMANCE_HEADER, parsePastPerformanceCsv, saveBackupSelectionPreset, selectableHorseFields } from "./horseTypes";
 
 describe("backup field categories", () => {
   it("covers every selectable horse field exactly once", () => {
