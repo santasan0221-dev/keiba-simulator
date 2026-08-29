@@ -40,7 +40,7 @@ export function TruthPanel({ race, loadStatus = "選択日の予測なし" }: { 
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   if (!race) {
     return <section className="truth-panel truth-panel--empty" aria-label="実AI予測">
-      <div className="truth-panel-heading"><span className="eyebrow">AI TRUTH PANEL</span><Database size={15} /></div>
+      <div className="truth-panel-heading"><span className="eyebrow">AI予測ステータス</span><Database size={15} /></div>
       <h3>実AI予測：{loadStatus}</h3>
       <p>{loadStatus === "正常読込済み" ? "single_pick_aiから正常に読み込まれています。" : loadStatus === "結果待ち" ? "予測は読み込み済みです。公式結果はまだ確定していません。" : loadStatus === "選択日の予測なし" ? "選択日に予測データがありません。開催日を変更してください。" : loadStatus === "認証エラー" ? "single_pick_aiの認証が必要です。" : loadStatus === "API未接続" ? "single_pick_aiへ接続できません。接続先とネットワークを確認してください。" : "single_pick_ai APIの応答を確認できません。"} 校正済みの確率だけを表示し、what-if結果とは分離しています。</p>
     </section>;
@@ -69,8 +69,8 @@ export function TruthPanel({ race, loadStatus = "選択日の予測なし" }: { 
   const ready = calibrationReady && calibratedRows.length > 0;
   const honmeiCalibrated = honmei ? hasCalibratedProbability(honmei) : false;
 
-  return <section className={`truth-panel ${ready ? "truth-panel--ready" : "truth-panel--reference"}`} aria-label="single_pick_aiの実AI予測">
-    <div className="truth-panel-heading"><span className="eyebrow">AI TRUTH PANEL · SINGLE_PICK_AI</span>{ready ? <span className="truth-state truth-state--ready"><BadgeCheck size={12} /> 校正済み</span> : <span className="truth-state truth-state--reference"><CircleAlert size={12} /> 参考・未校正</span>}</div>
+  return <section className={`truth-panel ${ready ? "truth-panel--ready" : "truth-panel--reference"}`} aria-label="AI予測の詳細">
+    <div className="truth-panel-heading"><span className="eyebrow">AI予測ステータス</span>{ready ? <span className="truth-state truth-state--ready"><BadgeCheck size={12} /> 校正済み</span> : <span className="truth-state truth-state--reference"><CircleAlert size={12} /> 参考・未校正</span>}</div>
     <div className="truth-panel-title"><div><h3>{raceName}</h3><p>{race.race.date ?? "日付未取得"} · {race.race.distance ? `${race.race.distance.toLocaleString()}m` : "距離未取得"} · {race.race.going ?? "馬場未取得"}</p></div><div className="truth-asof"><ShieldCheck size={14} /><span>AS OF</span><strong>{race.model.as_of ?? "記録時点未取得"}</strong></div></div>
     <div className="truth-primary" aria-label="AI本命と最終判断"><div className="truth-primary-pick"><span>AI本命</span>{honmei ? <strong>◎ {horseLabel(honmei)}</strong> : <strong>AI本命：取得不能</strong>}<small>最終印を正本として表示</small></div><div className={`truth-primary-decision truth-primary-decision--${decisionStatus.toLowerCase()}`}><span>最終判断</span><strong>判断：{decisionLabel(decisionStatus)}</strong>{decisionStatus === "NO_BET" ? <small>本命評価はありますが、馬券として買う条件には達していません。</small> : decisionStatus === "UNKNOWN" ? <small>見送りには変換せず、判定データ取得不能として扱います。</small> : <small>保存済みの正式選抜条件を通過しています。</small>}</div></div>
     {formalBet ? <div className="truth-formal-bet"><span>正式買い目</span><strong>{betLabel(formalBet)}</strong>{race.decision?.gate_reason ? <small>{race.decision.gate_reason}</small> : null}{honmeiOutsideFormalBet ? <small className="truth-formal-bet-note">AI本命と買い目は異なる場合があります。市場評価などを含む最終判定で買い目を選定しています。</small> : null}</div> : null}

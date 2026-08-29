@@ -101,10 +101,10 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     [races, filter],
   );
 
-  return <section id="real-race-input" className="race-catalog" aria-label="single_pick_ai実レース入力">
+  return <section id="real-race-input" className="race-catalog" aria-label="今日のAI予想一覧">
     <div className="race-catalog-panel">
     <div className="race-catalog-heading"><div><span className="eyebrow">TODAY'S AI PICKS</span><h2>今日のAI予想。</h2></div><div className="race-catalog-heading-actions"><Link href="/ai-history" className="real-race-history-link"><History size={14} /> AI履歴</Link><Database size={17} /></div></div>
-    <p className="race-catalog-intro">single_pick_aiのread-only APIから実データを読み込みます。読み込んだAI予測と、条件変更後のwhat-ifは混ぜずに表示します。</p>
+    <p className="race-catalog-intro">実際のレースデータをもとにAI予測を読み込みます。読み込んだAI予測と、条件を変えたwhat-ifの結果は混ぜずに表示します。</p>
     <div className="real-race-controls"><label><span>開催日</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><div className="real-race-org" aria-label="主催"><span>主催</span><div>{ORGS.map((value) => <button type="button" key={value} className={org === value ? "selected" : ""} onClick={() => { if (value !== org) trackBetaEvent({ name: "beta_org_switch", properties: { organization: value, source: "catalog" } }); setOrg(value); }}>{value}</button>)}</div></div><button className="real-race-refresh" type="button" onClick={refresh} disabled={loadingRaces || !date}>{loadingRaces ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />} 更新</button></div>
     {error && <div className="real-race-status real-race-status--error" role="alert"><TriangleAlert size={14} /><span>{error}</span></div>}{notice && !error && <p className="real-race-status" aria-live="polite">{notice}</p>}
     {!loadingRaces && !error && races.length > 0 && <div className="race-catalog-summary">
