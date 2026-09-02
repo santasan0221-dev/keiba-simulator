@@ -14,7 +14,10 @@ export type BetaEvent = {
 };
 
 type UmamiClient = {
-  track: (name: string, properties?: Record<string, string>) => void;
+  // Umami's real tracker allows track() with no arguments to record a plain
+  // pageview hit; the app also calls it with (name, properties) for custom
+  // events, so both call shapes need to type-check.
+  track: (name?: string, properties?: Record<string, string>) => void;
 };
 
 declare global {
@@ -99,11 +102,26 @@ export function sanitizeUmamiPayload(payload: Record<string, unknown>) {
   return sanitized;
 }
 
+function sendToUmami(event: BetaEvent) {
+  if (!window.umami?.track) return;
+  if (event.name === "beta_page_view") {
+    // data-auto-track is disabled above so this app fully controls what is
+    // sent, but Umami's dashboard (Visitors/Visits/Views/Realtime) only
+    // counts a visit that contains at least one real pageview hit
+    // (event_type 1); a visit made only of named custom events is excluded
+    // from those totals entirely. Emit one un-named pageview per page view
+    // so real traffic is reflected there. The keibaBetaBeforeSend hook still
+    // sanitizes url/referrer/title on this call like any other.
+    window.umami.track();
+  }
+  window.umami.track(event.name, event.properties);
+}
+
 export function trackBetaEvent(event: BetaEvent) {
   const sanitized = sanitizeEvent(event);
   if (!sanitized || typeof window === "undefined") return false;
   if (window.umami?.track) {
-    window.umami.track(sanitized.name, sanitized.properties);
+    sendToUmami(sanitized);
   } else {
     queuedEvents.push(sanitized);
   }
@@ -112,9 +130,7 @@ export function trackBetaEvent(event: BetaEvent) {
 
 function flushQueue() {
   if (!window.umami?.track) return;
-  queuedEvents.splice(0).forEach((event) => {
-    window.umami?.track(event.name, event.properties);
-  });
+  queuedEvents.splice(0).forEach(sendToUmami);
 }
 
 export function routeName(pathname: string, basePath = "") {

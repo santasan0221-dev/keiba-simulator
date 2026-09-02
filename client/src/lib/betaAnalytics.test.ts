@@ -5,6 +5,7 @@ import {
   normalizeAnalyticsConfig,
   sanitizeUmamiPayload,
   sanitizeEvent,
+  trackBetaEvent,
   type BetaEvent,
 } from "./betaAnalytics";
 
@@ -110,6 +111,35 @@ describe("public beta analytics privacy contract", () => {
       title: "KEIBA TRACE Public Beta",
       name: "beta_page_view",
       data: { route: "race_detail" },
+    });
+  });
+
+  describe("Umami visit counting (regression: dashboard showed 0 visitors/visits/views)", () => {
+    it("sends an un-named pageview hit before the beta_page_view custom event, so the visit is not custom-event-only", () => {
+      const track = vi.fn();
+      vi.stubGlobal("window", { umami: { track } });
+
+      trackBetaEvent({ name: "beta_page_view", properties: { route: "home" } });
+
+      expect(track).toHaveBeenNthCalledWith(1);
+      expect(track).toHaveBeenNthCalledWith(2, "beta_page_view", { route: "home" });
+      expect(track).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not send an extra pageview hit for non-page-view events", () => {
+      const track = vi.fn();
+      vi.stubGlobal("window", { umami: { track } });
+
+      trackBetaEvent({ name: "beta_share", properties: { organization: "JRA", method: "native" } });
+
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith("beta_share", { organization: "JRA", method: "native" });
+    });
+
+    it("does nothing (no throw) when umami is not yet loaded", () => {
+      expect(() =>
+        trackBetaEvent({ name: "beta_page_view", properties: { route: "member" } }),
+      ).not.toThrow();
     });
   });
 });
