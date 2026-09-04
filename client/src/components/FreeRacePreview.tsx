@@ -1,7 +1,20 @@
 import { CalendarClock, CircleAlert, ExternalLink, LockKeyhole, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
-import { fetchRace, type LabRace } from "@/lib/singlePickAi";
+import { fetchRace, type LabHorse, type LabRace } from "@/lib/singlePickAi";
 import { getFreeScopeState, parseFreeScopeManifest, verifyFreeRace, type FreeScopeManifest } from "@/lib/freeScopeRule";
+
+// AI本命 is only ever the horse whose saved final_mark is exactly "◎" --
+// never the model's raw ai_rank (a score-rank position, not a mark), never
+// v23k_rank, never the highest score. A missing or duplicate ◎ must fail
+// closed (null) here, not fall back to rank or arbitrarily pick one match.
+// This preview additionally requires a name and a calibrated win
+// probability, since its whole point is showing that calibrated number --
+// that requirement is independent of, and unrelated to, the mark contract.
+export function selectFreeRaceHonmei(horses: LabHorse[]): LabHorse | null {
+  const honmeiRows = horses.filter((horse) => horse.display?.final_mark === "◎");
+  const honmei = honmeiRows.length === 1 ? honmeiRows[0] : null;
+  return honmei && honmei.name && typeof honmei.model.win_prob_calibrated === "number" ? honmei : null;
+}
 
 type LoadState =
   | { kind: "LOADING" }
@@ -58,7 +71,7 @@ export function FreeRacePreview() {
   if (!race) return <section className="free-race-preview is-pending" aria-busy="true"><span className="eyebrow">FREE PRE-RACE / LOADING</span><h2>固定公開対象を読み込んでいます。</h2><p>正本のrace key、発走時刻、prediction as-of、校正状態を一致確認しています。</p></section>;
 
   const hasStarted = Date.now() >= Date.parse(scope.entry.scheduled_start_at);
-  const top = race.horses.find((horse) => horse.model.ai_rank === 1 && horse.name && typeof horse.model.win_prob_calibrated === "number");
+  const top = selectFreeRaceHonmei(race.horses);
   if (hasStarted) return <section className="free-race-preview is-postrace"><LockKeyhole size={18} /><div><span className="eyebrow">FREE PRE-RACE / CLOSED</span><h2>このFREE発走前公開は終了しました。</h2><p>固定されたrace keyは保持しています。公式結果の状態は事後公開で確認してください。</p><a href="/ai-history"><CalendarClock size={14} /> 全レースの事後公開を見る</a></div></section>;
   if (!top) return <section className="free-race-preview is-error" role="alert"><CircleAlert size={18} /><div><span className="eyebrow">FREE PRE-RACE / UNAVAILABLE</span><h2>校正済みのFREE予測を確認できません。</h2><p>本命または校正済み確率が正本から得られないため、予測値は表示しません。</p></div></section>;
 
