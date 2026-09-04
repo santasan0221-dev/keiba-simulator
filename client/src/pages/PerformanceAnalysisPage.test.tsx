@@ -72,8 +72,8 @@ describe("ModelRow (実績・分析 ROI display contract)", () => {
     const markup = renderToStaticMarkup(<ModelRow row={championRow} />);
     expect(markup).toContain("正式モデル");
     expect(markup).toContain("100円固定シミュレーション");
-    expect(markup).toContain("単勝回収率（100円固定・仮想）");
-    expect(markup).toContain("複勝回収率（100円固定・仮想）");
+    expect(markup).toContain("単勝ROI（100円固定・仮想）");
+    expect(markup).toContain("複勝ROI（100円固定・仮想）");
     expect(markup).not.toContain("ACTUAL");
     expect(markup).not.toContain("正本値");
     expect(markup).not.toContain("実績ROI");
@@ -83,8 +83,42 @@ describe("ModelRow (実績・分析 ROI display contract)", () => {
     const markup = renderToStaticMarkup(<ModelRow row={shadowRow} />);
     expect(markup).toContain("研究用");
     expect(markup).toContain("100円固定シミュレーション");
-    expect(markup).toContain("単勝回収率（100円固定・仮想）");
+    expect(markup).toContain("単勝ROI（100円固定・仮想）");
     expect(markup).not.toContain("ACTUAL");
+  });
+
+  it("CASE 3: the old 回収率 label no longer renders on the champion row", () => {
+    const markup = renderToStaticMarkup(<ModelRow row={championRow} />);
+    expect(markup).not.toContain("単勝回収率（100円固定・仮想）");
+    expect(markup).not.toContain("複勝回収率（100円固定・仮想）");
+  });
+
+  it("CASE 4: the old 回収率 label no longer renders on the shadow row", () => {
+    const markup = renderToStaticMarkup(<ModelRow row={shadowRow} />);
+    expect(markup).not.toContain("単勝回収率（100円固定・仮想）");
+    expect(markup).not.toContain("複勝回収率（100円固定・仮想）");
+  });
+
+  it("CASE 2: a positive place_roi renders as a positive percent, not a raw fraction", () => {
+    const row: ModelComparisonRow = { ...championRow, simulatedPlaceRoi: metric(0.123) };
+    const markup = renderToStaticMarkup(<ModelRow row={row} />);
+    expect(markup).toContain("12.300%");
+    expect(markup).not.toContain("0.123");
+  });
+
+  it("CASE 7: champion and shadow ROI percent formatting match (same digits, same % suffix)", () => {
+    const championMarkup = renderToStaticMarkup(<ModelRow row={championRow} />);
+    const shadowMarkup = renderToStaticMarkup(<ModelRow row={shadowRow} />);
+    expect(championMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d{3}%/);
+    expect(shadowMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d{3}%/);
+  });
+
+  it("CASE 8: a PENDING_DATA/unavailable ROI still shows the existing status label, not NaN% or a raw fraction", () => {
+    const row: ModelComparisonRow = { ...championRow, simulatedWinRoi: metric(null, "PENDING_DATA") };
+    const markup = renderToStaticMarkup(<ModelRow row={row} />);
+    expect(markup).toContain("データ確認中");
+    expect(markup).not.toContain("NaN");
+    expect(markup).not.toContain("null%");
   });
 });
 
@@ -148,10 +182,13 @@ describe("ModelRow (champion ROI evaluation-count disclosure)", () => {
     expect(markup).not.toContain("NaN");
   });
 
-  it("CASE 9: does not alter the existing win/place ROI values", () => {
+  it("CASE 9: does not alter the underlying win/place ROI values, only their display format (fraction -> percent)", () => {
     const markup = renderToStaticMarkup(<ModelRow row={championRow} />);
-    expect(markup).toContain("-0.285");
-    expect(markup).toContain("-0.270");
+    // -0.2851694915254237 * 100, -0.27033898305084747 * 100, same digits=3
+    // formatting metricText already applies -- the number itself is
+    // unchanged, only asPercent=true now converts and appends "%".
+    expect(markup).toContain("-28.517%");
+    expect(markup).toContain("-27.034%");
   });
 
   it("CASE 10: preserves the existing simulation disclaimers", () => {
@@ -169,5 +206,10 @@ describe("PerformanceAnalysisPage (page-level ROI disclaimer)", () => {
     expect(markup).toContain("100円を購入したと仮定");
     expect(markup).toContain("実際の馬券購入履歴や実収支ではありません");
     expect(markup).not.toContain("実績の収益と明確に分離");
+  });
+
+  it("CASE 6: keeps the formal BET/no-bet independence disclaimer", () => {
+    const markup = renderToStaticMarkup(<PerformanceAnalysisPage />);
+    expect(markup).toContain("BET/見送り判定とは別");
   });
 });

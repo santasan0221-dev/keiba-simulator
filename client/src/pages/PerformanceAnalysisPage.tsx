@@ -29,8 +29,8 @@ export function ModelRow({ row }: { row: ModelComparisonRow }) {
       <Metric label="Top3的中率" value={row.top3HitRate} percent />
       <Metric label="MRR" value={row.winnerMrr} />
       <Metric label="NDCG@3" value={row.ndcgAt3} />
-      <Metric label="単勝回収率（100円固定・仮想）" value={row.simulatedWinRoi} />
-      <Metric label="複勝回収率（100円固定・仮想）" value={row.simulatedPlaceRoi} />
+      <Metric label="単勝ROI（100円固定・仮想）" value={row.simulatedWinRoi} percent />
+      <Metric label="複勝ROI（100円固定・仮想）" value={row.simulatedPlaceRoi} percent />
       {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} className="lab-model-metric--wide" />}
       {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} className="lab-model-metric--wide" />}
     </div>
