@@ -325,7 +325,10 @@ export type LabHealth = {
 
 export type LabResultStatus = "CONFIRMED" | "DEAD_HEAT" | "PENDING" | "REVIEW_REQUIRED" | "FAILED" | "RACE_STOPPED" | string;
 export type LabResultHorse = number | { finish: number | null; horse_no: number | null; horse_name: string | null };
-export type LabResultPredictionHorse = number | { rank: number | null; horse_no: number | null; horse_name: string | null };
+// Each entry carries its own saved final_mark -- never infer ◎/○/▲ from
+// array position. There is no rank field here on purpose: ai_rank/v23k_rank
+// are not the prediction mark and must never be read to build this list.
+export type LabResultPredictionHorse = { mark: "◎" | "○" | "▲"; horse_no: number; horse_name: string | null };
 export type LabResultListItem = {
   race_key: string;
   race_date: string | null;

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarDays, Clock3, Database, RefreshCw, Rows3, SlidersHorizontal } from "lucide-react";
 import { DailyOperationsStrip } from "./DailyOperationsStrip";
-import { LabApiError, fetchAvailablePredictionDates, fetchLabResults, type LabResultListItem } from "@/lib/singlePickAi";
+import { LabApiError, fetchAvailablePredictionDates, fetchLabResults, type LabResultListItem, type LabResultPredictionHorse } from "@/lib/singlePickAi";
 
 type OrganizationFilter = "" | "JRA" | "NAR";
 
@@ -41,15 +41,24 @@ export function requestedResultValue(status: string | null, value: number | null
   return statusText(status);
 }
 
+// Each predicted_top3 entry carries its own saved final_mark -- render it
+// directly, never derive ◎/○/▲ from the entry's position in the array.
+// Kept to the same "#<horse_no>" format the display used before this fix
+// (predicted_top3 previously carried no name data at all); not a display
+// redesign, only the mark source changed.
+export function predictedMarkLabel(entry: LabResultPredictionHorse): string {
+  return `${entry.mark}#${entry.horse_no}`;
+}
+
 function ResultRow({ item }: { item: LabResultListItem }) {
-  const predicted = item.predicted_top3?.map((horse, index) => horseLabel(horse, index + 1)).filter((value): value is string => Boolean(value)) ?? [];
+  const predicted = item.predicted_top3?.map(predictedMarkLabel) ?? [];
   const official = item.official_top3?.map((horse, index) => horseLabel(horse, index + 1)).filter((value): value is string => Boolean(value)) ?? [];
   const isConfirmed = item.result_status === "CONFIRMED" || item.result_status === "DEAD_HEAT";
   const rowClass = isConfirmed ? "is-confirmed" : item.result_status === "PENDING" ? "is-pending" : "is-review";
 
   return <article className={`ops-result-row ${rowClass}`}>
     <div className="ops-result-race"><strong>{item.organization ?? "主催未取得"} · {item.venue ?? "会場未取得"} {item.race_no ? `${item.race_no}R` : "レース番号未取得"}</strong><small>発走 {dateTime(item.scheduled_start_at)} · 予測生成 {dateTime(item.prediction_created_at)}</small></div>
-    <div><span>◎○▲</span><strong>{predicted.length ? predicted.map((horse, index) => `${["◎", "○", "▲"][index]}${horse}`).join(" ") : "取得不能"}</strong></div>
+    <div><span>◎○▲</span><strong>{predicted.length ? predicted.join(" ") : "取得不能"}</strong></div>
     <div><span>公式1〜3着</span><strong>{official.length ? official.join(" / ") : item.special_statuses?.length ? item.special_statuses.join(" / ") : item.result_status === "PENDING" ? "未確定" : "取得不能"}</strong></div>
     <div><span>◎着順 / top3 coverage</span><strong>{requestedResultValue(item.result_status, item.ai_pick_finish, "finish")} / {requestedResultValue(item.result_status, item.top3_coverage, "coverage")}</strong></div>
     <div><span>結果状態</span><strong>{statusText(item.result_status)}{item.special_statuses?.length ? ` · ${item.special_statuses.join(" / ")}` : ""}</strong></div>
