@@ -120,6 +120,20 @@ describe("ModelRow (実績・分析 ROI display contract)", () => {
     expect(markup).not.toContain("NaN");
     expect(markup).not.toContain("null%");
   });
+
+  it("CASE 11 (percent formatter correctness): a win_roi above +100% renders 150.000%, not 1.500%", () => {
+    const row: ModelComparisonRow = { ...championRow, simulatedWinRoi: metric(1.5) };
+    const markup = renderToStaticMarkup(<ModelRow row={row} />);
+    expect(markup).toContain("150.000%");
+    expect(markup).not.toContain("1.500%");
+  });
+
+  it("hit rates are unaffected by the percent formatter fix (still <= 1 in practice, still convert the same way)", () => {
+    const row: ModelComparisonRow = { ...championRow, top1HitRate: metric(0.17445), top3HitRate: metric(0.5813) };
+    const markup = renderToStaticMarkup(<ModelRow row={row} />);
+    expect(markup).toContain("17.445%");
+    expect(markup).toContain("58.130%");
+  });
 });
 
 // Regression coverage for the FINAL_MARK_HONMEI evaluation-count disclosure:

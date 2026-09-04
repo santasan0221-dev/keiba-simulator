@@ -242,6 +242,12 @@ export async function fetchFreeRace(): Promise<FeatureResult<FreeRacePayload>> {
 
 export function metricText(metric: CanonicalMetric, digits = 1, asPercent = false): string {
   if (metric.state !== "AVAILABLE" || metric.value === null) return featureStateLabel(metric.state);
-  const value = asPercent ? (metric.value <= 1 ? metric.value * 100 : metric.value) : metric.value;
+  // asPercent's contract: every caller passes a fraction/ratio (hit rates
+  // in [0,1], ROI unbounded above but never pre-scaled) -- always convert,
+  // never guess from the value's own magnitude. A prior `value <= 1 ? *100
+  // : as-is` heuristic silently under-rendered any ratio > 1 (e.g. a +150%
+  // ROI showed as "1.500%" instead of "150.000%"), which never affected
+  // hit rates (always <= 1) but was a real bug for ROI, corrected here.
+  const value = asPercent ? metric.value * 100 : metric.value;
   return `${value.toFixed(digits)}${asPercent ? "%" : ""}`;
 }

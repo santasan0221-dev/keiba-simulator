@@ -114,3 +114,44 @@ describe("public feature API fail-closed boundary", () => {
     expect(result.message).toBe("本日のFREE対象レースはまだ選定されていません。");
   });
 });
+
+// Regression coverage for the percent-formatter correctness fix: asPercent
+// must always multiply by 100 on every caller's fraction/ratio contract,
+// never guess based on whether the value happens to already be <= 1 --
+// that heuristic silently under-rendered any ratio > 1 (ROI can exceed
+// +100%; hit rates never do, which is exactly why this went unnoticed).
+describe("metricText (percent conversion contract)", () => {
+  const available = (value: number) => ({ state: "AVAILABLE", value });
+
+  it("0 -> 0.000%", () => {
+    expect(metricText(available(0), 3, true)).toBe("0.000%");
+  });
+
+  it("a hit-rate-shaped fraction (0.175) -> 17.500%", () => {
+    expect(metricText(available(0.175), 3, true)).toBe("17.500%");
+  });
+
+  it("exactly 1 (the old heuristic's boundary) -> 100.000%, not 1.000%", () => {
+    expect(metricText(available(1), 3, true)).toBe("100.000%");
+  });
+
+  it("a ROI-shaped ratio above 1 (1.5, i.e. +150%) -> 150.000%, not 1.500%", () => {
+    expect(metricText(available(1.5), 3, true)).toBe("150.000%");
+  });
+
+  it("2.25 -> 225.000%", () => {
+    expect(metricText(available(2.25), 3, true)).toBe("225.000%");
+  });
+
+  it("a real negative ROI (-0.285) -> -28.500%", () => {
+    expect(metricText(available(-0.285), 3, true)).toBe("-28.500%");
+  });
+
+  it("-1 (the ROI floor, a total loss) -> -100.000%", () => {
+    expect(metricText(available(-1), 3, true)).toBe("-100.000%");
+  });
+
+  it("unavailable/null still falls back to the existing status label, not a percent", () => {
+    expect(metricText({ state: "PENDING_DATA", value: null }, 3, true)).toBe(featureStateLabel("PENDING_DATA"));
+  });
+});
