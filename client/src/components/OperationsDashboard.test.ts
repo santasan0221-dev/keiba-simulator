@@ -46,4 +46,21 @@ describe("predictedMarkLabel (AI history mark display contract)", () => {
     const entries: LabResultPredictionHorse[] = [{ mark: "◎", horse_no: 10, horse_name: "本命馬" }];
     expect(entries.map(predictedMarkLabel)).toEqual(["◎#10"]);
   });
+
+  it("an empty list (missing final_mark, per backend's _marked_top3 omission contract) maps to no labels -- callers must not fabricate a fallback pick", () => {
+    const entries: LabResultPredictionHorse[] = [];
+    expect(entries.map(predictedMarkLabel)).toEqual([]);
+  });
+
+  it("never collapses a malformed duplicate-◎ list to a single arbitrary winner -- both render, neither is silently dropped", () => {
+    // Backend's _marked_top3 already omits any mark slot with zero or more
+    // than one match, so this shape should never actually arrive over the
+    // wire -- this pins the frontend's own fail-safe behavior in case that
+    // contract is ever violated upstream: it must show both, never guess.
+    const entries: LabResultPredictionHorse[] = [
+      { mark: "◎", horse_no: 3, horse_name: "馬A" },
+      { mark: "◎", horse_no: 8, horse_name: "馬B" },
+    ];
+    expect(entries.map(predictedMarkLabel)).toEqual(["◎#3", "◎#8"]);
+  });
 });
