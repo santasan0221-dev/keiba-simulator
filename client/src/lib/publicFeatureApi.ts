@@ -61,6 +61,16 @@ export type ModelComparisonRow = {
   simulatedPlaceRoi: CanonicalMetric;
   rankResidual: CanonicalMetric;
   marginSeconds: CanonicalMetric;
+  // Champion-only (2026-09 FINAL_MARK_HONMEI contract). Absent on shadow
+  // rows -- normalizeMetric's UNAVAILABLE/null default applies, never a
+  // fabricated 0, so a shadow row and an old/missing-field champion
+  // response are indistinguishable from "no data" here, not "zero".
+  evaluationBasis: string | null;
+  uniqueHonmeiCount: CanonicalMetric;
+  evaluatedCount: CanonicalMetric;
+  missingHonmeiCount: CanonicalMetric;
+  duplicateHonmeiCount: CanonicalMetric;
+  inactiveHonmeiCount: CanonicalMetric;
 };
 
 export type ModelDetailPayload = {
@@ -185,6 +195,12 @@ function normalizeModel(value: unknown): ModelComparisonRow | null {
     simulatedPlaceRoi: normalizeMetric(value.place_roi),
     rankResidual: normalizeMetric(value.rank_residual),
     marginSeconds: normalizeMetric(value.margin_seconds),
+    evaluationBasis: stringOrNull(value.evaluation_basis),
+    uniqueHonmeiCount: normalizeMetric(value.unique_honmei_count),
+    evaluatedCount: normalizeMetric(value.evaluated_count),
+    missingHonmeiCount: normalizeMetric(value.missing_honmei_count),
+    duplicateHonmeiCount: normalizeMetric(value.duplicate_honmei_count),
+    inactiveHonmeiCount: normalizeMetric(value.inactive_honmei_count),
   };
 }
 

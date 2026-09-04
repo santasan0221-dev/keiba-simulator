@@ -14,6 +14,12 @@ function Metric({ label, value, percent = false }: { label: string; value: Model
 
 export function ModelRow({ row }: { row: ModelComparisonRow }) {
   const isChampion = row.evaluationMode === "CHAMPION_FIXED_STAKE_SIMULATION";
+  // Only surface these when the backend actually sent a number for this
+  // row -- a shadow row (no champion-only fields at all) or an old
+  // response missing the field both land on state !== "AVAILABLE", and
+  // must stay hidden rather than read as a fabricated 0-count.
+  const showInactiveNote = isChampion && row.inactiveHonmeiCount.state === "AVAILABLE" && (row.inactiveHonmeiCount.value ?? 0) > 0;
+  const showDuplicateNote = isChampion && row.duplicateHonmeiCount.state === "AVAILABLE" && (row.duplicateHonmeiCount.value ?? 0) > 0;
   return <article className={`lab-model-row ${isChampion ? "is-actual" : "is-shadow"}`}>
     <header><div><span className="eyebrow">{isChampion ? "正式モデル｜100円固定シミュレーション" : "研究用（参考）｜100円固定シミュレーション"}</span><h2>{row.modelId}</h2><p>{row.modelStage ?? "stage未取得"} · サンプル状況 {featureStateLabel(row.sampleStatus)}</p></div><span className="lab-model-state">{featureStateLabel(row.sampleStatus)}</span></header>
     <div className="lab-model-metrics">
@@ -25,7 +31,14 @@ export function ModelRow({ row }: { row: ModelComparisonRow }) {
       <Metric label="NDCG@3" value={row.ndcgAt3} />
       <Metric label="単勝回収率（100円固定・仮想）" value={row.simulatedWinRoi} />
       <Metric label="複勝回収率（100円固定・仮想）" value={row.simulatedPlaceRoi} />
+      {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} />}
+      {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} />}
     </div>
+    {isChampion && <div className="lab-model-roi-basis">
+      <p>ROIは保存済みAI本命◎が一意に存在し、評価可能なレースのみを対象にしています。</p>
+      {showInactiveNote && <p className="lab-model-roi-note">取消・除外等による評価対象外：{row.inactiveHonmeiCount.value}件</p>}
+      {showDuplicateNote && <p className="lab-model-roi-note">AI本命◎重複による評価対象外：{row.duplicateHonmeiCount.value}件</p>}
+    </div>}
   </article>;
 }
 
