@@ -40,10 +40,15 @@ export type BettingCandidatesPayload = {
   decisions: OfficialBettingCandidate[];
 };
 
+// Both evaluation modes are the SAME fixed-100-yen single-pick simulation
+// family -- neither is real purchase data. They differ only in whose pick
+// is priced (the formal champion vs. a research shadow model), never in
+// whether real money was involved. Do not reintroduce "ACTUAL"/"real"-style
+// naming here or in simulatedWinRoi/simulatedPlaceRoi below.
 export type ModelComparisonRow = {
   modelId: string;
   modelStage: string | null;
-  evaluationMode: "ACTUAL" | "SHADOW_HYPOTHETICAL" | string | null;
+  evaluationMode: "CHAMPION_FIXED_STAKE_SIMULATION" | "SHADOW_FIXED_STAKE_SIMULATION" | string | null;
   sampleStatus: PublicFeatureState;
   period: { start: string | null; end: string | null; range: string | null } | null;
   predictionCount: CanonicalMetric;
@@ -52,8 +57,8 @@ export type ModelComparisonRow = {
   top3HitRate: CanonicalMetric;
   winnerMrr: CanonicalMetric;
   ndcgAt3: CanonicalMetric;
-  actualWinRoi: CanonicalMetric;
-  actualPlaceRoi: CanonicalMetric;
+  simulatedWinRoi: CanonicalMetric;
+  simulatedPlaceRoi: CanonicalMetric;
   rankResidual: CanonicalMetric;
   marginSeconds: CanonicalMetric;
 };
@@ -176,8 +181,8 @@ function normalizeModel(value: unknown): ModelComparisonRow | null {
     top3HitRate: normalizeMetric(value.top3_hit_rate),
     winnerMrr: normalizeMetric(value.winner_mrr),
     ndcgAt3: normalizeMetric(value.ndcg_at_3),
-    actualWinRoi: normalizeMetric(value.win_roi),
-    actualPlaceRoi: normalizeMetric(value.place_roi),
+    simulatedWinRoi: normalizeMetric(value.win_roi),
+    simulatedPlaceRoi: normalizeMetric(value.place_roi),
     rankResidual: normalizeMetric(value.rank_residual),
     marginSeconds: normalizeMetric(value.margin_seconds),
   };

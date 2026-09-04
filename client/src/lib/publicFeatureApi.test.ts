@@ -71,7 +71,7 @@ describe("public feature API fail-closed boundary", () => {
       models: [{
         model_id: "v24",
         model_stage: "SHADOW",
-        evaluation_mode: "SHADOW_HYPOTHETICAL",
+        evaluation_mode: "SHADOW_FIXED_STAKE_SIMULATION",
         sample_status: "PENDING_DATA",
         period: { start: "1970-01-01T00:00:00+00:00", end: "2026-08-22T00:00:00+00:00", range: "lifetime" },
         prediction_count: { status: "PENDING_DATA", value: 0 },
