@@ -8,8 +8,8 @@ import { featureStateLabel } from "@/lib/labels";
 const pendingComparison: FeatureResult<ModelComparisonRow[]> = { state: "PENDING_DATA", data: null, message: "正本のモデル比較を確認しています。", detail: null };
 const pendingDetail: FeatureResult<ModelDetailPayload> = { state: "PENDING_DATA", data: null, message: "モデル詳細の閲覧状態を確認しています。", detail: null };
 
-function Metric({ label, value, percent = false }: { label: string; value: ModelComparisonRow["predictionCount"]; percent?: boolean }) {
-  return <div><span>{label}</span><strong>{metricText(value, 3, percent)}</strong></div>;
+function Metric({ label, value, percent = false, className }: { label: string; value: ModelComparisonRow["predictionCount"]; percent?: boolean; className?: string }) {
+  return <div className={className}><span>{label}</span><strong>{metricText(value, 3, percent)}</strong></div>;
 }
 
 export function ModelRow({ row }: { row: ModelComparisonRow }) {
@@ -31,8 +31,8 @@ export function ModelRow({ row }: { row: ModelComparisonRow }) {
       <Metric label="NDCG@3" value={row.ndcgAt3} />
       <Metric label="単勝回収率（100円固定・仮想）" value={row.simulatedWinRoi} />
       <Metric label="複勝回収率（100円固定・仮想）" value={row.simulatedPlaceRoi} />
-      {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} />}
-      {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} />}
+      {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} className="lab-model-metric--wide" />}
+      {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} className="lab-model-metric--wide" />}
     </div>
     {isChampion && <div className="lab-model-roi-basis">
       <p>ROIは保存済みAI本命◎が一意に存在し、評価可能なレースのみを対象にしています。</p>

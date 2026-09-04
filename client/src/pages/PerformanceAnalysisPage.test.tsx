@@ -110,6 +110,13 @@ describe("ModelRow (champion ROI evaluation-count disclosure)", () => {
     expect(markup).toContain("84");
   });
 
+  it("CASE 3b: the two new metrics complete the desktop grid's last row (lab-model-metric--wide), shadow never carries it", () => {
+    const championMarkup = renderToStaticMarkup(<ModelRow row={championRow} />);
+    expect((championMarkup.match(/lab-model-metric--wide/g) ?? []).length).toBe(2);
+    const shadowMarkup = renderToStaticMarkup(<ModelRow row={shadowRow} />);
+    expect(shadowMarkup).not.toContain("lab-model-metric--wide");
+  });
+
   it("CASE 4: shows the inactive-honmei note when inactive_honmei_count > 0", () => {
     const markup = renderToStaticMarkup(<ModelRow row={championRow} />);
     expect(markup).toContain("取消・除外等による評価対象外：1件");
