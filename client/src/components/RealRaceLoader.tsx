@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { CircleCheck, Database, History, Hourglass, LoaderCircle, Minus, RefreshCw, TriangleAlert } from "lucide-react";
 import { Link } from "wouter";
 import type { Horse } from "@/lib/horseTypes";
-import { fetchAvailablePredictionDates, fetchRace, fetchRaces, getApiBase, toHorses, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
+import { fetchAvailablePredictionDates, fetchRaces, getApiBase, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { retrySinglePick } from "@/lib/singlePickRetry";
 import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 import { decisionBucketLabel, decisionLabel, normalizeDecisionStatus } from "@/lib/labels";
+import { raceKeyToPath } from "@/lib/raceShareUrl";
 
 const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
@@ -34,21 +35,34 @@ function decisionIcon(bucket: DecisionBucket) {
   return Hourglass;
 }
 
+/**
+ * 詳細を見る opens the race's own URL (/race/:org/:date/:venue/:no), so the
+ * detail is always the first thing on screen, back/forward work, and the URL
+ * can be shared. Replaces the old in-page load, which rendered the detail far
+ * below the list with no navigation or scroll.
+ */
+export function RaceDetailLink({ raceKey }: { raceKey: string }) {
+  const path = raceKeyToPath(raceKey);
+  if (!path) return <span className="real-race-detail-button is-disabled" aria-disabled="true">詳細URLを作成できません</span>;
+  return <Link href={path} className="real-race-detail-button" onClick={() => trackBetaEvent({ name: "beta_race_select", properties: { organization: organizationFromRaceKey(raceKey), source: "catalog" } })}>詳細を見る<span aria-hidden="true"> ＞</span></Link>;
+}
+
 async function findLatestPredictionDate() {
   const result = await fetchAvailablePredictionDates();
   return result.latest_prediction_date ?? "";
 }
 
-export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: RealRaceLoad) => void; onStatusChange?: (status: RealRaceLoadStatus) => void }) {
+// onLoad stays in the props contract Home is tested against, but race
+// selection now navigates to the race URL (RaceDetailLink) instead of
+// loading the race into Home, so it is no longer called from here.
+export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLoad) => void; onStatusChange?: (status: RealRaceLoadStatus) => void }) {
   const [base] = useState(getApiBase());
   const [date, setDate] = useState("");
   const [org, setOrg] = useState<(typeof ORGS)[number]>("NAR");
   const [races, setRaces] = useState<LabRaceListItem[]>([]);
   const [loadingRaces, setLoadingRaces] = useState(false);
-  const [loadingRaceKey, setLoadingRaceKey] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [selectedRaceKey, setSelectedRaceKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<DecisionFilter>("ALL");
 
   const refresh = () => {
@@ -75,18 +89,6 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
     return () => { active = false; };
   }, []);
   useEffect(() => { refresh(); }, [date, org, base]);
-
-  const loadRace = async (raceKey: string) => {
-    trackBetaEvent({ name: "beta_race_select", properties: { organization: organizationFromRaceKey(raceKey), source: "catalog" } });
-    setLoadingRaceKey(raceKey); setSelectedRaceKey(raceKey); setError(""); setNotice("実レースの入力データを確認しています。");
-    try {
-      const race = await retrySinglePick(() => fetchRace(raceKey), { onRetry: ({ attempt, maxAttempts, nextDelayMs }) => setNotice(`実レースの取得を再試行しています（${attempt + 1}/${maxAttempts}回・${(nextDelayMs / 1000).toFixed(1)}秒後）。`) });
-      onLoad({ race, horses: toHorses(race) });
-      onStatusChange?.("正常読込済み");
-      setNotice(race.model.calibration_status === "READY" ? "実レースを読み込みました。校正済み予測はTRUTH PANEL、what-ifは別セクションに表示します。" : "実レースを読み込みました。確率は未校正のため、TRUTH PANELでは数値を表示しません。");
-    } catch (reason) { onStatusChange?.("API応答エラー"); setError(`API応答エラー。実レースを読み込めませんでした。${reason instanceof Error ? reason.message : String(reason)}`); setNotice(""); }
-    finally { setLoadingRaceKey(null); }
-  };
 
   // Client-side only: counts and filtering over the already-fetched race
   // array. Never touches race.decision.status or how BET/NO_BET/UNKNOWN is
@@ -122,7 +124,7 @@ export function RealRaceLoader({ onLoad, onStatusChange }: { onLoad: (loaded: Re
         <div className="real-race-card-head"><strong>{race.venue ?? race.race_key}{race.race_no ? ` ${race.race_no}R` : ""}</strong><span>{formatStartTime(race.scheduled_start_at)}</span></div>
         <div className="real-race-card-pick"><span className="real-race-pick-label">AI本命</span>{honmei ? <strong className="real-race-pick-name">◎ {honmei.name}</strong> : <strong className="real-race-pick-name real-race-pick-name--empty">AI本命なし</strong>}</div>
         <div className={`real-race-card-decision real-race-card-decision--${bucket.toLowerCase()}`}><DecisionIcon size={13} aria-hidden="true" /><span>{decisionLabel(race.decision?.status ?? "UNKNOWN")}</span></div>
-        <button type="button" className="real-race-detail-button" disabled={loadingRaceKey !== null} onClick={() => loadRace(race.race_key)}>{loadingRaceKey === race.race_key ? <LoaderCircle className="spin" size={14} /> : <>詳細を見る<span aria-hidden="true"> ＞</span></>}</button>
+        <RaceDetailLink raceKey={race.race_key} />
       </div>;
     }) : races.length ? <div className="real-race-empty">この条件に一致するレースがありません</div> : <div className="real-race-empty">{date ? "取得できるレースがありません" : "予測可能日を確認しています"}</div>}</div>
     <p className="real-race-provenance"><strong>能力値の出所:</strong> 末脚はv23k実値。as-of履歴として明示される項目のみ履歴実値、それ以外の補助能力は暫定値です。詳細は出走馬タブで確認できます。</p>

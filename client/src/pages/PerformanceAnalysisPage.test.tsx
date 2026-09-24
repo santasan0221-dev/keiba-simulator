@@ -102,15 +102,16 @@ describe("ModelRow (実績・分析 ROI display contract)", () => {
   it("CASE 2: a positive place_roi renders as a positive percent, not a raw fraction", () => {
     const row: ModelComparisonRow = { ...championRow, simulatedPlaceRoi: metric(0.123) };
     const markup = renderToStaticMarkup(<ModelRow row={row} />);
-    expect(markup).toContain("12.300%");
+    expect(markup).toContain("12.3%");
+    expect(markup).not.toContain("12.300%");
     expect(markup).not.toContain("0.123");
   });
 
   it("CASE 7: champion and shadow ROI percent formatting match (same digits, same % suffix)", () => {
     const championMarkup = renderToStaticMarkup(<ModelRow row={championRow} />);
     const shadowMarkup = renderToStaticMarkup(<ModelRow row={shadowRow} />);
-    expect(championMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d{3}%/);
-    expect(shadowMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d{3}%/);
+    expect(championMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d%/);
+    expect(shadowMarkup).toMatch(/単勝ROI（100円固定・仮想）<\/span><strong>-?\d+\.\d%/);
   });
 
   it("CASE 8: a PENDING_DATA/unavailable ROI still shows the existing status label, not NaN% or a raw fraction", () => {
@@ -121,18 +122,27 @@ describe("ModelRow (実績・分析 ROI display contract)", () => {
     expect(markup).not.toContain("null%");
   });
 
-  it("CASE 11 (percent formatter correctness): a win_roi above +100% renders 150.000%, not 1.500%", () => {
+  it("CASE 11 (percent formatter correctness): a win_roi above +100% renders 150.0%, not 1.5%", () => {
     const row: ModelComparisonRow = { ...championRow, simulatedWinRoi: metric(1.5) };
     const markup = renderToStaticMarkup(<ModelRow row={row} />);
-    expect(markup).toContain("150.000%");
-    expect(markup).not.toContain("1.500%");
+    expect(markup).toContain("150.0%");
+    expect(markup).not.toContain(">1.5%");
+  });
+
+  it("counts render as integers with separators, never with decimals", () => {
+    const row: ModelComparisonRow = { ...championRow, predictionCount: metric(1612), confirmedCount: metric(1480) };
+    const markup = renderToStaticMarkup(<ModelRow row={row} />);
+    expect(markup).toContain("1,612");
+    expect(markup).toContain("1,480");
+    expect(markup).not.toContain("1612.000");
+    expect(markup).not.toContain("1480.000");
   });
 
   it("hit rates are unaffected by the percent formatter fix (still <= 1 in practice, still convert the same way)", () => {
     const row: ModelComparisonRow = { ...championRow, top1HitRate: metric(0.17445), top3HitRate: metric(0.5813) };
     const markup = renderToStaticMarkup(<ModelRow row={row} />);
-    expect(markup).toContain("17.445%");
-    expect(markup).toContain("58.130%");
+    expect(markup).toContain("17.4%");
+    expect(markup).toContain("58.1%");
   });
 });
 
@@ -198,11 +208,10 @@ describe("ModelRow (champion ROI evaluation-count disclosure)", () => {
 
   it("CASE 9: does not alter the underlying win/place ROI values, only their display format (fraction -> percent)", () => {
     const markup = renderToStaticMarkup(<ModelRow row={championRow} />);
-    // -0.2851694915254237 * 100, -0.27033898305084747 * 100, same digits=3
-    // formatting metricText already applies -- the number itself is
-    // unchanged, only asPercent=true now converts and appends "%".
-    expect(markup).toContain("-28.517%");
-    expect(markup).toContain("-27.034%");
+    // -0.2851694915254237 * 100, -0.27033898305084747 * 100 at the
+    // one-decimal percent display -- the value itself is unchanged.
+    expect(markup).toContain("-28.5%");
+    expect(markup).toContain("-27.0%");
   });
 
   it("CASE 10: preserves the existing simulation disclaimers", () => {

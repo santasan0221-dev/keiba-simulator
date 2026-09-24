@@ -1,0 +1,698 @@
+{
+  "race": {
+    "race_key": "JRA|2026-09-20|東京|11",
+    "date": "2026-09-20",
+    "organization": "JRA",
+    "venue": "東京",
+    "race_no": 11,
+    "distance": 1600,
+    "surface": "芝",
+    "going": "良",
+    "going_status": "AVAILABLE",
+    "weather": null,
+    "pace_hint": null,
+    "scheduled_start_at": "2026-09-20T06:00:00+00:00",
+    "status": "PREDICTED"
+  },
+  "model": {
+    "champion_id": "jra-champion-ffffffffffffffff",
+    "calibration_status": "READY",
+    "disclaimer": "本アプリは予測支援であり的中を保証しない。投資は自己責任。",
+    "as_of": "2026-09-20 01:00:00+00:00"
+  },
+  "horses": [
+    {
+      "no": 1,
+      "name": "サンダーリーフ",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 85.5,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 85.5,
+        "ai_rank": 1,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.241,
+        "top3_probability": 0.62,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "◎",
+        "final_mark": "◎",
+        "v23k_rank": 1,
+        "mark_adjustment_reason": "据え置き",
+        "anxiety_tags": [],
+        "plus_tags": [
+          "AI上位評価",
+          "市場妙味あり",
+          "先行力",
+          "内枠",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": 2
+      },
+      "market": {
+        "popularity": 3,
+        "win_odds": 6.8,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 3,
+      "name": "アオイノキセキ",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 72.6,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 72.6,
+        "ai_rank": 3,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.098,
+        "top3_probability": 0.41,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "○",
+        "final_mark": "○",
+        "v23k_rank": 2,
+        "mark_adjustment_reason": "据え置き",
+        "anxiety_tags": [],
+        "plus_tags": [
+          "AI上位評価",
+          "先行力",
+          "内枠",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": 1
+      },
+      "market": {
+        "popularity": 4,
+        "win_odds": 9.4,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 4,
+      "name": "ゴールドフェザー",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 69.4,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 69.4,
+        "ai_rank": 4,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.071,
+        "top3_probability": 0.33,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "▲",
+        "final_mark": "▲",
+        "v23k_rank": 3,
+        "mark_adjustment_reason": "据え置き",
+        "anxiety_tags": [],
+        "plus_tags": [
+          "先行力",
+          "内枠",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": 2
+      },
+      "market": {
+        "popularity": 6,
+        "win_odds": 24.5,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 2,
+      "name": "ミラクルボルト",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 67.2,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 67.2,
+        "ai_rank": 2,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.112,
+        "top3_probability": 0.48,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "△",
+        "final_mark": "△",
+        "v23k_rank": 4,
+        "mark_adjustment_reason": "据え置き",
+        "anxiety_tags": [
+          "過剰人気（指数不一致）"
+        ],
+        "plus_tags": [
+          "AI上位評価",
+          "先行力",
+          "内枠",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": -1
+      },
+      "market": {
+        "popularity": 1,
+        "win_odds": 2.1,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 6,
+      "name": "ベルウッドプリンセス",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 59.1,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 59.1,
+        "ai_rank": 6,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.052,
+        "top3_probability": 0.24,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "△",
+        "final_mark": "消してはいけない穴",
+        "v23k_rank": 5,
+        "mark_adjustment_reason": "人気薄(8番人気)だが裏付け2個: 先行力, 馬体安定",
+        "anxiety_tags": [
+          "オッズ未取得",
+          "AI評価低い"
+        ],
+        "plus_tags": [
+          "先行力",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": 2
+      },
+      "market": {
+        "popularity": 8,
+        "win_odds": null,
+        "slot": null,
+        "captured_at": null
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 5,
+      "name": "シルバーストリーム",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 57.4,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 57.4,
+        "ai_rank": 5,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.06,
+        "top3_probability": 0.3,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "無印",
+        "final_mark": "消し",
+        "v23k_rank": 6,
+        "mark_adjustment_reason": "2番人気だが不安タグ3個: 過剰人気（指数不一致）, 危険人気馬, AI評価低い",
+        "anxiety_tags": [
+          "過剰人気（指数不一致）",
+          "危険人気馬",
+          "AI評価低い"
+        ],
+        "plus_tags": [
+          "先行力",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [
+          "過剰人気（指数不一致）",
+          "危険人気馬"
+        ],
+        "danger_score": -3
+      },
+      "market": {
+        "popularity": 2,
+        "win_odds": 3.9,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 7,
+      "name": "ハヤブサノツバサ",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 53.9,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 53.9,
+        "ai_rank": 7,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": null,
+        "top3_probability": 0.2,
+        "probability_semantics_status": "UNAVAILABLE",
+        "probability_refusals": [
+          "WIN_PROBABILITY_MISSING:horse=7"
+        ]
+      },
+      "display": {
+        "base_mark": "無印",
+        "final_mark": "無印",
+        "v23k_rank": 7,
+        "mark_adjustment_reason": "据え置き",
+        "anxiety_tags": [
+          "AI評価低い"
+        ],
+        "plus_tags": [
+          "先行力",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": -2
+      },
+      "market": {
+        "popularity": 5,
+        "win_odds": 12.0,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    },
+    {
+      "no": 8,
+      "name": "エンドレスサマーナイト",
+      "style": "先行",
+      "withdrawn": false,
+      "withdrawn_status": "UNVERIFIED_ASSUMED_ACTIVE",
+      "abilities": {
+        "speed": 51.1,
+        "stamina": null,
+        "start": null,
+        "form": null,
+        "going_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "mapping_status": "P2_UNVERIFIED_SINGLE_SPEED_REDUCTION"
+      },
+      "model": {
+        "v23k_score": 51.1,
+        "ai_rank": 8,
+        "win_prob_calibrated": null,
+        "top3_prob": null,
+        "prob_status": "UNCALIBRATED_SHADOW_SCORE",
+        "win_probability": 0.031,
+        "top3_probability": 0.15,
+        "probability_semantics_status": "OK",
+        "probability_refusals": []
+      },
+      "display": {
+        "base_mark": "無印",
+        "final_mark": "☆",
+        "v23k_rank": 8,
+        "mark_adjustment_reason": "妙味タグ2個で昇格: 先行力, 馬体安定",
+        "anxiety_tags": [
+          "AI評価低い"
+        ],
+        "plus_tags": [
+          "先行力",
+          "馬体安定"
+        ],
+        "dismiss_reason_tags": [],
+        "danger_score": -1
+      },
+      "market": {
+        "popularity": 7,
+        "win_odds": 45.2,
+        "slot": "t10",
+        "captured_at": "2026-09-20T05:50:00+00:00"
+      },
+      "record": {
+        "starts": null,
+        "wins": null,
+        "seconds": null,
+        "thirds": null,
+        "avg_finish": null,
+        "going_top3_rates": {
+          "良": null,
+          "稍重": null,
+          "重": null,
+          "不良": null
+        },
+        "latest_history_date": null,
+        "mapping_status": "P2_UNVERIFIED"
+      }
+    }
+  ],
+  "branches": [
+    {
+      "key": "front",
+      "label": "前残り",
+      "probability": 34.0,
+      "factors": {
+        "逃げ": 1.035,
+        "先行": 1.02,
+        "差し": 0.985,
+        "追込": 0.96
+      },
+      "summary": "what-if固定分岐（サーバー算出）"
+    },
+    {
+      "key": "balanced",
+      "label": "平均",
+      "probability": 33.0,
+      "factors": {
+        "逃げ": 1.0,
+        "先行": 1.0,
+        "差し": 1.0,
+        "追込": 1.0
+      },
+      "summary": "what-if固定分岐（サーバー算出）"
+    },
+    {
+      "key": "closer",
+      "label": "差し届く",
+      "probability": 33.0,
+      "factors": {
+        "逃げ": 0.96,
+        "先行": 0.98,
+        "差し": 1.02,
+        "追込": 1.045
+      },
+      "summary": "what-if固定分岐（サーバー算出）"
+    }
+  ],
+  "decision": {
+    "status": "UNKNOWN",
+    "raw_status": "SENBATSU",
+    "reason": "EVALUATE_SENBATSU_PASSED",
+    "gate_status": null,
+    "gate_reason": null,
+    "bet": null
+  },
+  "market_ev": {
+    "note": "JRA控除率補正・簡易",
+    "status": "AVAILABLE",
+    "organization_scope": "JRA",
+    "rows": [
+      {
+        "no": 1,
+        "name": "サンダーリーフ",
+        "win_probability": 0.241,
+        "win_odds": 6.8,
+        "simple_corrected_market_prob": 0.117647,
+        "expected_return": 1.6388
+      },
+      {
+        "no": 3,
+        "name": "アオイノキセキ",
+        "win_probability": 0.098,
+        "win_odds": 9.4,
+        "simple_corrected_market_prob": 0.085106,
+        "expected_return": 0.9212
+      },
+      {
+        "no": 4,
+        "name": "ゴールドフェザー",
+        "win_probability": 0.071,
+        "win_odds": 24.5,
+        "simple_corrected_market_prob": 0.032653,
+        "expected_return": 1.7395
+      },
+      {
+        "no": 2,
+        "name": "ミラクルボルト",
+        "win_probability": 0.112,
+        "win_odds": 2.1,
+        "simple_corrected_market_prob": 0.380952,
+        "expected_return": 0.2352
+      },
+      {
+        "no": 5,
+        "name": "シルバーストリーム",
+        "win_probability": 0.06,
+        "win_odds": 3.9,
+        "simple_corrected_market_prob": 0.205128,
+        "expected_return": 0.234
+      },
+      {
+        "no": 8,
+        "name": "エンドレスサマーナイト",
+        "win_probability": 0.031,
+        "win_odds": 45.2,
+        "simple_corrected_market_prob": 0.017699,
+        "expected_return": 1.4012
+      }
+    ],
+    "unavailable_reasons": [
+      "WIN_ODDS_UNAVAILABLE:no=6",
+      "WIN_PROBABILITY_MISSING:horse=7"
+    ]
+  },
+  "result": null,
+  "provenance": {
+    "snapshot_sha": "0e2efd81e32e14a77b1925d45c401f373ebba33d2222feb9735814ba002784a0",
+    "generated_at": "2026-09-20 01:00:01+00:00",
+    "sources": [
+      "snapshot",
+      "market_odds",
+      "walk_forward_calibration_status",
+      "track_condition"
+    ],
+    "field_sources": {
+      "race": "snapshot.diagnostics",
+      "horses.style": "all_horses.run_style",
+      "horses.abilities.speed": "all_horses.v23k_score (P1 single-score reduction)",
+      "horses.abilities.going_rates": "P2_UNVERIFIED_NULL",
+      "horses.abilities.other": "P2_UNVERIFIED_NULL",
+      "horses.model": "all_horses + walk-forward READY gate",
+      "horses.market": "market_odds or snapshot odds fallback",
+      "horses.record": "P2_UNVERIFIED_NULL",
+      "branches": "WHAT_IF_FIXED_V1"
+    }
+  }
+}

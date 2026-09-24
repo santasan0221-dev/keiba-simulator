@@ -40,7 +40,7 @@ export default function BettingCandidatesPage() {
     {!locked && result.data?.decisions.length ? <section className="lab-candidate-list" aria-label="正本の正式買い目候補">
       {result.data.decisions.map((candidate, index) => <article className="lab-candidate-row" key={`${candidate.raceKey ?? "race"}-${index}`}>
         <div><span className="eyebrow">{decisionLabel(candidate.decision)}</span><h2>{candidate.raceLabel ?? candidate.raceKey ?? "レース情報を確認中"}</h2><p>{candidate.betType ?? "券種未取得"} · {candidate.horseName ?? "対象馬未取得"}</p></div>
-        <dl><div><dt>校正済み確率</dt><dd>{metricText(candidate.calibratedProbability, 3)}</dd></div><div><dt>実オッズ</dt><dd>{metricText(candidate.marketOdds, 3)}</dd></div><div><dt>期待値（参考）</dt><dd>{metricText(candidate.expectedReturn, 3)}</dd></div><div><dt>市場との差（参考）</dt><dd>{metricText(candidate.edge, 3)}</dd></div></dl>
+        <dl><div><dt>校正済み確率</dt><dd>{metricText(candidate.calibratedProbability, 1, true)}</dd></div><div><dt>実オッズ</dt><dd>{metricText(candidate.marketOdds, 3)}</dd></div><div><dt>期待値（参考）</dt><dd>{metricText(candidate.expectedReturn, 3)}</dd></div><div><dt>市場との差（参考）</dt><dd>{metricText(candidate.edge, 3)}</dd></div></dl>
         <p className="lab-candidate-reason">{candidate.reason ?? "判定理由を正本APIから取得できません。"}</p>
       </article>)}
     </section> : null}

@@ -4,12 +4,23 @@ import { MemberGate } from "@/components/AccessTierUI";
 import { PublicLabHeader } from "@/components/LabServiceNavigation";
 import { fetchModelComparison, fetchModelDetail, metricText, type FeatureResult, type ModelComparisonRow, type ModelDetailPayload } from "@/lib/publicFeatureApi";
 import { featureStateLabel } from "@/lib/labels";
+import { formatCount } from "@/lib/displayFormat";
 
 const pendingComparison: FeatureResult<ModelComparisonRow[]> = { state: "PENDING_DATA", data: null, message: "正本のモデル比較を確認しています。", detail: null };
 const pendingDetail: FeatureResult<ModelDetailPayload> = { state: "PENDING_DATA", data: null, message: "モデル詳細の閲覧状態を確認しています。", detail: null };
 
-function Metric({ label, value, percent = false, className }: { label: string; value: ModelComparisonRow["predictionCount"]; percent?: boolean; className?: string }) {
-  return <div className={className}><span>{label}</span><strong>{metricText(value, 3, percent)}</strong></div>;
+type MetricKind = "count" | "percent" | "score";
+
+// Counts are whole numbers, rates/ROI are percents with one decimal, and
+// ranking scores (MRR, NDCG) keep three decimals. Unavailable states keep
+// their status label via metricText -- never a fabricated 0.
+function metricDisplay(value: ModelComparisonRow["predictionCount"], kind: MetricKind): string {
+  if (kind === "count") return value.state === "AVAILABLE" && value.value !== null ? formatCount(value.value) : metricText(value);
+  return kind === "percent" ? metricText(value, 1, true) : metricText(value, 3);
+}
+
+function Metric({ label, value, kind, className }: { label: string; value: ModelComparisonRow["predictionCount"]; kind: MetricKind; className?: string }) {
+  return <div className={className}><span>{label}</span><strong>{metricDisplay(value, kind)}</strong></div>;
 }
 
 export function ModelRow({ row }: { row: ModelComparisonRow }) {
@@ -23,16 +34,16 @@ export function ModelRow({ row }: { row: ModelComparisonRow }) {
   return <article className={`lab-model-row ${isChampion ? "is-actual" : "is-shadow"}`}>
     <header><div><span className="eyebrow">{isChampion ? "正式モデル｜100円固定シミュレーション" : "研究用（参考）｜100円固定シミュレーション"}</span><h2>{row.modelId}</h2><p>{row.modelStage ?? "stage未取得"} · サンプル状況 {featureStateLabel(row.sampleStatus)}</p></div><span className="lab-model-state">{featureStateLabel(row.sampleStatus)}</span></header>
     <div className="lab-model-metrics">
-      <Metric label="予測件数" value={row.predictionCount} />
-      <Metric label="結果確定件数" value={row.confirmedCount} />
-      <Metric label="Top1的中率" value={row.top1HitRate} percent />
-      <Metric label="Top3的中率" value={row.top3HitRate} percent />
-      <Metric label="MRR" value={row.winnerMrr} />
-      <Metric label="NDCG@3" value={row.ndcgAt3} />
-      <Metric label="単勝ROI（100円固定・仮想）" value={row.simulatedWinRoi} percent />
-      <Metric label="複勝ROI（100円固定・仮想）" value={row.simulatedPlaceRoi} percent />
-      {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} className="lab-model-metric--wide" />}
-      {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} className="lab-model-metric--wide" />}
+      <Metric label="予測件数" value={row.predictionCount} kind="count" />
+      <Metric label="結果確定件数" value={row.confirmedCount} kind="count" />
+      <Metric label="Top1的中率" value={row.top1HitRate} kind="percent" />
+      <Metric label="Top3的中率" value={row.top3HitRate} kind="percent" />
+      <Metric label="MRR" value={row.winnerMrr} kind="score" />
+      <Metric label="NDCG@3" value={row.ndcgAt3} kind="score" />
+      <Metric label="単勝ROI（100円固定・仮想）" value={row.simulatedWinRoi} kind="percent" />
+      <Metric label="複勝ROI（100円固定・仮想）" value={row.simulatedPlaceRoi} kind="percent" />
+      {isChampion && <Metric label="ROI評価対象" value={row.evaluatedCount} kind="count" className="lab-model-metric--wide" />}
+      {isChampion && <Metric label="AI本命◎なし" value={row.missingHonmeiCount} kind="count" className="lab-model-metric--wide" />}
     </div>
     {isChampion && <div className="lab-model-roi-basis">
       <p>ROIは保存済みAI本命◎が一意に存在し、評価可能なレースのみを対象にしています。</p>

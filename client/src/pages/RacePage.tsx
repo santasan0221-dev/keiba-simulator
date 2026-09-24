@@ -38,10 +38,17 @@ export async function shareRace(raceKey: string) {
   }
 }
 
+/** Open every race at the top: wouter keeps the previous page's scroll on client-side navigation. */
+export function resetScrollForRace(target: Pick<Window, "scrollTo"> | undefined) {
+  target?.scrollTo(0, 0);
+}
+
 export default function RacePage() {
   const params = useParams<RaceUrlParams>();
   const raceKey = paramsToRaceKey(params);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+
+  useEffect(() => { resetScrollForRace(typeof window === "undefined" ? undefined : window); }, [raceKey]);
 
   useEffect(() => {
     if (!raceKey) {

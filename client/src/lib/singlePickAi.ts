@@ -162,9 +162,16 @@ export type LabHorse = {
   model: {
     v23k_score: number | null;
     ai_rank: number | null;
+    /** Legacy column: holds the main model's TOP-3 output, never a win probability. Do not display as 勝率. */
     win_prob_calibrated: number | null;
     top3_prob: number | null;
     prob_status: string;
+    /** Schema v2 P(finish == 1). null when the archived row refused or lacked it. */
+    win_probability?: number | null;
+    /** Schema v2 P(finish <= 3), isotonic-calibrated main model. */
+    top3_probability?: number | null;
+    probability_semantics_status?: string;
+    probability_refusals?: string[];
   };
   display?: {
     base_mark: string | null;
@@ -201,7 +208,7 @@ export type LabRace = {
   horses: LabHorse[];
   decision?: LabPredictionDecision;
   branches: Array<{ key: string; label: string; probability: number }>;
-  market_ev: { note: string; status: string; rows: Array<Record<string, unknown>> };
+  market_ev: { note: string; status: string; rows: Array<Record<string, unknown>>; unavailable_reasons?: string[] };
   provenance: Record<string, unknown>;
   result?: LabRaceResult | null;
 };

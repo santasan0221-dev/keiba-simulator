@@ -11,7 +11,7 @@ vi.mock("@/lib/singlePickAi", async (importActual) => {
 // runs in vitest's node environment (no DOM), so stub it with a plain <a>.
 vi.mock("wouter", () => ({ Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => React.createElement("a", { href, className }, children) }));
 
-import { RealRaceLoader } from "./RealRaceLoader";
+import { RaceDetailLink, RealRaceLoader } from "./RealRaceLoader";
 
 describe("RealRaceLoader", () => {
   it("never renders internal ops/dev-facing text on the public page", () => {
@@ -35,5 +35,18 @@ describe("RealRaceLoader", () => {
     expect(markup).toContain("主催");
     expect(markup).toContain("NAR");
     expect(markup).toContain("JRA");
+  });
+
+  it("links 詳細を見る to the dedicated, shareable race URL", () => {
+    const markup = renderToStaticMarkup(<RaceDetailLink raceKey="JRA|2026-09-20|東京|11" />);
+    expect(markup).toContain(`href="/race/JRA/2026-09-20/${encodeURIComponent("東京")}/11"`);
+    expect(markup).toContain("詳細を見る");
+    expect(markup).not.toContain("<button");
+  });
+
+  it("does not render a dead link for a malformed race_key", () => {
+    const markup = renderToStaticMarkup(<RaceDetailLink raceKey="broken-key" />);
+    expect(markup).not.toContain("href=");
+    expect(markup).toContain("詳細URLを作成できません");
   });
 });

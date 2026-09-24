@@ -35,17 +35,20 @@ describe("TruthPanel", () => {
     expect(markup).toContain("結果はまだ確定していません");
   });
 
-  it("withholds numeric probabilities unless each horse is explicitly READY", () => {
-    const markup = renderToStaticMarkup(<TruthPanel race={{ ...confirmedRace, horses: confirmedRace.horses.map((horse) => ({ ...horse, model: { ...horse.model, prob_status: "UNCALIBRATED_SHADOW_SCORE" } })) }} />);
-    expect(markup).toContain("校正済み確率は表示しません");
-    expect(markup).not.toContain("0.3");
-    expect(markup).not.toContain("0.6");
+  it("never displays the legacy win_prob_calibrated/top3_prob columns as probabilities", () => {
+    // confirmedRace carries only the legacy columns (0.3 / 0.6): no schema v2 fields.
+    const markup = renderToStaticMarkup(<TruthPanel race={confirmedRace} />);
+    expect(markup).not.toContain("30.0%");
+    expect(markup).not.toContain("60.0%");
+    expect(markup).toContain("この予測には勝率・3着内率が保存されていません");
   });
 
-  it("withholds out-of-range probability payloads", () => {
-    const markup = renderToStaticMarkup(<TruthPanel race={{ ...confirmedRace, horses: confirmedRace.horses.map((horse) => ({ ...horse, model: { ...horse.model, win_prob_calibrated: 1.2, top3_prob: -0.1 } })) }} />);
-    expect(markup).toContain("校正済み確率は表示しません");
-    expect(markup).not.toContain("win_prob_calibrated");
+  it("renders out-of-range schema v2 probabilities as — rather than a number", () => {
+    const horses = confirmedRace.horses.map((horse) => ({ ...horse, model: { ...horse.model, win_probability: 1.2, top3_probability: -0.1 } }));
+    const markup = renderToStaticMarkup(<TruthPanel race={{ ...confirmedRace, horses }} />);
+    expect(markup).not.toContain("120.0%");
+    expect(markup).not.toContain("-10.0%");
+    expect(markup).not.toContain("win_probability");
     expect(markup).not.toContain("top3_prob");
   });
 

@@ -14,7 +14,7 @@ function horse(overrides: {
   ai_rank: number | null;
   v23k_score?: number | null;
   final_mark: string | null;
-  win_prob_calibrated?: number | null;
+  win_probability?: number | null;
 }): LabHorse {
   return {
     no: overrides.no,
@@ -25,8 +25,10 @@ function horse(overrides: {
     model: {
       v23k_score: overrides.v23k_score ?? 50,
       ai_rank: overrides.ai_rank,
-      win_prob_calibrated: overrides.win_prob_calibrated === undefined ? 0.3 : overrides.win_prob_calibrated,
-      top3_prob: 0.6,
+      win_prob_calibrated: null,
+      top3_prob: null,
+      win_probability: overrides.win_probability === undefined ? 0.3 : overrides.win_probability,
+      top3_probability: 0.6,
       prob_status: "CALIBRATED",
     },
     display: {
@@ -101,8 +103,14 @@ describe("selectFreeRaceHonmei (/free Display Contract)", () => {
   });
 
   it("unique ◎ without a calibrated win probability still fails closed (unrelated to the mark contract, but must not regress)", () => {
-    const horses = [horse({ no: 3, name: "本命馬", ai_rank: 1, final_mark: "◎", win_prob_calibrated: null })];
+    const horses = [horse({ no: 3, name: "本命馬", ai_rank: 1, final_mark: "◎", win_probability: null })];
     expect(selectFreeRaceHonmei(horses)).toBeNull();
+  });
+
+  it("never qualifies on the legacy win_prob_calibrated column (it holds a top-3 value)", () => {
+    const base = horse({ no: 3, name: "本命馬", ai_rank: 1, final_mark: "◎", win_probability: null });
+    const legacyOnly = { ...base, model: { ...base.model, win_prob_calibrated: 0.62, prob_status: "CALIBRATED" } };
+    expect(selectFreeRaceHonmei([legacyOnly])).toBeNull();
   });
 
   it("unique ◎ without a name still fails closed", () => {

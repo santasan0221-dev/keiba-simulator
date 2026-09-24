@@ -1,19 +1,23 @@
 import { CalendarClock, CircleAlert, ExternalLink, LockKeyhole, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchRace, type LabHorse, type LabRace } from "@/lib/singlePickAi";
+import { formatPercent } from "@/lib/displayFormat";
 import { getFreeScopeState, parseFreeScopeManifest, verifyFreeRace, type FreeScopeManifest } from "@/lib/freeScopeRule";
 
 // AI本命 is only ever the horse whose saved final_mark is exactly "◎" --
 // never the model's raw ai_rank (a score-rank position, not a mark), never
 // v23k_rank, never the highest score. A missing or duplicate ◎ must fail
 // closed (null) here, not fall back to rank or arbitrarily pick one match.
-// This preview additionally requires a name and a calibrated win
+// This preview additionally requires a name and a schema v2 win
 // probability, since its whole point is showing that calibrated number --
 // that requirement is independent of, and unrelated to, the mark contract.
 export function selectFreeRaceHonmei(horses: LabHorse[]): LabHorse | null {
   const honmeiRows = horses.filter((horse) => horse.display?.final_mark === "◎");
   const honmei = honmeiRows.length === 1 ? honmeiRows[0] : null;
-  return honmei && honmei.name && typeof honmei.model.win_prob_calibrated === "number" ? honmei : null;
+  // Schema v2 win_probability only: the legacy win_prob_calibrated column
+  // holds a top-3 value and must never qualify or be shown as a win rate.
+  const win = honmei?.model.win_probability;
+  return honmei && honmei.name && typeof win === "number" && Number.isFinite(win) && win >= 0 && win <= 1 ? honmei : null;
 }
 
 type LoadState =
@@ -77,7 +81,7 @@ export function FreeRacePreview() {
 
   return <section className="free-race-preview is-open" aria-labelledby="free-race-title">
     <div className="free-race-heading"><div><span className="eyebrow">FREE OPEN / {manifestLoad.manifest.rule_id}</span><h2 id="free-race-title">{race.race.venue ?? "会場未取得"} {race.race.race_no ? `${race.race.race_no}R` : "レース番号未取得"}</h2><p>{race.race.surface ?? "馬場種別未取得"} {race.race.distance ? `${race.race.distance.toLocaleString()}m` : "距離未取得"} · 発走 {formatDateTime(scope.entry.scheduled_start_at)}</p></div><span className="free-open-badge">FREE OPEN</span></div>
-    <div className="free-race-pick"><Trophy size={18} /><div><span>正本の本命</span><strong>{top.name}</strong><small>校正済み勝率 {top.model.win_prob_calibrated?.toFixed(1)}% · prediction as-of {formatDateTime(scope.entry.model_as_of)}</small></div></div>
+    <div className="free-race-pick"><Trophy size={18} /><div><span>正本の本命</span><strong>{top.name}</strong><small>AI勝率 {formatPercent(top.model.win_probability)} · prediction as-of {formatDateTime(scope.entry.model_as_of)}</small></div></div>
     <div className="free-race-foot"><span>候補: JRA土日 9R〜12R / locked {manifestLoad.manifest.locked_at ? formatDateTime(manifestLoad.manifest.locked_at) : "確認不能"}</span><a href="/ai-history">結果確定後の全レース公開 <ExternalLink size={13} /></a></div>
   </section>;
 }
