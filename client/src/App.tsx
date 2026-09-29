@@ -7,7 +7,7 @@ import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import SimulatorPage from "./pages/SimulatorPage";
+import SimulatorPage from "./pages/SimulatorShell";
 import RacePage from "./pages/RacePage";
 import FreeRacesPage from "./pages/FreeRacesPage";
 import RaceHistoryPage from "./pages/RaceHistoryPage";

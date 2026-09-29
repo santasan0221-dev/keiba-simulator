@@ -1,3 +1,4 @@
+import { formatSpecialStatuses } from "@/lib/resultFormat";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, AlertTriangle, BellRing, CheckCircle2, Clock3, Download, Filter, LoaderCircle, RefreshCw, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -64,7 +65,7 @@ const toRaceHistoryRace = (item: LabResultListItem, requestedDate: string): Race
   calibrationStatus: null,
   asOf: item.prediction_created_at,
   resultStatus: item.result_status,
-  specialStatuses: item.special_statuses,
+  specialStatuses: item.special_statuses?.map(status => formatSpecialStatuses([status])) ?? null,
   aiPickFinish: item.ai_pick_finish,
   aiPickOutcome: null,
   comparedCount: null,

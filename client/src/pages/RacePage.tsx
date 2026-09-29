@@ -1,3 +1,4 @@
+import { ApiState } from "@/components/ApiState";
 import { useEffect, useState } from "react";
 import { ArrowLeft, CircleAlert, Copy, LoaderCircle, Share2, TriangleAlert } from "lucide-react";
 import { Link, useParams } from "wouter";
@@ -12,7 +13,7 @@ type LoadState =
   | { kind: "loading" }
   | { kind: "invalid_url" }
   | { kind: "not_found"; raceKey: string }
-  | { kind: "unavailable"; raceKey: string; message: string }
+  | { kind: "unavailable"; raceKey: string; message: string; status: number }
   | { kind: "ready"; race: LabRace };
 
 export async function shareRace(raceKey: string) {
@@ -65,7 +66,7 @@ export default function RacePage() {
           setState({ kind: "not_found", raceKey });
         } else {
           const message = reason instanceof Error ? reason.message : String(reason);
-          setState({ kind: "unavailable", raceKey, message });
+          setState({ kind: "unavailable", raceKey, message, status: reason instanceof LabApiError ? reason.status : 0 });
         }
       });
     return () => { active = false; };
@@ -73,6 +74,7 @@ export default function RacePage() {
 
   return <main className="race-page">
     <header className="race-page-topbar">
+      {state.kind === "ready" && <strong className="race-sticky-identity">{state.race.race.venue} {state.race.race.race_no}R <small>{state.race.race.distance ?? "—"}m</small></strong>}
       <Link href="/" className="race-page-back"><ArrowLeft size={16} /> 今日のレース一覧へ</Link>
     </header>
     <LabServiceNavigation active="today" />
@@ -80,7 +82,7 @@ export default function RacePage() {
       {state.kind === "loading" && <section className="race-page-status" aria-busy="true"><LoaderCircle className="spin" size={18} /><p>レースを読み込んでいます…</p></section>}
       {state.kind === "invalid_url" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースURLは正しくありません。</h2><p>共有されたURLが正しいか確認するか、レース一覧から選び直してください。</p></div></section>}
       {state.kind === "not_found" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースは見つかりませんでした。</h2><p>race_key: <code>{state.raceKey}</code></p><p>開催がない、または予測がまだ生成されていない可能性があります。0件として扱わず、取得不能として表示しています。</p></div></section>}
-      {state.kind === "unavailable" && <section className="race-page-status race-page-status--error" role="alert"><TriangleAlert size={18} /><div><h2>現在データを取得できません。</h2><p>{state.message}</p><p>正本APIへ接続できないため、0件や取得成功として表示していません。時間をおいて再度お試しください。</p></div></section>}
+      {state.kind === "unavailable" && <section className="race-page-status race-page-status--error" role="alert"><TriangleAlert size={18} /><div><h2>現在データを取得できません。</h2><ApiState kind="unavailable" status={state.status}/><p>正本APIへ接続できないため、0件や取得成功として表示していません。時間をおいて再度お試しください。</p></div></section>}
       {state.kind === "ready" && <>
         <TruthPanel race={state.race} />
         <button type="button" className="race-page-share" onClick={() => void shareRace(state.race.race.race_key ?? raceKey ?? "")}>

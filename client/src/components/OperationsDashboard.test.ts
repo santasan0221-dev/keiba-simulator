@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { predictedMarkLabel, requestedResultValue, statusText } from "./OperationsDashboard";
+import {
+  predictedMarkLabel,
+  requestedResultValue,
+  statusText,
+} from "./OperationsDashboard";
 import type { LabResultPredictionHorse } from "@/lib/singlePickAi";
 
 describe("OperationsDashboard result-state presentation", () => {
@@ -18,8 +22,28 @@ describe("OperationsDashboard result-state presentation", () => {
     expect(requestedResultValue("PENDING", null, "finish")).toBe("未確定");
     expect(requestedResultValue("PENDING", null, "coverage")).toBe("未確定");
     expect(requestedResultValue("CONFIRMED", null, "finish")).toBe("取得不能");
-    expect(requestedResultValue("DEAD_HEAT", null, "coverage")).toBe("取得不能");
-    expect(requestedResultValue("CONFIRMED", 2, "coverage")).toBe("2 / 3");
+    expect(requestedResultValue("DEAD_HEAT", null, "coverage")).toBe(
+      "取得不能"
+    );
+    expect(requestedResultValue("CONFIRMED", 2, "coverage")).toBe("取得不能");
+  });
+});
+
+describe("coverage ratio regression", () => {
+  it.each([
+    [0, "0%"],
+    [0.333333, "33.3%"],
+    [0.666667, "66.7%"],
+    [1, "100%"],
+  ])("formats %s as %s", (value, label) => {
+    expect(requestedResultValue("CONFIRMED", value as number, "coverage")).toBe(
+      label
+    );
+  });
+  it.each([NaN, Infinity, -1, 2])("rejects invalid ratio %s", value => {
+    expect(requestedResultValue("CONFIRMED", value, "coverage")).toBe(
+      "取得不能"
+    );
   });
 });
 
@@ -43,7 +67,9 @@ describe("predictedMarkLabel (AI history mark display contract)", () => {
   });
 
   it("renders a lone honmei without inventing placeholder ○/▲ entries", () => {
-    const entries: LabResultPredictionHorse[] = [{ mark: "◎", horse_no: 10, horse_name: "本命馬" }];
+    const entries: LabResultPredictionHorse[] = [
+      { mark: "◎", horse_no: 10, horse_name: "本命馬" },
+    ];
     expect(entries.map(predictedMarkLabel)).toEqual(["◎#10"]);
   });
 

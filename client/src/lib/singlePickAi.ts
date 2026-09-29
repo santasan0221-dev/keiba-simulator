@@ -350,7 +350,7 @@ export type LabResultListItem = {
   ai_pick_finish: number | null;
   top3_coverage: number | null;
   result_status: LabResultStatus | null;
-  special_statuses: string[] | null;
+  special_statuses: { horse_no: number | null; status: string }[] | null;
   result_fetched_at: string | null;
 };
 
@@ -366,9 +366,29 @@ export async function fetchLabHealth(): Promise<LabHealth> {
   return getJson(`/api/lab/health`);
 }
 
+
+function validResultRow(value: unknown): value is LabResultListItem {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  const text = (v: unknown) => v == null || typeof v === "string";
+  const number = (v: unknown) => v == null || typeof v === "number";
+  const record = (v: unknown): v is Record<string, unknown> => Boolean(v && typeof v === "object");
+  const horseNo = (v: unknown) => typeof v === "number" && Number.isInteger(v) && v > 0;
+  const array = (v: unknown, check: (item: unknown) => boolean) => v == null || Array.isArray(v) && v.every(check);
+  return typeof row.race_key === "string" && row.race_key.length > 0
+    && ["organization","venue","scheduled_start_at","prediction_id","prediction_created_at","result_status","result_fetched_at"].every(key => text(row[key]))
+    && ["race_no","ai_pick_finish","top3_coverage"].every(key => number(row[key]))
+    && array(row.predicted_top3, item => record(item) && ["◎","○","▲"].includes(String(item.mark)) && horseNo(item.horse_no) && text(item.horse_name))
+    && array(row.official_top3, item => horseNo(item) || record(item) && (horseNo(item.horse_no) || typeof item.horse_name === "string") && text(item.horse_name) && number(item.finish))
+    && array(row.special_statuses, item => record(item) && text(item.status) && number(item.horse_no));
+}
+
 export async function fetchLabResults(params: { date: string; organization?: "JRA" | "NAR"; venue?: string }): Promise<{ date?: string; race_date?: string; results: LabResultListItem[] }> {
   const search = new URLSearchParams({ date: params.date });
   if (params.organization) search.set("organization", params.organization);
   if (params.venue) search.set("venue", params.venue);
-  return getJson(`/api/lab/results?${search.toString()}`);
+  return getJson<{ results: LabResultListItem[] }>(`/api/lab/results?${search.toString()}`).then(response => {
+    if (!Array.isArray(response.results) || !response.results.every(validResultRow)) throw new LabApiError(200, "結果APIの形式を確認できません");
+    return response;
+  });
 }

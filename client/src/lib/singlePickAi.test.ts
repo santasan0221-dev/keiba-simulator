@@ -48,8 +48,17 @@ describe("single_pick_ai toHorses", () => {
     await expect(fetchRaces("2026-08-15", "JRA")).rejects.toThrow("APIがJSONを返しません");
   });
 
+  it.each([{race_key:"race",predicted_top3:{}},{race_key:"race",venue:{}},{race_key:"race",official_top3:[{}]}])("rejects malformed nested result values %j", async row => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({results:[row]}), {status:200,headers:{"content-type":"application/json"}})));
+    await expect(fetchLabResults({date:"2026-09-28"})).rejects.toThrow("結果APIの形式");
+  });
+  it("rejects malformed result payloads rather than showing zero races", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({results: null}), {status:200,headers:{"content-type":"application/json"}})));
+    await expect(fetchLabResults({date:"2026-09-28"})).rejects.toThrow("結果APIの形式");
+  });
+
   it("uses the fixed read-only daily, results, available-dates and health endpoints", async () => {
-    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } })));
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ ok: true, results: [] }), { status: 200, headers: { "content-type": "application/json" } })));
     vi.stubGlobal("fetch", fetchMock);
 
     await fetchDailyOperations("2026-08-17");

@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { apiOrigin } from "@/components/ApiState";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CircleCheck, Database, History, Hourglass, LoaderCircle, Minus, RefreshCw, TriangleAlert } from "lucide-react";
 import { Link } from "wouter";
 import type { Horse } from "@/lib/horseTypes";
-import { fetchAvailablePredictionDates, fetchRaces, getApiBase, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
+import { fetchAvailablePredictionDates, fetchRaces, getApiBase, LabApiError, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { retrySinglePick } from "@/lib/singlePickRetry";
 import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 import { decisionBucketLabel, decisionLabel, normalizeDecisionStatus } from "@/lib/labels";
@@ -63,32 +64,36 @@ export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLo
   const [loadingRaces, setLoadingRaces] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const requestId = useRef(0);
   const [filter, setFilter] = useState<DecisionFilter>("ALL");
 
   const refresh = () => {
-    if (!date) return;
+    if (!date) { setLoadingRaces(false); setRaces([]); setNotice("開催日を選択してください。"); return; }
+    const request = ++requestId.current;
     setLoadingRaces(true);
     setError("");
     setNotice("レース一覧を取得中です。");
-    void retrySinglePick(() => fetchRaces(date, org), { onRetry: ({ attempt, maxAttempts, nextDelayMs }) => setNotice(`接続を再試行しています（${attempt + 1}/${maxAttempts}回・${(nextDelayMs / 1000).toFixed(1)}秒後）。`) }).then((data) => {
+    void retrySinglePick(() => fetchRaces(date, org), { onRetry: ({ attempt, maxAttempts, nextDelayMs }) => { if (request === requestId.current) setNotice(`接続を再試行しています（${attempt + 1}/${maxAttempts}回・${(nextDelayMs / 1000).toFixed(1)}秒後）。`); } }).then((data) => {
+      if (request !== requestId.current) return;
       setRaces(data.races);
       setFilter("ALL");
       onStatusChange?.(data.races.length ? "結果待ち" : "選択日の予測なし");
       setNotice(data.races.length ? `${data.races.length}件のレース候補を取得しました。` : "選択日の予測なし。日付または主催を変更してください。");
     }).catch((reason: unknown) => {
+      if (request !== requestId.current) return;
       setRaces([]);
       setNotice("");
       onStatusChange?.("API未接続");
-      setError(`API未接続。single_pick_aiに接続できません。${reason instanceof Error ? reason.message : String(reason)}`);
-    }).finally(() => setLoadingRaces(false));
+      setError(`API未接続。HTTP ${reason instanceof LabApiError && reason.status > 0 ? reason.status : "応答なし"} · API origin: ${apiOrigin()}`);
+    }).finally(() => {if (request === requestId.current) setLoadingRaces(false);});
   };
 
   useEffect(() => {
     let active = true;
-    void findLatestPredictionDate().then((latest) => { if (active) setDate(latest); }).catch(() => { if (active) setDate(""); });
+    void findLatestPredictionDate().then((latest) => { if (active) setDate(latest); }).catch((reason: unknown) => { if (active) {setDate("");setError(`開催日を取得できません。HTTP ${reason instanceof LabApiError && reason.status > 0 ? reason.status : "応答なし"} · API origin: ${apiOrigin()}`);} });
     return () => { active = false; };
   }, []);
-  useEffect(() => { refresh(); }, [date, org, base]);
+  useEffect(() => { refresh(); return () => {requestId.current++;}; }, [date, org, base]);
 
   // Client-side only: counts and filtering over the already-fetched race
   // array. Never touches race.decision.status or how BET/NO_BET/UNKNOWN is
