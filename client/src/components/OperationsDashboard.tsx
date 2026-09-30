@@ -201,6 +201,7 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
       {special && <p className="special-status">{special}</p>}
       <footer className="kt-ledger-foot">
         {path ? <Link href={path} className="kt-link">レース詳細 ＞</Link> : null}
+        <Link href={`/simulator?race=${encodeURIComponent(item.race_key)}`} className="kt-link">シナリオ＋公式結果 ＞</Link>
         <details className="result-secondary">
           <summary>記録の詳細</summary>
           <dl>
