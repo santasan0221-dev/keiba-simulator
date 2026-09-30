@@ -1,11 +1,13 @@
 import { ApiState } from "@/components/ApiState";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CircleAlert, Copy, LoaderCircle, Share2, TriangleAlert } from "lucide-react";
+import { ArrowLeft, CircleAlert, Copy, FlaskConical, History, LoaderCircle, Share2, TriangleAlert } from "lucide-react";
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
 import { TruthPanel } from "@/components/TruthPanel";
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
-import { fetchRace, LabApiError, type LabRace } from "@/lib/singlePickAi";
+import { fetchRace, fetchRaces, LabApiError, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
+import { AgreementPanel, PickTrio, RaceHero, RankingBoard, raceVerdict, VerdictBanner, WinnerStrip } from "@/components/trace/RaceParts";
+import { JourneyRail, RaceTicker, useNow } from "@/components/trace/TraceChrome";
 import { absoluteRaceUrl, paramsToRaceKey, type RaceUrlParams } from "@/lib/raceShareUrl";
 import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 
@@ -72,23 +74,56 @@ export default function RacePage() {
     return () => { active = false; };
   }, [raceKey]);
 
-  return <main className="race-page">
-    <header className="race-page-topbar">
-      {state.kind === "ready" && <strong className="race-sticky-identity">{state.race.race.venue} {state.race.race.race_no}R <small>{state.race.race.distance ?? "—"}m</small></strong>}
+  const now = useNow();
+  const [dayRaces, setDayRaces] = useState<LabRaceListItem[]>([]);
+  const readyRace = state.kind === "ready" ? state.race : null;
+  useEffect(() => {
+    const date = readyRace?.race.date;
+    const org = readyRace?.race.organization ?? undefined;
+    if (!date) return;
+    let active = true;
+    fetchRaces(date, org).then(value => { if (active) setDayRaces(value.races); }).catch(() => { if (active) setDayRaces([]); });
+    return () => { active = false; };
+  }, [readyRace?.race.date, readyRace?.race.organization]);
+
+  return <main className="race-page kt-page">
+    <header className="race-page-topbar kt-topbar">
       <Link href="/" className="race-page-back"><ArrowLeft size={16} /> 今日のレース一覧へ</Link>
+      {state.kind === "ready" && <strong className="race-sticky-identity">{state.race.race.venue} {state.race.race.race_no}R <small>{state.race.race.distance ?? "—"}m</small></strong>}
     </header>
     <LabServiceNavigation active="today" />
-    <div className="race-page-body">
+    {dayRaces.length > 0 && <RaceTicker races={dayRaces} nowMs={now} activeKey={raceKey} />}
+    <div className="race-page-body kt-container">
       {state.kind === "loading" && <section className="race-page-status" aria-busy="true"><LoaderCircle className="spin" size={18} /><p>レースを読み込んでいます…</p></section>}
       {state.kind === "invalid_url" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースURLは正しくありません。</h2><p>共有されたURLが正しいか確認するか、レース一覧から選び直してください。</p></div></section>}
       {state.kind === "not_found" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースは見つかりませんでした。</h2><p>race_key: <code>{state.raceKey}</code></p><p>開催がない、または予測がまだ生成されていない可能性があります。0件として扱わず、取得不能として表示しています。</p></div></section>}
       {state.kind === "unavailable" && <section className="race-page-status race-page-status--error" role="alert"><TriangleAlert size={18} /><div><h2>現在データを取得できません。</h2><ApiState kind="unavailable" status={state.status}/><p>正本APIへ接続できないため、0件や取得成功として表示していません。時間をおいて再度お試しください。</p></div></section>}
-      {state.kind === "ready" && <>
-        <TruthPanel race={state.race} />
-        <button type="button" className="race-page-share" onClick={() => void shareRace(state.race.race.race_key ?? raceKey ?? "")}>
-          <Share2 size={14} /> このレースを共有 <Copy size={12} />
-        </button>
-      </>}
+      {state.kind === "ready" && <RaceExperience race={state.race} raceKey={raceKey} now={now} />}
     </div>
   </main>;
+}
+
+function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string | null; now: number }) {
+  const { verdict, reasons } = raceVerdict(race);
+  const key = race.race.race_key ?? raceKey ?? "";
+  return <div className="kt-race kt-reveal">
+    <JourneyRail step="race" raceKey={key} />
+    <RaceHero race={race} nowMs={now} />
+    <WinnerStrip race={race} />
+    <VerdictBanner verdict={verdict} reasons={reasons} />
+    <PickTrio race={race} />
+    <AgreementPanel race={race} />
+    <RankingBoard race={race} />
+    <nav className="kt-cta-row" aria-label="次の操作">
+      <Link href={`/simulator?race=${encodeURIComponent(key)}`} className="kt-cta kt-cta--primary"><FlaskConical size={16} aria-hidden="true" /> このレースの展開シナリオを見る</Link>
+      <Link href="/ai-history#race-ledger" className="kt-cta"><History size={16} aria-hidden="true" /> 結果・履歴を見る</Link>
+      <button type="button" className="kt-cta race-page-share" onClick={() => void shareRace(key)}><Share2 size={14} /> このレースを共有 <Copy size={12} /></button>
+    </nav>
+    <section className="kt-data-room" aria-label="詳細データ">
+      <details>
+        <summary><div><span className="kt-eyebrow">DATA ROOM</span><h2>詳細データ・期待値・判断材料・公式結果</h2></div></summary>
+        <TruthPanel race={race} />
+      </details>
+    </section>
+  </div>;
 }

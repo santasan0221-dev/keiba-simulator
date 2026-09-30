@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Info } from "lucide-react";
 import { Link } from "wouter";
 import { RealRaceLoader, type RealRaceLoad, type RealRaceLoadStatus } from "@/components/RealRaceLoader";
 import { TruthPanel } from "@/components/TruthPanel";
@@ -11,6 +10,7 @@ import { AccessTierBadge, FreeScopeStrip, MemberGate } from "@/components/Access
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { LabValueStrip } from "@/components/LabValueStrip";
 import { publicAssetUrl } from "@/lib/publicAsset";
+import { CommandCenter } from "@/components/trace/CommandCenter";
 
 const BRAND_MARK_URL = publicAssetUrl("media/keiba-lab-mark.png");
 
@@ -57,26 +57,34 @@ export default function Home() {
     setRealRace(race);
   };
 
-  return <div className="app-shell">
-    <header className="topbar">
+  // "/#today-races" (bottom nav / journey rail) lands on the race finder.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#today-races") document.getElementById("today-races")?.scrollIntoView();
+  }, []);
+
+  return <div className="app-shell kt-page">
+    <header className="topbar kt-topbar">
       <div className="brand-lockup">
         <div className="brand-mark"><img src={BRAND_MARK_URL} alt="Keiba Simulator mark" /></div>
         <div><div className="brand-name">KEIBA <span>TRACE</span></div><div className="brand-caption">AI予想を、結果まで追う。</div></div>
       </div>
-      <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" /><span>予測 {formatFreshness(dailyFreshness?.last_prediction_at)}</span><span>公式結果 {formatFreshness(dailyFreshness?.last_result_at)}</span><button className="ghost-icon" aria-label="Information"><Info size={16} /></button></div>
+      <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" /><span>予測 {formatFreshness(dailyFreshness?.last_prediction_at)}</span><span>公式結果 {formatFreshness(dailyFreshness?.last_result_at)}</span></div>
     </header>
     <LabServiceNavigation active="today" />
-    <LabValueStrip />
-    <FreeScopeStrip />
-    <RealRaceLoader onLoad={handleRealRaceLoad} onStatusChange={setRealRaceLoadStatus} />
-    <div className="lab-section-width">
-      <TruthPanel race={realRace} loadStatus={realRaceLoadStatus} />
+    <main className="kt-container">
+      <CommandCenter />
+      <section id="today-races" className="kt-finder" aria-label="レースファインダー">
+        <RealRaceLoader onLoad={handleRealRaceLoad} onStatusChange={setRealRaceLoadStatus} />
+      </section>
+      {realRace ? <TruthPanel race={realRace} loadStatus={realRaceLoadStatus} /> : null}
       <div className="lab-related-links">
         <Link href="/performance-analysis" className="real-race-history-link">実績・分析を見る<span aria-hidden="true"> ＞</span></Link>
         <Link href="/ai-history" className="real-race-history-link">AI履歴を見る<span aria-hidden="true"> ＞</span></Link>
       </div>
+      <LabValueStrip />
+      <FreeScopeStrip />
       <MemberGate />
-    </div>
+    </main>
     <footer className="footer"><span>KEIBA TRACE / PRIVATE RACE MODEL</span><span>予測はAIモデルによる推計であり、的中・回収率を保証するものではありません。</span></footer>
   </div>;
 }

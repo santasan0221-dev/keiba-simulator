@@ -85,8 +85,28 @@ export function DailyOperationsStrip({
       : health || healthError
         ? "要確認"
         : "確認中";
+  const total =
+    current?.prediction_counts &&
+    typeof current.prediction_counts.JRA === "number" &&
+    typeof current.prediction_counts.NAR === "number"
+      ? current.prediction_counts.JRA + current.prediction_counts.NAR
+      : null;
+  const automation = current?.automation_status ?? null;
+  const dailyLabel = loading
+    ? "確認中"
+    : !current
+      ? "取得不能"
+      : automation === "NORMAL"
+        ? "正常運用"
+        : automation === "WAITING"
+          ? "待機中"
+          : automation === "REVIEW_REQUIRED"
+            ? "要確認"
+            : "状態未取得";
+  const dailyTone =
+    dailyLabel === "正常運用" ? "ok" : dailyLabel === "要確認" || dailyLabel === "取得不能" ? "warn" : "idle";
   return (
-    <section className="daily-operations-strip" aria-label="日次運用ステータス">
+    <section className="daily-operations-strip" id="operations" aria-label="日次運用ステータス">
       <header className="broadcast-heading">
         <div>
           <span className="eyebrow">KEIBA TRACE / OPERATIONS</span>
@@ -100,12 +120,18 @@ export function DailyOperationsStrip({
             <span>· 予測から公式結果まで</span>
           </p>
         </div>
-        <span className="broadcast-edition">
-          RACE DAY
-          <br />
-          MONITOR
-        </span>
+        <div className={`kt-daily-status kt-daily-status--${dailyTone}`} role="status">
+          <small>DAILY STATUS</small>
+          <strong>{dailyLabel}</strong>
+          <span>System health {healthLabel}</span>
+        </div>
       </header>
+      {current && typeof total === "number" && total > 0 && typeof current.official_result_count === "number" ? (
+        <div className="kt-progress" aria-label="公式結果の取得進捗">
+          <div className="kt-progress-head"><span>公式結果の取得進捗</span><b className="kt-num">{current.official_result_count} / {total}</b></div>
+          <div className="kt-progress-track"><span style={{ "--kt-fill": `${Math.min(100, (current.official_result_count / total) * 100)}%` } as React.CSSProperties} /></div>
+        </div>
+      ) : null}
       <div className="daily-operations-grid" aria-busy={loading}>
         <div>
           <small>Today's predictions</small>

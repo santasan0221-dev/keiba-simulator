@@ -1,5 +1,5 @@
 import React, { type ReactNode } from "react";
-import { BarChart3, FlaskConical, History, LineChart, LockKeyhole, Sparkles } from "lucide-react";
+import { BarChart3, FlaskConical, History, House, LineChart, ListOrdered, LockKeyhole, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { AccessTierBadge } from "@/components/AccessTierUI";
 import { publicAssetUrl } from "@/lib/publicAsset";
@@ -20,15 +20,32 @@ const links: Array<{ key: ServicePage; href: string; label: string; icon: typeof
   { key: "member", href: "/member", label: "MEMBER", icon: LockKeyhole },
 ];
 
+// Mobile bottom bar: the core journey only (Home → Race → Simulator →
+// Results). Rendered after the main nav so the main nav's link order stays
+// the canonical one; CSS shows it below 760px only.
+const journeyLinks: Array<{ key: ServicePage | "races"; href: string; label: string; icon: typeof Sparkles }> = [
+  { key: "today", href: "/", label: "ホーム", icon: House },
+  { key: "races", href: "/#today-races", label: "レース", icon: ListOrdered },
+  { key: "simulator", href: "/simulator", label: "展開SIM", icon: FlaskConical },
+  { key: "history", href: "/ai-history", label: "結果", icon: History },
+];
+
 export function LabServiceNavigation({ active }: { active: ServicePage }) {
-  return <nav className="lab-service-nav" aria-label="KEIBA TRACE サービスナビゲーション">
+  return <>
+  <nav className="lab-service-nav" aria-label="KEIBA TRACE サービスナビゲーション">
     <div className="lab-service-nav-inner">
       {links.map(({ key, href, label, icon: Icon }) => <Link key={key} href={href} className={`lab-service-link ${active === key ? "is-active" : ""}`} aria-current={active === key ? "page" : undefined} onClick={() => { if (key === "member") trackBetaEvent({ name: "beta_member_click", properties: { source: "main_nav" } }); }}>
         <Icon size={13} strokeWidth={1.8} />
         <span>{label}</span>
       </Link>)}
     </div>
-  </nav>;
+  </nav>
+  <nav className="kt-bottom-nav" aria-label="モバイルショートカット">
+    {journeyLinks.map(({ key, href, label, icon: Icon }) => <Link key={key} href={href} className={`kt-bottom-link${active === key ? " is-active" : ""}`} aria-current={active === key ? "page" : undefined}>
+      <Icon size={18} strokeWidth={1.8} aria-hidden="true" /><span>{label}</span>
+    </Link>)}
+  </nav>
+  </>;
 }
 
 export function PublicLabHeader({ active, eyebrow, title, description, children }: { active: Exclude<ServicePage, "today">; eyebrow: string; title: string; description: string; children?: ReactNode }) {

@@ -125,6 +125,48 @@ export type LabRaceListItem = {
     prob_status: string;
   } | null;
   decision?: LabPredictionDecision;
+  /** Publication ◎ (final_mark). Optional: older API builds omit it. */
+  honmei?: LabHonmei | null;
+  /** AI評価1位 (win_probability rank 1). Never carries a mark. */
+  ai_top?: LabAiTop | null;
+};
+
+/** ◎本命 = the publication ◎ (saved final_mark). Never derived from rank or market. */
+export type LabHonmei = {
+  status: "AVAILABLE" | "UNAVAILABLE" | string;
+  reason?: string | null;
+  mark: string | null;
+  horse_no: number | null;
+  horse_name: string | null;
+  win_probability: number | null;
+  caution?: { status: string; label: string; reasons: string[]; note: string | null } | null;
+};
+
+/** AI評価1位: win_probability argmax. No ◎ -- ever. */
+export type LabAiTop = {
+  status: "AVAILABLE" | "UNAVAILABLE" | string;
+  reason?: string | null;
+  label?: string;
+  horse_no: number | null;
+  horse_name: string | null;
+  win_probability: number | null;
+};
+
+export type LabBetDecision = {
+  status: "BUY" | "WATCH" | "PASS" | "UNKNOWN" | string;
+  reasons: string[];
+  classifier_status?: string;
+  race_decision?: string;
+  gate_status?: string | null;
+};
+
+export type LabSourcePick = { source: string; status: string; horse_no: number | null; win_probability: number | null };
+
+export type LabHonmeiView = {
+  ui_notice?: string;
+  ranking?: { status: string; reason_codes: string[]; ranked: Array<{ rank: number; horse_no: number; horse_name: string | null; win_probability: number }> };
+  sources?: { ai?: LabSourcePick; market?: LabSourcePick; simulation?: LabSourcePick };
+  agreement?: { state: string; ai_market: boolean | null; publication_ai?: boolean | null; publication_market?: boolean | null };
 };
 
 export type LabDisplayBet = {
@@ -172,6 +214,8 @@ export type LabHorse = {
     top3_probability?: number | null;
     probability_semantics_status?: string;
     probability_refusals?: string[];
+    /** Fail-closed market P(1st) from one pre-start odds slot; null when not published. */
+    market_win_probability?: number | null;
   };
   display?: {
     base_mark: string | null;
@@ -211,6 +255,10 @@ export type LabRace = {
   market_ev: { note: string; status: string; rows: Array<Record<string, unknown>>; unavailable_reasons?: string[] };
   provenance: Record<string, unknown>;
   result?: LabRaceResult | null;
+  honmei?: LabHonmei | null;
+  ai_top?: LabAiTop | null;
+  bet_decision?: LabBetDecision | null;
+  honmei_view?: LabHonmeiView | null;
 };
 
 const PALETTE = ["#b9c3d4", "#e7b66a", "#db7e70", "#95c6b0", "#aa9ad6", "#d7a5ca", "#8ebc83", "#9bbbd2"];
@@ -227,9 +275,34 @@ function toAppStyle(style: string | null): Style {
   return "差し";
 }
 
-export async function getJson<T>(path: string): Promise<T> {
+// In-flight GET de-duplication only. Two callers asking for the same URL
+// with the same headers while the first request is still pending share that
+// one network call and its outcome (value or error). The entry is removed as
+// soon as the request settles, success or failure, so this is never a cache:
+// the next call after settlement always goes to the network.
+const inFlight = new Map<string, Promise<unknown>>();
+
+/** Test hook: number of GETs currently being shared. */
+export function inFlightRequestCount(): number {
+  return inFlight.size;
+}
+
+export function getJson<T>(path: string): Promise<T> {
   const base = getApiBase();
-  const response = await fetch(`${base}${path}`, { headers: getApiRequestHeaders(base) });
+  const url = `${base}${path}`;
+  const headers = getApiRequestHeaders(base);
+  const key = `GET ${url} ${JSON.stringify(headers ?? {})}`;
+  const pending = inFlight.get(key);
+  if (pending) return pending as Promise<T>;
+  const request = requestJson<T>(url, headers).finally(() => {
+    if (inFlight.get(key) === request) inFlight.delete(key);
+  });
+  inFlight.set(key, request);
+  return request;
+}
+
+async function requestJson<T>(url: string, headers: HeadersInit | undefined): Promise<T> {
+  const response = await fetch(url, { headers });
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
   const body: unknown = isJson ? await response.json().catch(() => null) : null;

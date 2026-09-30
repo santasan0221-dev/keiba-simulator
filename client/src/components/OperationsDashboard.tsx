@@ -5,13 +5,18 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trophy } from "lucide-react";
+import { Link } from "wouter";
+import { raceKeyToPath } from "@/lib/raceShareUrl";
+import { finishOfHorse, honmeiAccuracy, pickCards } from "@/lib/raceView";
+import { formatPercent } from "@/lib/displayFormat";
 import { DailyOperationsStrip } from "./DailyOperationsStrip";
 import { ApiFailure, ApiState } from "./ApiState";
 import { formatCoverageRatio, formatSpecialStatuses } from "@/lib/resultFormat";
 import {
   fetchAvailablePredictionDates,
   fetchLabResults,
+  fetchRace,
   type LabResultListItem,
   type LabResultPredictionHorse,
 } from "@/lib/singlePickAi";
@@ -82,6 +87,29 @@ function horseLabel(value: unknown, index: number): string {
   }
   return "取得不能";
 }
+type TopFinish = { state: "idle" } | { state: "loading" } | { state: "ready"; ai: string; market: string } | { state: "unavailable" };
+
+/** AI TOP / MARKET TOP finishes: the results API does not carry them, so they are read from the race detail on demand. */
+function TopFinishes({ item }: { item: LabResultListItem }) {
+  const [value, setValue] = useState<TopFinish>({ state: "idle" });
+  const confirmed = item.result_status === "CONFIRMED" || item.result_status === "DEAD_HEAT";
+  if (!confirmed) return <><div className="kt-ledger-cell"><small>AI TOP着順</small><strong>未確定</strong></div><div className="kt-ledger-cell"><small>MARKET TOP着順</small><strong>未確定</strong></div></>;
+  const load = () => {
+    setValue({ state: "loading" });
+    fetchRace(item.race_key).then(race => {
+      const { aiTop, marketTop } = pickCards(race);
+      setValue({
+        state: "ready",
+        ai: aiTop.available ? `#${aiTop.horseNo} ${finishOfHorse(aiTop.horseNo, race.result, item.special_statuses)}` : "対象外",
+        market: marketTop.available ? `#${marketTop.horseNo} ${finishOfHorse(marketTop.horseNo, race.result, item.special_statuses)}` : "市場データなし",
+      });
+    }).catch(() => setValue({ state: "unavailable" }));
+  };
+  if (value.state === "ready") return <><div className="kt-ledger-cell kt-ledger-cell--ai"><small>AI TOP着順</small><strong>{value.ai}</strong></div><div className="kt-ledger-cell kt-ledger-cell--market"><small>MARKET TOP着順</small><strong>{value.market}</strong></div></>;
+  return <div className="kt-ledger-cell kt-ledger-cell--wide"><small>AI TOP / MARKET TOP着順</small>
+    <button type="button" className="kt-ledger-check" onClick={load} disabled={value.state === "loading"}>{value.state === "loading" ? "照合中…" : value.state === "unavailable" ? "取得できません · 再照合" : "レース詳細と照合する"}</button></div>;
+}
+
 export function ResultRow({ item }: { item: LabResultListItem }) {
   const picks = item.predicted_top3?.filter(entry => entry.mark === "◎") ?? [];
   const honmei = picks.length === 1 ? picks[0] : null;
@@ -95,8 +123,12 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
         ? "review"
         : "unavailable";
   const special = formatSpecialStatuses(item.special_statuses);
+  const finish = confirmed && honmei && typeof item.ai_pick_finish === "number" && item.ai_pick_finish > 0 ? item.ai_pick_finish : null;
+  const outcome = !confirmed ? state : finish === null ? "unknown" : finish === 1 ? "hit" : finish <= 3 ? "placed" : "miss";
+  const outcomeLabel: Record<string, string> = { hit: "◎ 的中 · 1着", placed: `◎ 3着内 · ${finish}着`, miss: `◎ 圏外 · ${finish}着`, unknown: "◎ 着順取得不能", pending: "結果待ち", review: "結果確認中", unavailable: statusText(item.result_status) };
+  const path = raceKeyToPath(item.race_key);
   return (
-    <article className={`race-result-card is-${state}`}>
+    <article className={`race-result-card kt-ledger-card is-${state} kt-outcome--${outcome}`}>
       <header className="race-trace-rail">
         <div>
           <span className="broadcast-badge">
@@ -105,17 +137,18 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
           <h3>
             {item.venue ?? "会場未取得"} <b>{item.race_no ?? "—"}R</b>
           </h3>
+          <span className="race-start">
+            発走 <time>{dateTime(item.scheduled_start_at)}</time>
+          </span>
         </div>
         <span className={`broadcast-badge status-${state}`}>
           {statusText(item.result_status)}
         </span>
       </header>
-      <div className="race-start">
-        発走 <time>{dateTime(item.scheduled_start_at)}</time>
-      </div>
+      <div className="kt-outcome-banner" role="status">{outcome === "hit" ? <Trophy size={16} aria-hidden="true" /> : null}<strong>{outcomeLabel[outcome]}</strong></div>
       <div className="result-card-main">
         <section className="publication-pick">
-          <small>公開本命</small>
+          <small>予想◎（公開本命）</small>
           <strong>
             {honmei ? (
               <>
@@ -128,11 +161,11 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
           </strong>
         </section>
         <section className="official-order">
-          <small>公式1〜3着</small>
+          <small>結果 · 公式1〜3着</small>
           <div>
             {item.official_top3?.length ? (
               item.official_top3.map((horse, index) => (
-                <span key={index}>{horseLabel(horse, index)}</span>
+                <span key={index} className={typeof horse === "number" && horse === honmei?.horse_no ? "is-honmei" : undefined}>{horseLabel(horse, index)}</span>
               ))
             ) : (
               <span>
@@ -142,8 +175,8 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
           </div>
         </section>
       </div>
-      <div className="result-metrics">
-        <div>
+      <div className="result-metrics kt-ledger-metrics">
+        <div className="kt-ledger-cell kt-ledger-cell--honmei">
           <small>◎着順</small>
           <strong>
             {requestedResultValue(
@@ -153,7 +186,8 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
             )}
           </strong>
         </div>
-        <div>
+        <TopFinishes item={item} />
+        <div className="kt-ledger-cell">
           <small>top3 coverage</small>
           <strong className="probability-value">
             {requestedResultValue(
@@ -165,23 +199,26 @@ export function ResultRow({ item }: { item: LabResultListItem }) {
         </div>
       </div>
       {special && <p className="special-status">{special}</p>}
-      <details className="result-secondary">
-        <summary>記録の詳細</summary>
-        <dl>
-          <div>
-            <dt>予測生成</dt>
-            <dd>{dateTime(item.prediction_created_at)}</dd>
-          </div>
-          <div>
-            <dt>結果取得</dt>
-            <dd>{dateTime(item.result_fetched_at)}</dd>
-          </div>
-          <div>
-            <dt>detail ID</dt>
-            <dd>{item.prediction_id ?? "取得不能"}</dd>
-          </div>
-        </dl>
-      </details>
+      <footer className="kt-ledger-foot">
+        {path ? <Link href={path} className="kt-link">レース詳細 ＞</Link> : null}
+        <details className="result-secondary">
+          <summary>記録の詳細</summary>
+          <dl>
+            <div>
+              <dt>予測生成</dt>
+              <dd>{dateTime(item.prediction_created_at)}</dd>
+            </div>
+            <div>
+              <dt>結果取得</dt>
+              <dd>{dateTime(item.result_fetched_at)}</dd>
+            </div>
+            <div>
+              <dt>detail ID</dt>
+              <dd>{item.prediction_id ?? "取得不能"}</dd>
+            </div>
+          </dl>
+        </details>
+      </footer>
     </article>
   );
 }
@@ -289,11 +326,11 @@ export function OperationsDashboard() {
         selectedDate={filters.date}
         onLatestDate={date => setFilters({ date, organization: "", venue: "" })}
       />
-      <header className="broadcast-ledger-heading">
+      <header className="broadcast-ledger-heading" id="race-ledger">
         <div>
-          <span className="eyebrow">RACE RESULT LEDGER</span>
+          <span className="eyebrow">RACE HISTORY · RESULT LEDGER</span>
           <h2>予測の先を、確かめる。</h2>
-          <p>公開本命と公式結果を、レースごとに。</p>
+          <p>公開◎と公式結果を、レースごとに。外れも隠さず表示します。</p>
         </div>
         <button
           type="button"
@@ -377,14 +414,28 @@ export function OperationsDashboard() {
           onRetry={() => setRefresh(value => value + 1)}
         />
       ) : rows?.length ? (
+        <>
+        <LedgerSummary rows={rows} />
         <div className="ops-result-ledger">
           {rows.map(item => (
             <ResultRow key={item.race_key} item={item} />
           ))}
         </div>
+        </>
       ) : (
         <ApiState kind="empty" />
       )}
     </section>
   );
+}
+
+function LedgerSummary({ rows }: { rows: LabResultListItem[] }) {
+  const accuracy = honmeiAccuracy(rows);
+  const pct = (value: number | null) => (value === null ? "—" : formatPercent(value));
+  return <div className="kt-ledger-summary" aria-label="表示中レースの◎成績">
+    <div><small>表示レース</small><strong className="kt-num">{rows.length}</strong></div>
+    <div><small>◎ 1着</small><strong className="kt-num">{accuracy.wins}<span>/{accuracy.confirmed}</span></strong><em>{pct(accuracy.winRate)}</em></div>
+    <div><small>◎ 3着内</small><strong className="kt-num">{accuracy.top3}<span>/{accuracy.confirmed}</span></strong><em>{pct(accuracy.top3Rate)}</em></div>
+    <div><small>平均 coverage</small><strong className="kt-num">{accuracy.meanCoverage === null ? "—" : formatCoverageRatio(accuracy.meanCoverage)}</strong></div>
+  </div>;
 }
