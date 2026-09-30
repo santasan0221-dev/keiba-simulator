@@ -6,7 +6,6 @@ import { JourneyRail } from "@/components/trace/TraceChrome";
 import { PickCardView, VerdictChip } from "@/components/trace/RaceParts";
 import {
   fetchAvailablePredictionDates,
-  fetchLabResults,
   fetchRace,
   fetchRaces,
   type LabRace,
@@ -15,7 +14,8 @@ import {
 } from "@/lib/singlePickAi";
 import { pickCards, verdictOf, type PickCard } from "@/lib/raceView";
 import { raceKeyToPath } from "@/lib/raceShareUrl";
-import { officialResultView, shouldPollResult, type OfficialResultView } from "@/lib/simulatorResult";
+import { fetchResultRow, officialResultView, type OfficialResultView } from "@/lib/simulatorResult";
+import { createResultPoller } from "@/lib/resultPoller";
 import {
   demoField,
   formationAt,
@@ -35,7 +35,6 @@ import {
 // illustration, not race time: nothing on screen is labelled in seconds.
 const SCENARIO_MS = 30_000;
 const SPEEDS = [1, 1.5, 2] as const;
-const RESULT_POLL_MS = 5 * 60_000;
 
 // Whole-track camera: the full oval is always in view (no follow camera),
 // so no runner can leave the screen. Mobile uses a rounder oval so the
@@ -73,7 +72,6 @@ export default function SimulatorShell() {
   const [date, setDate] = useState("");
   const [choices, setChoices] = useState<LabRaceListItem[]>([]);
   const [result, setResult] = useState<ResultLoad>({ status: "idle", row: null });
-  const [polls, setPolls] = useState(0);
   const compact = useMediaQuery("(max-width: 760px)");
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const autoSwitched = useRef(false);
@@ -81,16 +79,14 @@ export default function SimulatorShell() {
   const race = source.kind === "race" ? source.race : null;
 
   const loadResult = useCallback((target: LabRace) => {
-    const { date: raceDate, organization, venue, race_key: key } = target.race;
-    if (!raceDate || !key) { setResult({ status: "failed", row: null }); return; }
+    const key = target.race.race_key;
     setResult(current => ({ status: "loading", row: current.row }));
-    fetchLabResults({ date: raceDate, organization: organization === "JRA" || organization === "NAR" ? organization : undefined, venue: venue ?? undefined })
-      .then(response => {
-        const row = response.results.find(entry => entry.race_key === key) ?? null;
+    fetchResultRow(target)
+      .then(row => {
         setResult({ status: "ready", row });
         // A result confirmed after the race detail was loaded: refresh the
         // detail once so names / official order come from the canonical payload.
-        if (row && (row.result_status === "CONFIRMED" || row.result_status === "DEAD_HEAT") && !target.result) {
+        if (key && row && (row.result_status === "CONFIRMED" || row.result_status === "DEAD_HEAT") && !target.result) {
           fetchRace(key).then(fresh => setSource({ kind: "race", race: fresh })).catch(() => undefined);
         }
       })
@@ -101,7 +97,6 @@ export default function SimulatorShell() {
     setPlaying(false);
     setProgress(0);
     setMode("SCENARIO");
-    setPolls(0);
     autoSwitched.current = false;
     setResult({ status: "idle", row: null });
     if (!key) { setSource({ kind: "demo" }); return; }
@@ -172,18 +167,30 @@ export default function SimulatorShell() {
     return () => window.clearTimeout(timer);
   }, [complete, confirmed]);
 
-  // Light polling: only while PENDING / REVIEW_REQUIRED after post time, only
-  // while the tab is visible, at most 12 times (5 min apart).
+  // Official-result polling for the race that is open: one poller per race
+  // (lib/resultPoller). Before post time it waits on a one-shot timer to post
+  // time; afterwards it polls every 5 min while PENDING / REVIEW_REQUIRED,
+  // at most 12 times, never while the tab is hidden. Race change / unmount
+  // stops it. Refs keep the poller reading the latest race and state.
+  const raceRef = useRef<LabRace | null>(null);
+  raceRef.current = race;
+  const pollState = !race || !official || !officialReady ? "LOADING" : official.state;
+  const pollStateRef = useRef<OfficialResultView["state"] | "LOADING">(pollState);
+  pollStateRef.current = pollState;
+  const pollerRef = useRef<ReturnType<typeof createResultPoller> | null>(null);
+  const raceKey = race?.race.race_key ?? null;
+  const startIso = race?.race.scheduled_start_at ?? null;
   useEffect(() => {
-    if (!race || !official || !officialReady) return;
-    if (!shouldPollResult(official.state, race.race.scheduled_start_at, Date.now(), polls)) return;
-    const timer = window.setTimeout(() => {
-      if (document.visibilityState !== "visible") { setPolls(value => value + 1); return; }
-      setPolls(value => value + 1);
-      loadResult(race);
-    }, RESULT_POLL_MS);
-    return () => window.clearTimeout(timer);
-  }, [race, official?.state, officialReady, polls, loadResult]);
+    if (!raceKey) return;
+    const poller = createResultPoller({
+      startIso,
+      getState: () => pollStateRef.current,
+      refresh: () => { if (raceRef.current) loadResult(raceRef.current); },
+    });
+    pollerRef.current = poller;
+    return () => poller.stop();
+  }, [raceKey]);
+  useEffect(() => { pollerRef.current?.notify(); }, [pollState]);
 
   const runners: ScenarioRunner[] = useMemo(() => race
     ? race.horses.filter(horse => typeof horse.no === "number" && !horse.withdrawn).map(horse => ({ no: horse.no as number, name: horse.name, style: normalizeStyle(horse.style) }))

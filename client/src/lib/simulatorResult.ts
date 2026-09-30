@@ -8,7 +8,7 @@
  * PENDING and REVIEW_REQUIRED are states, not results: they never produce a
  * top 3, a finish position, or a 0.
  */
-import type { LabRace, LabResultListItem } from "@/lib/singlePickAi";
+import { fetchLabResults, type LabRace, type LabResultListItem } from "@/lib/singlePickAi";
 import { formatCoverageRatio, formatSpecialStatuses } from "@/lib/resultFormat";
 import { finishOfHorse, pickCards, uniqueHonmei } from "@/lib/raceView";
 
@@ -93,4 +93,16 @@ export function shouldPollResult(state: OfficialState, startIso: string | null |
   if (state !== "PENDING" && state !== "REVIEW_REQUIRED") return false;
   const start = startIso ? Date.parse(startIso) : NaN;
   return Number.isFinite(start) && nowMs >= start;
+}
+
+/**
+ * The canonical results row for one race. The only fetch path for both the
+ * manual refresh button and automatic polling, so concurrent calls collapse
+ * into one GET via getJson's in-flight de-duplication.
+ */
+export async function fetchResultRow(race: LabRace): Promise<LabResultListItem | null> {
+  const { date, organization, venue, race_key: key } = race.race;
+  if (!date || !key) throw new Error("race_key / date missing");
+  const response = await fetchLabResults({ date, organization: organization === "JRA" || organization === "NAR" ? organization : undefined, venue: venue ?? undefined });
+  return response.results.find(entry => entry.race_key === key) ?? null;
 }
