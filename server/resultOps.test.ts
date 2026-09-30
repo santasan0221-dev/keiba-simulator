@@ -26,13 +26,21 @@ fi
   process.env.SINGLE_PICK_AI_PYTHON = runner;
 }
 
-async function waitForTerminal(jobId: string) {
-  for (let i = 0; i < 40; i += 1) {
-    const job = getJob(jobId);
-    if (job && !["QUEUED", "RUNNING"].includes(job.status)) return job;
-    await new Promise(resolve => setTimeout(resolve, 25));
+// A job is settled when the batch is no longer active AND post-analysis is
+// not running. After a COMPLETE batch the job is already COMPLETE while
+// post-analysis (a second subprocess) is still RUNNING, so waiting on the
+// job status alone races that second process. Bounded polling with an
+// explicit deadline (inside vitest's 5 s test timeout, so this message wins);
+// on timeout the current state is reported.
+async function waitForTerminal(jobId: string, timeoutMs = 4_000, intervalMs = 25) {
+  const deadline = Date.now() + timeoutMs;
+  let job = getJob(jobId);
+  while (Date.now() < deadline) {
+    job = getJob(jobId);
+    if (job && !["QUEUED", "RUNNING"].includes(job.status) && job.postAnalysis.status !== "RUNNING") return job;
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
-  throw new Error("job did not finish");
+  throw new Error(`job ${jobId} did not settle within ${timeoutMs}ms: ${JSON.stringify(job ? { status: job.status, postAnalysis: job.postAnalysis, error: job.error } : null)}`);
 }
 
 afterEach(() => {
