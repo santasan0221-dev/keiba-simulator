@@ -269,7 +269,7 @@ export function nextRace<T extends { scheduled_start_at: string | null }>(races:
 
 // ---------------------------------------------------------------- results
 
-const SPECIAL_LABELS: Record<string, string> = { CANCELLED: "取消", EXCLUDED: "除外", DID_NOT_FINISH: "競走中止", DISQUALIFIED: "失格", RACE_STOPPED: "レース中止" };
+export const SPECIAL_LABELS: Record<string, string> = { CANCELLED: "取消", EXCLUDED: "除外", DID_NOT_FINISH: "競走中止", DISQUALIFIED: "失格", RACE_STOPPED: "レース中止" };
 
 /** Finish of a horse from the detail's official order (top 5). Never guessed. */
 export function finishOfHorse(no: number | null, result: LabRaceResult | null | undefined, special: { horse_no: number | null; status: string }[] | null): string {
@@ -285,6 +285,20 @@ export function finishOfHorse(no: number | null, result: LabRaceResult | null | 
 export function uniqueHonmei(row: LabResultListItem) {
   const picks = row.predicted_top3?.filter(entry => entry.mark === HONMEI) ?? [];
   return picks.length === 1 ? picks[0] : null;
+}
+
+/**
+ * What to show for the publication ◎ in a confirmed result row: its finish, or
+ * -- when it did not finish -- the real reason (取消 / 除外 / 競走中止 ...), never a
+ * blanket "取得不能". Only a missing finish with no recorded status is 取得不能.
+ */
+export function honmeiResultLabel(row: LabResultListItem): { text: string; kind: "finish" | "special" | "missing" } {
+  const honmei = uniqueHonmei(row);
+  const finish = honmei ? row.ai_pick_finish : null;
+  if (typeof finish === "number" && Number.isFinite(finish)) return { text: `${finish}着`, kind: "finish" };
+  const status = honmei ? row.special_statuses?.find(entry => entry.horse_no === honmei.horse_no)?.status?.toUpperCase() : undefined;
+  if (status) return { text: SPECIAL_LABELS[status] ?? "特殊状態", kind: "special" };
+  return { text: "取得不能", kind: "missing" };
 }
 
 export function isConfirmed(row: LabResultListItem) {

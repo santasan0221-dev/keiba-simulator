@@ -1,7 +1,7 @@
 import { ExternalLink, KeyRound, LockKeyhole, ShieldCheck, Timer, UserRoundCheck } from "lucide-react";
-import { ACCESS_TIER_NOTICE, FREE_PUBLICATION_RULE_NOTICE, noteLinks } from "@/lib/accessTier";
+import { ACCESS_TIER_NOTICE, FREE_SCOPE_NOTICE, noteLinks } from "@/lib/accessTier";
 import { Link } from "wouter";
-import { memberSourceForPath, trackBetaEvent } from "@/lib/betaAnalytics";
+import { memberSourceForPath, trackBetaEvent, trackOutbound, type OutboundPlacement } from "@/lib/betaAnalytics";
 
 type NoteKind = "membership" | "weekendPass";
 
@@ -31,16 +31,17 @@ export function AccessTierBadge() {
 
 export function FreeScopeStrip() {
   return <section className="free-scope-strip free-scope-strip--compact" aria-labelledby="free-scope-title">
-    <div className="free-scope-heading"><span className="eyebrow">FREE</span><h2 id="free-scope-title">FREE公開対象は事前固定ruleで自動選定。</h2></div>
-    <p className="free-scope-note">{FREE_PUBLICATION_RULE_NOTICE.description}</p>
+    <div className="free-scope-heading"><span className="eyebrow">FREE</span><h2 id="free-scope-title">{FREE_SCOPE_NOTICE.headline}</h2></div>
+    <p className="free-scope-note">{FREE_SCOPE_NOTICE.description}</p>
     <div className="free-scope-actions">
-      <Link href="/free">FREE公開を見る</Link>
+      <Link href="/rules">記録ルールを読む</Link>
       <button type="button" onClick={scrollToMemberGate}>MEMBERを見る</button>
     </div>
   </section>;
 }
 
-export function NoteExternalLink({ kind, compact = false }: { kind: NoteKind; compact?: boolean }) {
+export function NoteExternalLink({ kind, compact = false, placement }: { kind: NoteKind; compact?: boolean; placement?: OutboundPlacement }) {
+  const outboundPlacement: OutboundPlacement = placement ?? (kind === "weekendPass" ? "weekend_pass" : "member_gate");
   const isMembership = kind === "membership";
   const href = isMembership ? noteLinks.membership : noteLinks.weekendPass;
   const label = isMembership ? "noteでMEMBERの案内を見る" : "週末パスをnoteで見る";
@@ -53,7 +54,7 @@ export function NoteExternalLink({ kind, compact = false }: { kind: NoteKind; co
     </span>;
   }
 
-  return <a className={`note-external-link${compact ? " compact" : ""}`} href={href} target="_blank" rel="noreferrer" onClick={trackMemberFunnel}>
+  return <a className={`note-external-link${compact ? " compact" : ""}`} href={href} target="_blank" rel="noreferrer" onClick={() => { trackMemberFunnel(); trackOutbound(outboundPlacement); }}>
     <span>{label}</span><ExternalLink size={13} aria-hidden="true" />
     {!compact && <small>{description}</small>}
   </a>;
@@ -77,7 +78,7 @@ export function MemberGate() {
     <div className="member-gate-copy">
       <span className="eyebrow">MEMBER</span>
       <h2 id="member-gate-title">MEMBER機能は準備中です。</h2>
-      <div className="member-gate-scope"><span><ShieldCheck size={13} /> FREE: 一部発走前＋全事後公開</span><span><UserRoundCheck size={13} /> MEMBER: 全発走前＋詳細分析（準備中）</span></div>
+      <div className="member-gate-scope"><span><ShieldCheck size={13} /> FREE: ◎・AI TOP・MARKET TOP・基本結果（全レース）</span><span><UserRoundCheck size={13} /> MEMBER: 詳細分析・条件別・データ（準備中）</span></div>
     </div>
     <div className="member-gate-actions">
       <NoteExternalLink kind="membership" compact />
@@ -98,8 +99,8 @@ export function AccessCodeForm() {
       </label>
       <p id="access-code-help" className="access-code-status">{ACCESS_TIER_NOTICE.accessCodeStatus}。コードの可否は判定していません。</p>
       <div className="access-code-actions">
-        <NoteExternalLink kind="membership" compact />
-        <Link href="/">FREE公開へ戻る</Link>
+        <NoteExternalLink kind="membership" compact placement="access_code" />
+        <Link href="/">今日の予想へ戻る</Link>
       </div>
     </section>
   </main>;

@@ -4,8 +4,10 @@ import { Link } from "wouter";
 import { OperationsDashboard } from "@/components/OperationsDashboard";
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { JourneyRail } from "@/components/trace/TraceChrome";
+import { trackBetaEvent } from "@/lib/betaAnalytics";
 
 export default function RaceHistoryPage() {
+  useEffect(() => { trackBetaEvent({ name: "beta_history_view", properties: {} }); }, []);
   // wouter does not follow #hash targets on client-side navigation.
   useEffect(() => {
     const id = typeof window === "undefined" ? "" : window.location.hash.slice(1);

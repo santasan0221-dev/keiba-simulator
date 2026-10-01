@@ -31,6 +31,7 @@ jobs:
       - name: Build (base path = repo name for project Pages)
         env:
           VITE_SINGLE_PICK_AI_BASE: https://api.keibalab.net
+          KEIBA_TRACE_BASE_URL: ${{ vars.KEIBA_TRACE_BASE_URL }}
           VITE_ANALYTICS_ENDPOINT: ${{ secrets.VITE_ANALYTICS_ENDPOINT }}
           VITE_ANALYTICS_WEBSITE_ID: ${{ secrets.VITE_ANALYTICS_WEBSITE_ID }}
         run: pnpm exec vite build --base=/${{ github.event.repository.name }}/

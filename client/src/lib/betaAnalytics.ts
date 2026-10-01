@@ -1,3 +1,20 @@
+import { CAMPAIGN_IDS, parseCampaignVisit } from "@/lib/campaign";
+
+/** Fixed CTA identifiers. Nothing else can be reported as a CTA. */
+export const CTA_IDS = [
+  "hero_today",
+  "hero_results",
+  "hero_simulator",
+  "featured_race",
+  "featured_scenario",
+  "rules_link",
+  "value_strip",
+] as const;
+export type CtaId = (typeof CTA_IDS)[number];
+
+export const OUTBOUND_PLACEMENTS = ["member_gate", "member_page", "weekend_pass", "access_code"] as const;
+export type OutboundPlacement = (typeof OUTBOUND_PLACEMENTS)[number];
+
 export type BetaEventName =
   | "beta_page_view"
   | "beta_race_select"
@@ -6,7 +23,13 @@ export type BetaEventName =
   | "beta_return_visit"
   | "beta_member_click"
   | "beta_survey_open"
-  | "beta_survey_submit";
+  | "beta_survey_submit"
+  | "beta_cta_click"
+  | "beta_outbound_click"
+  | "beta_campaign_visit"
+  | "beta_race_detail_view"
+  | "beta_simulator_open"
+  | "beta_history_view";
 
 export type BetaEvent = {
   name: BetaEventName;
@@ -29,7 +52,7 @@ declare global {
 
 const EVENT_PROPERTIES: Record<BetaEventName, Record<string, readonly string[]>> = {
   beta_page_view: {
-    route: ["home", "race_detail", "free", "betting", "performance", "member", "history", "access_code", "other"],
+    route: ["home", "race_detail", "free", "betting", "performance", "member", "history", "access_code", "simulator", "rules", "other"],
   },
   beta_race_select: {
     organization: ["JRA", "NAR"],
@@ -55,6 +78,19 @@ const EVENT_PROPERTIES: Record<BetaEventName, Record<string, readonly string[]>>
     reuse_intent: ["yes", "maybe", "no"],
     member_interest: ["yes", "depends", "no"],
   },
+  // Growth P0 events. Every value is a fixed enumeration; free text, race keys,
+  // dates, URLs and identifiers are structurally impossible (see sanitizeEvent).
+  beta_cta_click: { cta_id: CTA_IDS },
+  // Only note exists as an outbound destination today. Bookers is deliberately
+  // not allowed until its terms and a link exist.
+  beta_outbound_click: { target: ["note"], placement: OUTBOUND_PLACEMENTS },
+  beta_campaign_visit: { source: ["x"], campaign: CAMPAIGN_IDS },
+  beta_race_detail_view: {
+    organization: ["JRA", "NAR", "UNKNOWN"],
+    race_state: ["pre", "pending", "post"],
+  },
+  beta_simulator_open: { entry: ["race_link", "direct"] },
+  beta_history_view: {},
 };
 
 const queuedEvents: BetaEvent[] = [];
@@ -147,6 +183,7 @@ export function routeName(pathname: string, basePath = "") {
   if (path === "/ai-history") return "history";
   if (path === "/access-code") return "access_code";
   if (path === "/simulator") return "simulator";
+  if (path === "/rules") return "rules";
   return "other";
 }
 
@@ -180,6 +217,44 @@ function recordReturnVisit(today: string) {
   }
 }
 
+export function trackCta(ctaId: CtaId) {
+  return trackBetaEvent({ name: "beta_cta_click", properties: { cta_id: ctaId } });
+}
+
+export function trackOutbound(placement: OutboundPlacement) {
+  return trackBetaEvent({ name: "beta_outbound_click", properties: { target: "note", placement } });
+}
+
+/** Race-detail state as a coarse bucket: "post" once a result exists, "pending" after the start, else "pre". */
+export function raceViewState(scheduledStartAt: string | null | undefined, hasResult: boolean, nowMs: number) {
+  if (hasResult) return "post" as const;
+  const start = scheduledStartAt ? Date.parse(scheduledStartAt) : NaN;
+  return Number.isFinite(start) && start <= nowMs ? ("pending" as const) : ("pre" as const);
+}
+
+const CAMPAIGN_SENT_KEY = "keiba-lab:beta:campaign-sent:v1";
+
+/**
+ * Reports an arrival from a campaign link at most once per browser session.
+ * Only the fixed source / campaign enumerations are reported; the URL itself,
+ * utm_content, utm_medium and the referrer are never read into an event.
+ */
+export function recordCampaignVisit(
+  search: string,
+  storage: Pick<Storage, "getItem" | "setItem"> | undefined =
+    typeof sessionStorage === "undefined" ? undefined : sessionStorage,
+) {
+  const visit = parseCampaignVisit(search);
+  if (!visit) return false;
+  try {
+    if (storage?.getItem(CAMPAIGN_SENT_KEY) === visit.campaign) return false;
+    storage?.setItem(CAMPAIGN_SENT_KEY, visit.campaign);
+  } catch {
+    // Session storage may be unavailable; a duplicate count beats blocking the page.
+  }
+  return trackBetaEvent({ name: "beta_campaign_visit", properties: { source: visit.source, campaign: visit.campaign } });
+}
+
 export function initializeBetaAnalytics() {
   if (typeof window === "undefined" || typeof document === "undefined") return false;
   const config = normalizeAnalyticsConfig(
@@ -205,6 +280,7 @@ export function initializeBetaAnalytics() {
     document.head.appendChild(script);
   }
   recordReturnVisit(new Date().toLocaleDateString("sv-SE"));
+  recordCampaignVisit(window.location.search);
   return true;
 }
 

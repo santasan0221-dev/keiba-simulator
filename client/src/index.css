@@ -78,7 +78,7 @@ input[type=range] { width: 100%; height: 3px; appearance: none; background: line
 .race-page-share:hover { border-color: #c8a866; background: #182533; }
 .lab-value-strip { display: grid; gap: 12px; margin: 0 0 18px; padding: 16px 18px; border: 1px solid #354657; background: linear-gradient(135deg, #121e2a, #0d151e); }
 .lab-value-strip-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.lab-value-strip-head h1 { margin: 0; font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: #f0e7d4; }
+.lab-value-strip-head h2 { margin: 0; font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: #f0e7d4; }
 .lab-value-strip-head span { color: #8091a1; font-size: 10px; letter-spacing: .08em; }
 .lab-value-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .lab-value-point { display: grid; gap: 3px; }

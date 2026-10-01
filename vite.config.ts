@@ -162,6 +162,8 @@ export default defineConfig({
     },
   },
   envDir: path.resolve(import.meta.dirname),
+  // KEIBA_TRACE_BASE_URL (canonical public URL) is the only non-VITE_ variable exposed to the client.
+  envPrefix: ["VITE_", "KEIBA_TRACE_"],
   root: path.resolve(import.meta.dirname, "client"),
   publicDir: path.resolve(import.meta.dirname, "client", "public"),
   build: {

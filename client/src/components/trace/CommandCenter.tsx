@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { Activity, ArrowRight, CalendarDays, Gauge, Radio, Target, TimerReset } from "lucide-react";
+import { ArrowRight, Radio, TimerReset } from "lucide-react";
 import {
   fetchAvailablePredictionDates,
   fetchDailyOperations,
@@ -15,25 +15,26 @@ import {
   type LabResultListItem,
 } from "@/lib/singlePickAi";
 import { raceKeyToPath } from "@/lib/raceShareUrl";
-import { formatCoverageRatio } from "@/lib/resultFormat";
 import { formatPercent } from "@/lib/displayFormat";
+import { todayRecord } from "@/lib/todayRecord";
+import { trackCta } from "@/lib/betaAnalytics";
 import {
   AGREEMENT_COPY,
   agreementOf,
   countdownLabel,
-  honmeiAccuracy,
+  honmeiResultLabel,
   isConfirmed,
   listPicks,
   nextRace,
   pickCards,
   startTime,
   uniqueHonmei,
-  VERDICT_COPY,
   verdictOf,
   type AgreementState,
   type Verdict,
 } from "@/lib/raceView";
 import { PickCardView, VerdictChip } from "./RaceParts";
+import { TodayRecord } from "./TodayRecord";
 import { JourneyRail, RaceTicker, useNow } from "./TraceChrome";
 
 type Load<T> = { state: "loading" } | { state: "ready"; value: T } | { state: "unavailable" };
@@ -49,10 +50,6 @@ function dateLabel(date: string) {
 function featuredRace(races: LabRaceListItem[], now: number): LabRaceListItem | null {
   const upcoming = races.filter(race => race.scheduled_start_at && Date.parse(race.scheduled_start_at) > now);
   return nextRace(upcoming.filter(race => verdictOf(race) === "BUY"), now) ?? nextRace(upcoming, now) ?? races.at(-1) ?? null;
-}
-
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return <div className="kt-stat"><small>{label}</small><strong key={value} className="kt-num kt-tick">{value}</strong>{sub ? <span>{sub}</span> : null}</div>;
 }
 
 /**
@@ -113,7 +110,9 @@ export function CommandCenter() {
   }, [watchKeys.join("|")]);
 
   const venues = Array.from(new Set(raceRows.map(race => race.venue).filter((venue): venue is string => Boolean(venue))));
-  const tally = VERDICTS.map(verdict => [verdict, raceRows.filter(race => verdictOf(race) === verdict).length] as const);
+  const verdictCounts = Object.fromEntries(VERDICTS.map(verdict => [verdict, raceRows.filter(race => verdictOf(race) === verdict).length])) as Record<Verdict, number>;
+  const record = useMemo(() => races.state === "ready" && results.state === "ready" ? todayRecord(races.value, results.value) : null, [races, results]);
+  const recordState = races.state === "unavailable" || results.state === "unavailable" ? "unavailable" : record ? "ready" : "loading";
   const next = nextRace(raceRows, now);
   const featuredDetail = featured ? details[featured.race_key] : undefined;
   const featuredPicks = featuredDetail ? pickCards(featuredDetail) : featured ? { ...listPicks(featured), marketTop: null } : null;
@@ -122,7 +121,7 @@ export function CommandCenter() {
     <header className="kt-command-head">
       <div>
         <span className="kt-eyebrow"><Radio size={12} aria-hidden="true" /> TODAY'S RACING COMMAND CENTER</span>
-        <h1>{day ? dateLabel(day) : date.state === "loading" ? "開催日を確認中" : "開催日を取得できません"}</h1>
+        <h2>{day ? dateLabel(day) : date.state === "loading" ? "開催日を確認中" : "開催日を取得できません"}</h2>
         <div className="kt-venues">{venues.length ? venues.map(venue => <span key={venue}>{venue}</span>) : <span className="is-muted">{races.state === "loading" ? "開催場を確認中" : "開催場データなし"}</span>}</div>
       </div>
       <div className="kt-next-post" aria-live="polite">
@@ -149,18 +148,13 @@ export function CommandCenter() {
             <PickCardView card={featuredPicks.aiTop} />
             {featuredPicks.marketTop ? <PickCardView card={featuredPicks.marketTop} /> : <article className="kt-pick kt-pick--market is-unavailable"><header><span className="kt-pick-tag">MARKET TOP</span><small>市場評価1位</small></header><div className="kt-pick-unavailable"><strong>読込中</strong><small>レース詳細から取得します</small></div></article>}
           </div>
-          <footer><Link href={raceKeyToPath(featured.race_key) ?? "/"} className="kt-cta kt-cta--primary">このレースを見る <ArrowRight size={16} aria-hidden="true" /></Link>
-            <Link href={`/simulator?race=${encodeURIComponent(featured.race_key)}`} className="kt-cta">展開シナリオ</Link></footer>
+          <footer><Link href={raceKeyToPath(featured.race_key) ?? "/"} className="kt-cta kt-cta--primary" onClick={() => trackCta("featured_race")}>このレースを見る <ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link href={`/simulator?race=${encodeURIComponent(featured.race_key)}`} className="kt-cta" onClick={() => trackCta("featured_scenario")}>展開シナリオ</Link></footer>
         </> : <div className="kt-empty">{races.state === "loading" ? "本日のレースを読み込み中…" : races.state === "unavailable" ? "レース一覧を取得できません（0件ではありません）。" : "この日の予測レースはありません。"}</div>}
       </article>
 
       <aside className="kt-command-side">
-        <section className="kt-panel" aria-label="買い判定の内訳">
-          <span className="kt-eyebrow"><Target size={12} aria-hidden="true" /> DECISION BOARD</span>
-          <ul className="kt-tally">{tally.map(([verdict, count]) => <li key={verdict} className={`kt-tally-${verdict.toLowerCase()}`}><VerdictChip verdict={verdict} /><b className="kt-num kt-tick" key={`${verdict}${count}`}>{races.state === "ready" ? count : "—"}</b></li>)}</ul>
-          <p className="kt-footnote">{VERDICT_COPY.WATCH.explanation}</p>
-        </section>
-        <SystemHealth health={health} daily={daily} />
+        <TodayRecord record={record} state={recordState} daily={daily.state === "ready" ? daily.value : null} healthOk={health.state === "loading" ? null : health.state === "ready" && health.value.reachable === true && health.value.schema_version === "lab-api-v2"} verdicts={verdictCounts} verdictsReady={races.state === "ready"} />
       </aside>
     </div>
 
@@ -173,7 +167,6 @@ export function CommandCenter() {
     <div className="kt-lower-grid">
       <LatestResults results={results} />
       <AgreementBoard races={raceRows} details={details} watchKeys={watchKeys} />
-      <RecentAccuracy results={results} />
     </div>
   </section>;
 }
@@ -202,9 +195,10 @@ function LatestResults({ results }: { results: Load<LabResultListItem[]> }) {
     <header className="kt-panel-head"><span className="kt-eyebrow">LATEST RESULTS</span><Link href="/ai-history#race-ledger" className="kt-link">すべて <ArrowRight size={13} aria-hidden="true" /></Link></header>
     {results.state === "loading" ? <p className="kt-empty">読み込み中…</p> : results.state === "unavailable" ? <p className="kt-empty">結果を取得できません（0件ではありません）。</p> : confirmed.length ? <ul className="kt-result-mini">{confirmed.map(row => {
       const honmei = uniqueHonmei(row);
-      const finish = honmei ? row.ai_pick_finish : null;
-      const tone = finish === 1 ? "hit" : finish !== null && finish <= 3 ? "placed" : "miss";
-      return <li key={row.race_key} className={`is-${tone}`}><strong>{row.venue} {row.race_no}R</strong><span>◎{honmei?.horse_no ?? "—"}</span><b className="kt-num">{finish ? `${finish}着` : "取得不能"}</b></li>;
+      const label = honmeiResultLabel(row);
+      const finish = label.kind === "finish" ? row.ai_pick_finish : null;
+      const tone = label.kind === "special" ? "na" : finish === 1 ? "hit" : finish !== null && finish <= 3 ? "placed" : "miss";
+      return <li key={row.race_key} className={`is-${tone}`}><strong>{row.venue} {row.race_no}R</strong><span>◎{honmei?.horse_no ?? "—"}</span><b className="kt-num">{label.text}</b></li>;
     })}</ul> : <p className="kt-empty">確定済みの結果はまだありません。</p>}
   </section>;
 }
@@ -218,35 +212,5 @@ function AgreementBoard({ races, details, watchKeys }: { races: LabRaceListItem[
       return <li key={key}><Link href={raceKeyToPath(key) ?? "/"}><strong>{race!.venue} {race!.race_no}R</strong>
         <span className={`kt-agree-tag kt-agree-tag--${(state ?? "loading").toLowerCase()}`}>{state ? AGREEMENT_COPY[state].label : "確認中"}</span></Link></li>;
     })}</ul> : <p className="kt-empty">照合できる発走前レースはありません。</p>}
-  </section>;
-}
-
-function RecentAccuracy({ results }: { results: Load<LabResultListItem[]> }) {
-  const accuracy = results.state === "ready" ? honmeiAccuracy(results.value) : null;
-  const pct = (value: number | null | undefined) => (value === null || value === undefined ? "—" : formatPercent(value));
-  return <section className="kt-panel" aria-label="Recent accuracy">
-    <header className="kt-panel-head"><span className="kt-eyebrow"><Gauge size={12} aria-hidden="true" /> RECENT ACCURACY</span><Link href="/performance-analysis" className="kt-link">実績 <ArrowRight size={13} aria-hidden="true" /></Link></header>
-    {results.state === "unavailable" ? <p className="kt-empty">結果を取得できません。</p> : <div className="kt-stat-row">
-      <Stat label="◎ 1着率" value={pct(accuracy?.winRate)} sub={accuracy ? `${accuracy.wins}/${accuracy.confirmed}` : undefined} />
-      <Stat label="◎ 3着内率" value={pct(accuracy?.top3Rate)} sub={accuracy ? `${accuracy.top3}/${accuracy.confirmed}` : undefined} />
-      <Stat label="印 top3 coverage" value={accuracy?.meanCoverage === null || accuracy === null ? "—" : formatCoverageRatio(accuracy.meanCoverage) ?? "—"} sub="平均" />
-    </div>}
-    <p className="kt-footnote">本日確定分のみ。確定前は「—」で表示し、0%にはしません。</p>
-  </section>;
-}
-
-function SystemHealth({ health, daily }: { health: Load<LabHealth>; daily: Load<LabDailyOperations> }) {
-  const ok = health.state === "ready" && health.value.reachable === true && health.value.schema_version === "lab-api-v2";
-  const label = health.state === "loading" ? "確認中" : ok ? "正常" : "要確認";
-  const ops = daily.state === "ready" ? daily.value : null;
-  const count = (value: number | null | undefined) => (typeof value === "number" && value >= 0 ? String(value) : daily.state === "loading" ? "…" : "取得不能");
-  return <section className="kt-panel" aria-label="System health">
-    <header className="kt-panel-head"><span className="kt-eyebrow"><Activity size={12} aria-hidden="true" /> SYSTEM HEALTH</span><span className={`kt-health kt-health--${health.state === "loading" ? "loading" : ok ? "ok" : "warn"}`}>{label}</span></header>
-    <dl className="kt-mini-stats">
-      <div><dt>結果確定</dt><dd className="kt-num">{count(ops?.official_result_count)}</dd></div>
-      <div><dt>未確定</dt><dd className="kt-num">{count(ops?.pending_count)}</dd></div>
-      <div><dt>要確認</dt><dd className="kt-num">{count(ops?.review_required_count)}</dd></div>
-    </dl>
-    <Link href="/ai-history#operations" className="kt-link"><CalendarDays size={13} aria-hidden="true" /> 運用状況を見る</Link>
   </section>;
 }

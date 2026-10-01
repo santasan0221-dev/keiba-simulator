@@ -9,7 +9,7 @@ import { fetchRace, fetchRaces, LabApiError, type LabRace, type LabRaceListItem 
 import { AgreementPanel, PickTrio, RaceHero, RankingBoard, raceVerdict, VerdictBanner, WinnerStrip } from "@/components/trace/RaceParts";
 import { JourneyRail, RaceTicker, useNow } from "@/components/trace/TraceChrome";
 import { absoluteRaceUrl, paramsToRaceKey, type RaceUrlParams } from "@/lib/raceShareUrl";
-import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
+import { organizationFromRaceKey, raceViewState, trackBetaEvent } from "@/lib/betaAnalytics";
 
 type LoadState =
   | { kind: "loading" }
@@ -106,6 +106,18 @@ export default function RacePage() {
 function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string | null; now: number }) {
   const { verdict, reasons } = raceVerdict(race);
   const key = race.race.race_key ?? raceKey ?? "";
+  // Counted once per successfully loaded race (not on a failed load). Only the
+  // organization and a coarse pre/pending/post bucket are reported: no race key.
+  useEffect(() => {
+    trackBetaEvent({
+      name: "beta_race_detail_view",
+      properties: {
+        organization: organizationFromRaceKey(key),
+        race_state: raceViewState(race.race.scheduled_start_at, Boolean(race.result), Date.now()),
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return <div className="kt-race kt-reveal">
     <JourneyRail step="race" raceKey={key} />
     <RaceHero race={race} nowMs={now} />

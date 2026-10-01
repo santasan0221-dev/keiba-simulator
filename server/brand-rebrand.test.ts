@@ -41,6 +41,12 @@ describe("KEIBA TRACE rebrand -- user-facing surfaces", () => {
     }
   });
 
+  it("no rebranded surface hides the retired brand behind markup (e.g. KEIBA <span>LAB</span>)", () => {
+    for (const [path, source] of Object.entries(rebrandedClientSources)) {
+      expect(source, `${path} must not render KEIBA <tag>LAB</tag>`).not.toMatch(/\bKEIBA(?:\s+|\s*(?:<[^>]*>\s*)+)LAB\b/i);
+    }
+  });
+
   it("header/logo lockup and share text present the new brand", () => {
     expect(rebrandedClientSources["client/src/components/LabServiceNavigation.tsx"]).toContain("KEIBA <span>TRACE</span>");
     expect(rebrandedClientSources["client/src/pages/Home.tsx"]).toContain("KEIBA <span>TRACE</span>");

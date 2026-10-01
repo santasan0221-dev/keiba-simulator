@@ -40,6 +40,48 @@ Tracked events:
 
 The survey has exactly three fixed-choice questions and no free-text field.
 
+## Growth P0 events (fixed enumerations only)
+
+These events extend the same contract. Every property value is a member of a
+fixed list defined in `client/src/lib/betaAnalytics.ts` / `campaign.ts`; any
+other value is rejected and the event is discarded, and any property that is not
+in the list for that event is dropped before sending. They add **no** visitor
+id, session id, fingerprint, email, race key, date, venue, URL or referrer.
+
+- `beta_page_view`: `route` now also accepts `simulator` and `rules`. (`simulator`
+  was missing from the allowlist, so `/simulator` page views were silently
+  discarded before this change.)
+- `beta_cta_click`: `cta_id` in `hero_today`, `hero_results`, `hero_simulator`,
+  `featured_race`, `featured_scenario`, `rules_link`, `value_strip`
+- `beta_outbound_click`: `target` = `note` only (Bookers is intentionally not
+  allowed until its terms and a link exist); `placement` in `member_gate`,
+  `member_page`, `weekend_pass`, `access_code`
+- `beta_campaign_visit`: `source` = `x` only; `campaign` in `morning`, `compare`,
+  `agree`, `split`, `prerace`, `result`, `daily`, `weekly`, `monthly`, `research`,
+  `simulator`, `edu`, `profile`, `pinned`. Read once per browser session from
+  `utm_source` / `utm_campaign`; `utm_medium`, `utm_content`, `utm_term` and every
+  other query parameter are ignored and never sent.
+- `beta_race_detail_view`: `organization` (`JRA` / `NAR` / `UNKNOWN`) and
+  `race_state` (`pre` / `pending` / `post`), sent once a race has loaded
+  successfully
+- `beta_simulator_open`: `entry` = `race_link` (opened with `?race=`) or `direct`
+- `beta_history_view`: no properties
+
+Returning visitors keep being reported only as `beta_return_visit` / `later_day`.
+Weekly returning visitors are therefore an approximation (the analytics vendor's
+visitor counts plus `later_day` events), not an exact identity-based figure.
+
+## Canonical public URL
+
+Source code never contains the public site URL. The canonical URL is the single
+build variable `KEIBA_TRACE_BASE_URL` (exposed to the client through vite's
+`envPrefix: ["VITE_", "KEIBA_TRACE_"]`; in CI it comes from the repository
+variable `vars.KEIBA_TRACE_BASE_URL`). `getTraceBaseUrl()` / `buildCampaignUrl()`
+in `client/src/lib/campaign.ts` return `null` when it is unset or not a plain
+https URL, so a missing setting can never produce a hard-coded or malformed link.
+(`client/index.html` still carries the previous canonical / `og:url` tags; moving
+them to the variable is a separate, optional change.)
+
 ## GitHub configuration
 
 Pages deployment secrets:

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { ACCESS_TIER_NOTICE, FREE_PUBLICATION_RULE_NOTICE, getSafeExternalUrl } from "./accessTier";
+import { ACCESS_TIER_NOTICE, FREE_SCOPE_NOTICE, getSafeExternalUrl } from "./accessTier";
 
 describe("FREE / MEMBER Phase A access boundary", () => {
-  it("describes FREE pre-race exposure as a pre-fixed automatic rule and forbids post-result reselection", () => {
-    expect(FREE_PUBLICATION_RULE_NOTICE.description).toContain("事前固定");
-    expect(FREE_PUBLICATION_RULE_NOTICE.description).toContain("結果確定後");
-    expect(FREE_PUBLICATION_RULE_NOTICE.description).toContain("選び直したりしません");
+  it("describes the FREE scope as every race (D1) and no longer as a pre-fixed one-race rule", () => {
+    expect(FREE_SCOPE_NOTICE.headline).toContain("全レース無料");
+    expect(FREE_SCOPE_NOTICE.description).toContain("すべてのレース");
+    expect(FREE_SCOPE_NOTICE.description).toContain("変わりません");
+    for (const retired of ["事前固定", "選び直", "自動選定"]) {
+      expect(`${FREE_SCOPE_NOTICE.headline}${FREE_SCOPE_NOTICE.description}`).not.toContain(retired);
+    }
   });
 
   it("keeps MEMBER and access-code states explicitly unavailable until authentication exists", () => {

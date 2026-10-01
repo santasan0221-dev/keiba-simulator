@@ -9,7 +9,7 @@
 export function LabValueStrip() {
   return <section className="lab-value-strip" aria-label="KEIBA TRACEについて">
     <div className="lab-value-strip-head">
-      <h1>今日のレースを、AI視点で整理する。<span className="lab-free-badge">無料で見られます</span></h1>
+      <h2>今日のレースを、AI視点で整理する。<span className="lab-free-badge">無料で見られます</span></h2>
       <span>JRA・地方競馬(NAR)対応</span>
     </div>
     <div className="lab-value-points">

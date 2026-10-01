@@ -1,9 +1,13 @@
 export type AccessTier = "FREE" | "MEMBER_PREPARING";
 
-export const FREE_PUBLICATION_RULE_NOTICE = {
-  label: "事前固定の自動選定rule",
-  description: "FREEの発走前公開対象は、事前固定された自動選定ruleの結果で決まります。結果確定後に対象を入れ替えたり、事後的に選び直したりしません。",
-  sourceState: "RULE SOURCE / 未接続",
+// FREE scope (decision D1): the publication ◎, AI TOP, MARKET TOP, the buy
+// verdict and the basic results are free for EVERY race. There is no
+// "one free race per week" selection any more; paid features, when they exist,
+// sit on top of this (deeper analysis, data), never in place of it.
+export const FREE_SCOPE_NOTICE = {
+  label: "全レース無料",
+  headline: "◎・AI TOP・MARKET TOP・基本結果は、全レース無料。",
+  description: "公開◎、AI評価1位、市場評価1位、買い判定、基本の結果と履歴は、すべてのレースで無料で確認できます。有料機能は準備中で、この範囲は変わりません。",
 } as const;
 
 export const ACCESS_TIER_NOTICE = {

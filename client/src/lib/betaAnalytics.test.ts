@@ -3,6 +3,9 @@ import {
   buildReturnVisitEvent,
   memberSourceForPath,
   normalizeAnalyticsConfig,
+  raceViewState,
+  recordCampaignVisit,
+  routeName,
   sanitizeUmamiPayload,
   sanitizeEvent,
   trackBetaEvent,
@@ -141,5 +144,82 @@ describe("public beta analytics privacy contract", () => {
         trackBetaEvent({ name: "beta_page_view", properties: { route: "member" } }),
       ).not.toThrow();
     });
+  });
+});
+
+
+describe("growth P0 events stay inside the anonymous contract", () => {
+  beforeEach(() => vi.unstubAllGlobals());
+
+  it("accepts /simulator and /rules page views (the simulator view used to be discarded)", () => {
+    expect(routeName("/simulator")).toBe("simulator");
+    expect(routeName("/rules")).toBe("rules");
+    for (const route of ["simulator", "rules", "home", "race_detail", "history"]) {
+      expect(sanitizeEvent({ name: "beta_page_view", properties: { route } } as BetaEvent), route).not.toBeNull();
+    }
+  });
+
+  it("accepts the new events only with fixed-enumeration values", () => {
+    const ok: BetaEvent[] = [
+      { name: "beta_cta_click", properties: { cta_id: "hero_today" } },
+      { name: "beta_outbound_click", properties: { target: "note", placement: "member_gate" } },
+      { name: "beta_campaign_visit", properties: { source: "x", campaign: "daily" } },
+      { name: "beta_race_detail_view", properties: { organization: "JRA", race_state: "pre" } },
+      { name: "beta_simulator_open", properties: { entry: "race_link" } },
+      { name: "beta_history_view", properties: {} },
+    ];
+    for (const event of ok) expect(sanitizeEvent(event), event.name).toEqual(event);
+  });
+
+  it("rejects free text, unknown enumerations and Bookers (not allowed yet)", () => {
+    const bad = [
+      { name: "beta_cta_click", properties: { cta_id: "anything I like" } },
+      { name: "beta_outbound_click", properties: { target: "bookers", placement: "member_gate" } },
+      { name: "beta_outbound_click", properties: { target: "note", placement: "https://example.com/x" } },
+      { name: "beta_campaign_visit", properties: { source: "facebook", campaign: "daily" } },
+      { name: "beta_campaign_visit", properties: { source: "x", campaign: "20261004_JRA|2026-10-04|東京|11" } },
+      { name: "beta_race_detail_view", properties: { organization: "JRA", race_state: "JRA|2026-10-04|東京|11" } },
+      { name: "beta_simulator_open", properties: { entry: "hero" } },
+    ] as unknown as BetaEvent[];
+    for (const event of bad) expect(sanitizeEvent(event), JSON.stringify(event)).toBeNull();
+  });
+
+  it("strips PII-style properties (email, ids, race keys, URLs) from every new event", () => {
+    const pii = { email: "person@example.com", visitor_id: "v-1", session_id: "s-1", fingerprint: "abc", race_key: "JRA|2026-10-04|東京|11", url: "https://example.com", utm_content: "20261004_x", ip: "203.0.113.9", name: "山田" };
+    const events: BetaEvent[] = [
+      { name: "beta_cta_click", properties: { cta_id: "hero_results", ...pii } },
+      { name: "beta_outbound_click", properties: { target: "note", placement: "member_page", ...pii } },
+      { name: "beta_campaign_visit", properties: { source: "x", campaign: "weekly", ...pii } },
+      { name: "beta_race_detail_view", properties: { organization: "NAR", race_state: "post", ...pii } },
+      { name: "beta_simulator_open", properties: { entry: "direct", ...pii } },
+      { name: "beta_history_view", properties: { ...pii } },
+    ] as unknown as BetaEvent[];
+    for (const event of events) {
+      const cleaned = sanitizeEvent(event);
+      expect(cleaned, event.name).not.toBeNull();
+      expect(JSON.stringify(cleaned), event.name).not.toMatch(/person@example|v-1|s-1|abc|JRA\|2026|example\.com|20261004|203\.0\.113|山田/);
+      for (const key of Object.keys(pii)) expect(Object.keys(cleaned!.properties), `${event.name}:${key}`).not.toContain(key);
+    }
+  });
+
+  it("reports a campaign arrival once per session and only the fixed values", () => {
+    const sent: unknown[] = [];
+    vi.stubGlobal("window", { umami: { track: (...args: unknown[]) => sent.push(args) } });
+    const store = new Map<string, string>();
+    const storage = { getItem: (key: string) => store.get(key) ?? null, setItem: (key: string, value: string) => void store.set(key, value) };
+    const search = "?utm_source=x&utm_medium=social&utm_campaign=morning&utm_content=20261004_JRA|2026-10-04|東京|11";
+    expect(recordCampaignVisit(search, storage)).toBe(true);
+    expect(recordCampaignVisit(search, storage)).toBe(false);
+    expect(recordCampaignVisit("?utm_source=other&utm_campaign=morning", storage)).toBe(false);
+    expect(sent).toEqual([["beta_campaign_visit", { source: "x", campaign: "morning" }]]);
+    expect(JSON.stringify(sent)).not.toMatch(/20261004|JRA/);
+  });
+
+  it("buckets a race detail view without exposing the race", () => {
+    const now = Date.parse("2026-10-04T05:00:00Z");
+    expect(raceViewState("2026-10-04T06:00:00Z", false, now)).toBe("pre");
+    expect(raceViewState("2026-10-04T04:00:00Z", false, now)).toBe("pending");
+    expect(raceViewState("2026-10-04T04:00:00Z", true, now)).toBe("post");
+    expect(raceViewState(null, false, now)).toBe("pre");
   });
 });

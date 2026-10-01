@@ -1,5 +1,7 @@
 import React from "react";
 import { CircleCheck, CircleHelp, Eye, MinusCircle, Trophy } from "lucide-react";
+import { Link } from "wouter";
+import { trackCta } from "@/lib/betaAnalytics";
 import type { LabRace } from "@/lib/singlePickAi";
 import { formatOdds, formatPercent } from "@/lib/displayFormat";
 import {
@@ -37,7 +39,7 @@ export function VerdictBanner({ verdict, reasons }: { verdict: Verdict; reasons:
       <VerdictChip verdict={verdict} size="lg" />
     </div>
     <p>{copy.explanation}{reasons.length ? <small> 根拠: {reasons.join(" / ")}</small> : null}</p>
-    <p className="kt-verdict-note">◎本命＝購入推奨ではありません。本命と買い判定は別々に表示しています。</p>
+    <p className="kt-verdict-note">◎本命＝購入推奨ではありません。本命と買い判定は別々に表示しています。<Link href="/rules" onClick={() => trackCta("rules_link")}>記録ルール</Link></p>
   </section>;
 }
 

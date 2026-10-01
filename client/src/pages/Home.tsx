@@ -11,6 +11,7 @@ import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { LabValueStrip } from "@/components/LabValueStrip";
 import { publicAssetUrl } from "@/lib/publicAsset";
 import { CommandCenter } from "@/components/trace/CommandCenter";
+import { TraceHero } from "@/components/trace/TraceHero";
 
 const BRAND_MARK_URL = publicAssetUrl("media/keiba-lab-mark.png");
 
@@ -65,13 +66,14 @@ export default function Home() {
   return <div className="app-shell kt-page">
     <header className="topbar kt-topbar">
       <div className="brand-lockup">
-        <div className="brand-mark"><img src={BRAND_MARK_URL} alt="Keiba Simulator mark" /></div>
+        <div className="brand-mark"><img src={BRAND_MARK_URL} alt="KEIBA TRACE" /></div>
         <div><div className="brand-name">KEIBA <span>TRACE</span></div><div className="brand-caption">AI予想を、結果まで追う。</div></div>
       </div>
       <div className="topbar-meta"><AccessTierBadge /><span className="status-dot" /><span>予測 {formatFreshness(dailyFreshness?.last_prediction_at)}</span><span>公式結果 {formatFreshness(dailyFreshness?.last_result_at)}</span></div>
     </header>
     <LabServiceNavigation active="today" />
     <main className="kt-container">
+      <TraceHero />
       <CommandCenter />
       <section id="today-races" className="kt-finder" aria-label="レースファインダー">
         <RealRaceLoader onLoad={handleRealRaceLoad} onStatusChange={setRealRaceLoadStatus} />
@@ -85,6 +87,6 @@ export default function Home() {
       <FreeScopeStrip />
       <MemberGate />
     </main>
-    <footer className="footer"><span>KEIBA TRACE / PRIVATE RACE MODEL</span><span>予測はAIモデルによる推計であり、的中・回収率を保証するものではありません。</span></footer>
+    <footer className="footer"><span>KEIBA TRACE / PRIVATE RACE MODEL · <Link href="/rules">記録ルール</Link></span><span>予測はAIモデルによる推計であり、的中・回収率を保証するものではありません。</span></footer>
   </div>;
 }

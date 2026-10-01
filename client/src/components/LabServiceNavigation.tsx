@@ -5,7 +5,7 @@ import { AccessTierBadge } from "@/components/AccessTierUI";
 import { publicAssetUrl } from "@/lib/publicAsset";
 import { trackBetaEvent } from "@/lib/betaAnalytics";
 
-type ServicePage = "today" | "betting" | "analysis" | "history" | "simulator" | "member";
+type ServicePage = "today" | "betting" | "analysis" | "history" | "simulator" | "member" | "rules";
 
 // "simulator" is deliberately placed after the real-prediction pages (today /
 // betting / analysis / history) and before MEMBER -- it's a secondary, opt-in

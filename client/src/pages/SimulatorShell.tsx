@@ -14,6 +14,7 @@ import {
 } from "@/lib/singlePickAi";
 import { pickCards, verdictOf, type PickCard } from "@/lib/raceView";
 import { raceKeyToPath } from "@/lib/raceShareUrl";
+import { trackBetaEvent } from "@/lib/betaAnalytics";
 import { fetchResultRow, officialResultView, type OfficialResultView } from "@/lib/simulatorResult";
 import { createResultPoller } from "@/lib/resultPoller";
 import {
@@ -103,6 +104,13 @@ export default function SimulatorShell() {
     setSource({ kind: "loading", key });
     fetchRace(key).then(value => { setSource({ kind: "race", race: value }); loadResult(value); }).catch(() => setSource({ kind: "error", key }));
   }, [loadResult]);
+
+  // Anonymous, fixed-enumeration open event: only whether the page was opened
+  // from a race link, never the race itself.
+  useEffect(() => {
+    const fromRace = Boolean(new URLSearchParams(window.location.search).get("race"));
+    trackBetaEvent({ name: "beta_simulator_open", properties: { entry: fromRace ? "race_link" : "direct" } });
+  }, []);
 
   // Dates + optional ?race= hand-off (race page, history ledger). Only the
   // field (number, name, published run style) and fixed pre-race tops are read.

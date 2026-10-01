@@ -6,19 +6,18 @@ import { trackBetaEvent } from "@/lib/betaAnalytics";
 
 const rows = [
   ["本日のレース情報", "FREEで表示", "FREEで表示"],
-  ["事前固定されたFREE対象の発走前公開", "公開設定の検証後のみ", "FREEで表示"],
-  ["全JRAレースの発走前詳細", "正本detailはMEMBER_LOCKED", "PENDING_DATA（生成待ち）"],
-  ["正式買い目候補", "MEMBER_LOCKED", "NOT_YET_GENERATED（生成待ち）"],
-  ["詳細な実績・条件別分析", "基本的な正本statusのみ", "PENDING_DATA／正本entitlement後に表示"],
-  ["AI履歴の基本情報", "日付・レース・結果状態", "準備中"],
+  ["公開◎・AI TOP・MARKET TOP（全レース、発走前）", "FREEで表示", "FREEで表示（変わりません）"],
+  ["買い判定（BUY / WATCH / PASS）と基本の結果・AI履歴", "FREEで表示", "FREEで表示（変わりません）"],
+  ["正式買い目候補", "MEMBER限定（準備中）", "準備中"],
+  ["詳細な実績・条件別分析・データ", "基本的な正本statusのみ", "準備中"],
 ];
 
 export default function MemberPage() {
-  return <PublicLabHeader active="member" eyebrow="MEMBER / INFORMATION ARCHITECTURE" title="MEMBERについて" description="FREEで見られる情報と、将来のMEMBER機能候補を明確に分けます。認証・決済・アクセスコード照合はまだ接続しません。">
+  return <PublicLabHeader active="member" eyebrow="MEMBER / INFORMATION ARCHITECTURE" title="MEMBERについて" description="全レース無料で見られる範囲と、将来のMEMBER機能候補を分けて説明します。認証・決済・アクセスコード照合はまだ接続しません。">
     <section className="lab-member-values" aria-label="MEMBERの主要価値">
-      <div><span>01</span><h2>全レースのAI予測</h2><p>FREEの正本detailはMEMBER_LOCKEDです。MEMBER側は現在PENDING_DATAであり、値を表示しません。</p></div>
-      <div><span>02</span><h2>正式買い目候補</h2><p>FREEではMEMBER_LOCKEDです。MEMBER側も現在NOT_YET_GENERATEDであり、候補は表示しません。</p></div>
-      <div><span>03</span><h2>詳細な実績・分析</h2><p>確定結果に基づく正本比較を表示します。MEMBER詳細はentitlementと正本statusがそろうまで準備中です。</p></div>
+      <div><span>01</span><h2>全レース無料の範囲</h2><p>公開◎・AI TOP・MARKET TOP・買い判定・基本の結果は、全レースでFREEのまま見られます。MEMBERを始めても、この範囲は変わりません。</p></div>
+      <div><span>02</span><h2>正式買い目候補</h2><p>FREEでは表示しません。MEMBER側は準備中で、候補はまだ表示しません。</p></div>
+      <div><span>03</span><h2>詳細な実績・分析</h2><p>基本の実績は無料で見られます。条件別などの詳細分析は、認証の準備が整うまで準備中です。</p></div>
     </section>
 
     <section className="lab-tier-comparison" aria-labelledby="tier-compare-title">
@@ -34,7 +33,7 @@ export default function MemberPage() {
       <div><span className="eyebrow">ENTITLEMENT / NOT CONNECTED</span><h2>MEMBER認証・決済は未接続です。</h2><p>Stripe、note決済、アクセスコード照合、閲覧状態の付与は行いません。料金も設定しません。</p></div>
     </section>
 
-    <div className="lab-member-links"><NoteExternalLink kind="membership" /><WeekendPassPanel /></div>
+    <div className="lab-member-links"><NoteExternalLink kind="membership" placement="member_page" /><WeekendPassPanel /></div>
     <p className="lab-access-code-link"><Link href="/access-code" onClick={() => trackBetaEvent({ name: "beta_member_click", properties: { source: "access_code" } })}>アクセスコード機能（準備中）を見る</Link></p>
     <MemberGate />
   </PublicLabHeader>;
