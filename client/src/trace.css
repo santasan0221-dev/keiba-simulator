@@ -418,7 +418,14 @@ body { background: var(--kt-bg); }
 
 /* ------------------------------------------------------------ mobile */
 @media (max-width: 760px) {
+  /* Bottom nav height (link 52 + padding 6x2 + 1px border + safe area): single source for anything that must clear the nav. */
+  :root { --kt-bottom-nav-h: calc(65px + env(safe-area-inset-bottom)); }
   .kt-container { padding: 0 16px 104px; }
+  /* Survey trigger/panel sit above the nav instead of covering its right-most item. */
+  body:has(.kt-bottom-nav) .beta-survey-trigger, body:has(.kt-bottom-nav) .beta-survey { bottom: calc(var(--kt-bottom-nav-h) + 8px); }
+  body:has(.kt-bottom-nav) .beta-survey { max-height: calc(100vh - var(--kt-bottom-nav-h) - 24px); }
+  /* Public pages (incl. /rules): page-end links stay clear of the nav and the survey trigger above it. */
+  body:has(.kt-bottom-nav) .lab-public-page { padding-bottom: calc(var(--kt-bottom-nav-h) + 44px + 24px); }
   .kt-page .kt-topbar { padding: 8px 16px; min-height: 52px; }
   .kt-page .kt-topbar .topbar-meta span:not(.status-dot) { display: none; }
   .kt-page .kt-topbar .topbar-meta .access-tier-badge, .kt-page .kt-topbar .topbar-meta [class*="tier"] { display: none; }
