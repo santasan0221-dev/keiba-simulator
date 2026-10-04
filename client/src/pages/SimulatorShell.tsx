@@ -17,6 +17,9 @@ import { raceKeyToPath } from "@/lib/raceShareUrl";
 import { trackBetaEvent } from "@/lib/betaAnalytics";
 import { fetchResultRow, officialResultView, type OfficialResultView } from "@/lib/simulatorResult";
 import { createResultPoller } from "@/lib/resultPoller";
+import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioOrderPanel";
+import { createThrottledEmitter } from "@/lib/scenarioOrder";
+import { GEOMETRY_DISCLAIMER, pointOnPath, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
 import {
   demoField,
   formationAt,
@@ -36,6 +39,8 @@ import {
 // illustration, not race time: nothing on screen is labelled in seconds.
 const SCENARIO_MS = 30_000;
 const SPEEDS = [1, 1.5, 2] as const;
+// SCENARIO ORDER redraws at ~8 Hz; the track itself still follows every animation frame.
+const ORDER_TABLE_MS = 125;
 
 // Whole-track camera: the full oval is always in view (no follow camera),
 // so no runner can leave the screen. Mobile uses a rounder oval so the
@@ -160,6 +165,24 @@ export default function SimulatorShell() {
   const complete = progress >= 1;
   useEffect(() => { if (complete) setPlaying(false); }, [complete]);
 
+  // Throttled progress for the SCENARIO ORDER table: while playing it is pushed
+  // at most every ORDER_TABLE_MS; any user action (scrub, pause, restart) shows at once.
+  const [orderProgress, setOrderProgress] = useState(0);
+  const emitterRef = useRef<ReturnType<typeof createThrottledEmitter<number>> | null>(null);
+  useEffect(() => {
+    const emitter = createThrottledEmitter<number>(ORDER_TABLE_MS, setOrderProgress, {
+      now: () => performance.now(),
+      setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+      clearTimeout: id => window.clearTimeout(id),
+    });
+    emitterRef.current = emitter;
+    return () => emitter.stop();
+  }, []);
+  useEffect(() => {
+    if (playing && !reducedMotion && progress < 1) emitterRef.current?.push(progress);
+    else emitterRef.current?.now(progress);
+  }, [progress, playing, reducedMotion]);
+
   const official: OfficialResultView | null = race
     ? officialResultView(result.row, race, result.status === "failed")
     : null;
@@ -213,6 +236,7 @@ export default function SimulatorShell() {
   const raceTitle = race ? `${race.race.venue ?? "—"} ${race.race.race_no ?? "—"}R` : "デモ隊列（10頭・番号のみ）";
   const backPath = race?.race.race_key ? raceKeyToPath(race.race.race_key) : null;
   const pct = Math.round(progress * 100);
+  const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
 
   const restart = () => { setProgress(0); autoSwitched.current = false; setMode("SCENARIO"); setPlaying(true); };
   const togglePlay = () => { if (complete) { restart(); return; } setMode("SCENARIO"); setPlaying(value => !value); };
@@ -278,7 +302,8 @@ export default function SimulatorShell() {
                 <span className="kt-phase-badge" aria-live="polite">{complete ? "SCENARIO COMPLETE" : `${phase} · ${PHASE_LABEL[phase]}`}</span>
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> 実測位置ではありません</p>
-              <TrackView frame={frame} compact={compact} honmeiNo={honmeiNo} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${frame.runners.length}頭。`} />
+              <TrackView frame={frame} course={course} compact={compact} honmeiNo={honmeiNo} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${frame.runners.length}頭。`} />
+              <p className="kt-course-note">{courseNote(course)}</p>
               <div className="kt-phase-rail" role="group" aria-label="レース区間">
                 {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); setProgress(PHASE_KEYFRAME[item]); }}>{item}</button>)}
               </div>
@@ -304,11 +329,13 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
+              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={orderProgress} compact={compact} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
               <PositionStrip formation={formationAt(runners, phase, pace)} honmeiNo={honmeiNo} finish={phase === "FINISH"} />
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
+              <ElevationPanel course={course} />
             </section>
           </div>
         ) : (
@@ -317,7 +344,7 @@ export default function SimulatorShell() {
             <section className="kt-result-scenario" aria-label="シナリオ（研究用）">
               <header><span className="kt-research-chip">SCENARIO</span><strong>研究用シナリオ（ゴール前）</strong></header>
               <p>脚質と仮定ペースから描いた隊列です。実際の展開を再現したものではなく、公式結果とは無関係です。</p>
-              <TrackView frame={finalFrame} compact={compact} honmeiNo={honmeiNo} label="シナリオ終了時の隊列（順位なし）" />
+              <TrackView frame={finalFrame} course={course} compact={compact} honmeiNo={honmeiNo} label="シナリオ終了時の隊列（順位なし）" />
             </section>
           </div>
         )}
@@ -334,30 +361,37 @@ export default function SimulatorShell() {
   );
 }
 
-function TrackView({ frame, compact, honmeiNo, label }: { frame: ScenarioFrame; compact: boolean; honmeiNo: number | null; label: string }) {
+function courseNote(course: CourseLayout): string {
+  const turn = course.direction === "LEFT" ? "左回り" : course.direction === "RIGHT" ? "右回り" : "回り方向: 未確認(UNKNOWN)";
+  const start = course.startPoint === "UNKNOWN" ? "スタート位置は公式図未反映のため概略（ゴール線起点）" : "スタート位置: 公式図に基づく概略";
+  return `${course.venue === "UNKNOWN" ? "汎用コース" : course.venue} · ${turn} · ${start}。${GEOMETRY_DISCLAIMER}`;
+}
+
+function TrackView({ frame, course, compact, honmeiNo, label }: { frame: ScenarioFrame; course: CourseLayout; compact: boolean; honmeiNo: number | null; label: string }) {
   const g = compact ? GEOMETRY.compact : GEOMETRY.wide;
-  const point = (lap: number, lane: number) => {
-    const theta = Math.PI / 2 - lap * Math.PI * 2;
-    return { x: g.cx + (g.rx + lane * g.laneX) * Math.cos(theta), y: g.cy + (g.ry + lane * g.laneY) * Math.sin(theta) };
-  };
+  const margin = 4.2 * g.laneX + 4;
+  const pxPath = useMemo(() => course.path.map(p => ({ x: margin + p.x * (g.w - 2 * margin), y: margin + p.y * (g.h - 2 * margin) })), [course, g.w, g.h, margin]);
+  const point = (lap: number, lane: number) => pointOnPath(pxPath, lap, (lane - 1.6) * g.laneX);
+  const edge = (offset: number) => Array.from({ length: 96 }, (_, i) => pointOnPath(pxPath, i / 96, offset * g.laneX)).map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const goalIn = pointOnPath(pxPath, 0, -1.6 * g.laneX), goalOut = pointOnPath(pxPath, 0, 4.2 * g.laneX);
   // Draw the ◎ last so it stays on top; otherwise horse-number order.
   const runners = [...frame.runners].sort((a, b) => Number(a.no === honmeiNo) - Number(b.no === honmeiNo) || a.no - b.no);
   // FINISH window: the level field fades out short of the line. The
   // scenario ends there; it never draws anyone crossing first.
   const fade = frame.progress <= 0.95 ? 1 : Math.max(0.25, 1 - (frame.progress - 0.95) / 0.05 * 0.75);
   return <svg className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label}>
-    <ellipse cx={g.cx} cy={g.cy} rx={g.rx + 4.2 * g.laneX} ry={g.ry + 4.2 * g.laneY} className="kt-track-outer" />
-    <ellipse cx={g.cx} cy={g.cy} rx={g.rx - 1.6 * g.laneX} ry={g.ry - 1.6 * g.laneY} className="kt-track-inner" />
-    <line x1={g.cx} y1={g.cy + g.ry - 1.6 * g.laneY} x2={g.cx} y2={g.cy + g.ry + 4.2 * g.laneY} className="kt-track-post" />
-    <text x={g.cx + 6} y={g.cy + g.ry + 4.2 * g.laneY - 4} className="kt-track-label">GOAL</text>
+    <polygon points={edge(4.2)} className="kt-track-outer" />
+    <polygon points={edge(-1.6)} className="kt-track-inner" />
+    <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" />
+    <text x={goalOut.x + 6} y={goalOut.y + 14} className="kt-track-label">GOAL</text>
     {runners.map(runner => {
-      const p = point(runner.lap, runner.lane);
+      const p = point(runner.lap, runner.lane + 1.6);
       return <g key={runner.no} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`} opacity={fade} transform={`translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`}>
         <circle r={g.r} />
         <text dy="4">{runner.no}</text>
       </g>;
     })}
-    {frame.progress > 0.95 ? <text x={g.cx} y={g.cy + 4} className="kt-track-end">ゴール前でシナリオ終了 · 着順は描きません</text> : null}
+    {frame.progress > 0.95 ? <text x={g.w / 2} y={g.h / 2 + 4} className="kt-track-end">ゴール前でシナリオ終了 · 着順は描きません</text> : null}
   </svg>;
 }
 

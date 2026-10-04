@@ -49,6 +49,31 @@ describe("simulator v2 page contract", () => {
   });
 });
 
+describe("simulator v3: SCENARIO ORDER wiring", () => {
+  const html = renderToStaticMarkup(<SimulatorShell />);
+  it("always shows the SCENARIO ORDER note", () => {
+    expect(html).toContain("SCENARIO ORDER");
+    expect(html).toContain("シナリオ上の仮想順位です。実測・着順予測ではありません。");
+  });
+  it("feeds the order panel only runners / pace / seed and the throttled progress -- no race, picks, result or odds", () => {
+    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{orderProgress\} compact=\{compact\} \/>/);
+    expect(source).toContain("createThrottledEmitter");
+    expect(source).not.toMatch(/ScenarioOrderPanel[^>]*(race=|honmei|official|result)/);
+  });
+  it("the order panel never reads picks, odds, probability or the official result", () => {
+    const panel = readFileSync(resolve(import.meta.dirname, "../components/trace/ScenarioOrderPanel.tsx"), "utf8");
+    for (const forbidden of ["honmei", "odds", "probability", "popularity", "officialResult", "LabResult", "pickCards"]) expect(panel, forbidden).not.toContain(forbidden);
+  });
+  it("the official result only opens in RESULT mode, never from the scenario order", () => {
+    expect(source).toMatch(/if \(!complete \|\| !confirmed \|\| autoSwitched\.current\) return;/);
+  });
+  it("mobile CSS keeps the order list inside the viewport", () => {
+    const css = readFileSync(resolve(import.meta.dirname, "../trace.css"), "utf8");
+    expect(css).toMatch(/\.kt-order-name \{[^}]*min-width: 0[^}]*text-overflow: ellipsis/);
+    expect(css).toMatch(/\.kt-order \{[^}]*min-width: 0/);
+  });
+});
+
 describe("official result panel", () => {
   it("confirmed → podium top 3 with ◎ / AI TOP / MARKET TOP finishes and coverage", () => {
     const html = renderToStaticMarkup(<OfficialResultPanel view={officialResultView(row({}), race())} loading={false} race={race()} />);
