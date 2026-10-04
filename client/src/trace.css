@@ -717,3 +717,6 @@ body { background: var(--kt-bg); }
 .kt-rank-dot { fill: #ffffff55; }
 .kt-rank-dot.is-pinned { fill: var(--kt-research); }
 .kt-page .kt-sim-stage { align-items: start; }
+.kt-track-start { stroke: var(--kt-research); stroke-width: 2; stroke-dasharray: 3 2; }
+.kt-track-label--start { fill: var(--kt-research); }
+.kt-corner { fill: var(--kt-faint); font-size: 10px; text-anchor: middle; }

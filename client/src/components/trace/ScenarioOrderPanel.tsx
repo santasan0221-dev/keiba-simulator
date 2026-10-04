@@ -78,6 +78,6 @@ export function ElevationPanel({ course }: { course: CourseLayout }) {
     {profile && profile.length > 1 ? <svg viewBox="0 0 240 48" role="img" aria-label="コース断面図（簡易）" className="kt-elevation-svg">
       <polyline className="kt-elevation-line" points={profile.map(point => `${(point.at * 240).toFixed(1)},${(44 - point.meters * 8).toFixed(1)}`).join(" ")} />
     </svg> : null}
-    {course.slopes.length ? <ul>{course.slopes.map(slope => <li key={slope.where}>{slope.kind === "UP" ? "上り" : "下り"} {slope.riseMeters}m · {slope.where}</li>)}</ul> : <p>この条件の高低差図は未取得です（UNKNOWN）。</p>}
+    {course.slopes.length ? <ul>{course.slopes.map(slope => <li key={slope.where}>{slope.kind === "UP" ? "上り" : "下り"} {slope.riseMeters === "UNKNOWN" ? "高低差 UNKNOWN" : `${slope.riseMeters}m`} · {slope.where}</li>)}</ul> : <p>この条件の高低差図は未取得です（UNKNOWN）。</p>}
   </section>;
 }

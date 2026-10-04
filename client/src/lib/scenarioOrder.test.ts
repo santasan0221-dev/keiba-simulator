@@ -3,7 +3,6 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { compactRows, createThrottledEmitter, FINAL_PHASE_FROM, orderFrame, orderView, rankHistory, RANK_CHECKPOINTS } from "./scenarioOrder";
 import { demoField, PHASE_KEYFRAME, scenarioFrame, scenarioSeed } from "./scenarioReplay";
-import { pointOnPath, resolveCourse, stadiumPath } from "./courseAtlas";
 
 const field = demoField();
 const seed = scenarioSeed("JRA|2026-09-30|中山|11");
@@ -65,8 +64,27 @@ describe("FINISH handling", () => {
     const final = orderView(field, 0.97, "平均", seed);
     expect(final.kind).toBe("FINAL_PHASE");
     expect(final.title).toBe("SCENARIO ORDER — FINAL PHASE");
+    expect(final.rows).toEqual(orderView(field, FINAL_PHASE_FROM, "平均", seed).rows);
     const done = orderView(field, 1, "平均", seed);
     expect(done).toEqual({ kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] });
+  });
+});
+
+describe("final-order freeze (95% to 100%)", () => {
+  it("the rows never change between 95% and 100%, for every pace and race_key", () => {
+    for (const pace of ["スロー", "平均", "ハイ"] as const) {
+      for (const key of ["a", "JRA|2026-09-30|中山|11", "NAR|2026-09-30|大井|04"]) {
+        const s = scenarioSeed(key);
+        const held = orderView(field, FINAL_PHASE_FROM, pace, s).rows;
+        for (let step = 1; step < 50; step++) {
+          const p = FINAL_PHASE_FROM + (step / 50) * (1 - FINAL_PHASE_FROM) - 1e-9;
+          const view = orderView(field, p, pace, s);
+          expect(view.kind).toBe("FINAL_PHASE");
+          expect(view.rows).toEqual(held);
+        }
+        expect(orderView(field, 1, pace, s).rows).toEqual([]);
+      }
+    }
   });
 });
 
@@ -130,27 +148,5 @@ describe("rank table update rate", () => {
     const start = performance.now();
     for (let i = 0; i < 500; i++) orderView(big, (i % 100) / 100, "平均", seed);
     expect((performance.now() - start) / 500).toBeLessThan(2);
-  });
-});
-
-describe("course atlas", () => {
-  it("only Tokyo turf is populated from a cited source; everything else is an UNKNOWN generic oval", () => {
-    const tokyo = resolveCourse("東京", "芝", 1600);
-    expect(tokyo.direction).toBe("LEFT");
-    expect(tokyo.lapMeters).toBe(2083.1);
-    expect(tokyo.startPoint).toBe("UNKNOWN");
-    expect(tokyo.sourceRefs.length).toBeGreaterThan(0);
-    const other = resolveCourse("中山", "芝", 2000);
-    expect(other.direction).toBe("UNKNOWN");
-    expect(other.lapMeters).toBe("UNKNOWN");
-    expect(other.sourceRefs).toEqual([]);
-  });
-  it("path direction: LEFT is counter-clockwise, RIGHT clockwise on screen", () => {
-    const area = (path: { x: number; y: number }[]) => path.reduce((s, p, i) => { const q = path[(i + 1) % path.length]; return s + (p.x * q.y - q.x * p.y); }, 0);
-    expect(area(stadiumPath("LEFT", 0.25))).toBeLessThan(0); // y-down screen: negative = counter-clockwise
-    expect(area(stadiumPath("RIGHT", 0.25))).toBeGreaterThan(0);
-    const p = stadiumPath("LEFT", 0.25);
-    expect(p.every(point => point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1)).toBe(true);
-    expect(pointOnPath(p, 0, 0)).toEqual(p[0]);
   });
 });

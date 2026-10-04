@@ -19,7 +19,7 @@ import { fetchResultRow, officialResultView, type OfficialResultView } from "@/l
 import { createResultPoller } from "@/lib/resultPoller";
 import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioOrderPanel";
 import { createThrottledEmitter } from "@/lib/scenarioOrder";
-import { GEOMETRY_DISCLAIMER, pointOnPath, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
+import { cornerShare, fitPath, GEOMETRY_DISCLAIMER, pointOnPath, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
 import {
   demoField,
   formationAt,
@@ -361,32 +361,58 @@ export default function SimulatorShell() {
   );
 }
 
+/** Open (straight) course: extend the band a little past both ends so runners on the start / goal lines stay on the track. */
+function capped(band: { x: number; y: number }[], pad: number) {
+  const xs = band.map(p => p.x), lo = Math.min(...xs), hi = Math.max(...xs);
+  return band.map(p => ({ x: p.x <= lo + 0.5 ? p.x - pad : p.x >= hi - 0.5 ? p.x + pad : p.x, y: p.y }));
+}
+
 function courseNote(course: CourseLayout): string {
-  const turn = course.direction === "LEFT" ? "左回り" : course.direction === "RIGHT" ? "右回り" : "回り方向: 未確認(UNKNOWN)";
-  const start = course.startPoint === "UNKNOWN" ? "スタート位置は公式図未反映のため概略（ゴール線起点）" : "スタート位置: 公式図に基づく概略";
-  return `${course.venue === "UNKNOWN" ? "汎用コース" : course.venue} · ${turn} · ${start}。${GEOMETRY_DISCLAIMER}`;
+  const turn = course.direction === "LEFT" ? "左回り" : course.direction === "RIGHT" ? "右回り" : course.direction === "STRAIGHT" ? "直線コース" : "回り方向: 未確認(UNKNOWN)";
+  const variant = course.variant === "INNER" ? "内回り" : course.variant === "OUTER" ? "外回り" : course.variant === "UNKNOWN" && course.lapMeters === "UNKNOWN" && course.direction !== "UNKNOWN" ? "内外区分: 未確認" : "";
+  const start = course.startLapShare === "UNKNOWN"
+    ? "スタート位置: 未確認(UNKNOWN)・ゴール線起点の概略"
+    : course.pathClosed ? "スタート位置: 周回距離と発走距離からの概算（公式図の読取ではありません）" : "";
+  const name = course.venue === "UNKNOWN" ? "汎用コース" : `${course.venue}${course.surface === "TURF" ? "芝" : course.surface === "DIRT" ? "ダート" : ""}${course.distance === "UNKNOWN" ? "" : course.distance}`;
+  return [name, turn, variant, start].filter(Boolean).join(" · ") + `。${GEOMETRY_DISCLAIMER}`;
 }
 
 function TrackView({ frame, course, compact, honmeiNo, label }: { frame: ScenarioFrame; course: CourseLayout; compact: boolean; honmeiNo: number | null; label: string }) {
   const g = compact ? GEOMETRY.compact : GEOMETRY.wide;
-  const margin = 4.2 * g.laneX + 4;
-  const pxPath = useMemo(() => course.path.map(p => ({ x: margin + p.x * (g.w - 2 * margin), y: margin + p.y * (g.h - 2 * margin) })), [course, g.w, g.h, margin]);
-  const point = (lap: number, lane: number) => pointOnPath(pxPath, lap, (lane - 1.6) * g.laneX);
-  const edge = (offset: number) => Array.from({ length: 96 }, (_, i) => pointOnPath(pxPath, i / 96, offset * g.laneX)).map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const goalIn = pointOnPath(pxPath, 0, -1.6 * g.laneX), goalOut = pointOnPath(pxPath, 0, 4.2 * g.laneX);
+  const margin = 4.2 * g.laneX + 8;
+  const closed = course.pathClosed;
+  const pxPath = useMemo(() => fitPath(course.path, g.w, g.h, margin), [course, g.w, g.h, margin]);
+  const startShare = course.startLapShare === "UNKNOWN" ? 0 : course.startLapShare;
+  // The frame's lap runs 0..~1 over the race; on the course it covers `raceLaps` laps ending at the goal line.
+  const at = (share: number, offset: number) => pointOnPath(pxPath, share, offset * g.laneX, closed);
+  const point = (lap: number, lane: number) => at(closed ? startShare + lap * course.raceLaps : lap, lane);
+  const edge = (offset: number) => Array.from({ length: 96 }, (_, i) => at(closed ? i / 96 : i / 95, offset));
+  const toPoints = (list: { x: number; y: number }[]) => list.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const goalShare = closed ? 0 : 1;
+  const goalIn = at(goalShare, -1.6), goalOut = at(goalShare, 4.2);
+  const startIn = at(closed ? startShare : 0, -1.6), startOut = at(closed ? startShare : 0, 4.2);
+  const startKnown = course.startLapShare !== "UNKNOWN";
   // Draw the ◎ last so it stays on top; otherwise horse-number order.
   const runners = [...frame.runners].sort((a, b) => Number(a.no === honmeiNo) - Number(b.no === honmeiNo) || a.no - b.no);
   // FINISH window: the level field fades out short of the line. The
   // scenario ends there; it never draws anyone crossing first.
   const fade = frame.progress <= 0.95 ? 1 : Math.max(0.25, 1 - (frame.progress - 0.95) / 0.05 * 0.75);
-  return <svg className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label}>
-    <polygon points={edge(4.2)} className="kt-track-outer" />
-    <polygon points={edge(-1.6)} className="kt-track-inner" />
-    <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" />
+  return <svg className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-direction={course.direction} data-start-share={String(course.startLapShare)}>
+    {closed ? <>
+      <polygon points={toPoints(edge(4.2))} className="kt-track-outer" />
+      <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
+    </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2))} className="kt-track-outer" />}
+    {closed ? course.corners.map((corner, index) => {
+      const pos = pointOnPath(pxPath, cornerShare(course, index), 6.2 * g.laneX);
+      return <text key={corner.label} x={pos.x} y={pos.y + 4} className="kt-corner" data-corner={corner.label}>{corner.label}</text>;
+    }) : null}
+    {startKnown ? <line x1={startIn.x} y1={startIn.y} x2={startOut.x} y2={startOut.y} className="kt-track-start" data-start="true" /> : null}
+    {startKnown ? <text x={startOut.x} y={startOut.y + (startOut.y > g.h / 2 ? 14 : -6)} className="kt-track-label kt-track-label--start">START</text> : null}
+    <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" data-goal="true" />
     <text x={goalOut.x + 6} y={goalOut.y + 14} className="kt-track-label">GOAL</text>
     {runners.map(runner => {
-      const p = point(runner.lap, runner.lane + 1.6);
-      return <g key={runner.no} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`} opacity={fade} transform={`translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`}>
+      const p = point(runner.lap, runner.lane);
+      return <g key={runner.no} data-runner={runner.no} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`} opacity={fade} transform={`translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`}>
         <circle r={g.r} />
         <text dy="4">{runner.no}</text>
       </g>;

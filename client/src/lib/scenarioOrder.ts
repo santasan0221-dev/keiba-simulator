@@ -36,8 +36,11 @@ export function orderFrame(runners: FrameRunner[], seed: number): OrderRow[] {
 
 export function orderView(runners: ScenarioRunner[], progress: number, pace: Pace, seed: number): OrderView {
   if (progress >= 1) return { kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] };
-  const rows = orderFrame(scenarioFrame(runners, progress, pace, seed).runners, seed);
-  return progress > FINAL_PHASE_FROM
+  // FINAL PHASE: the order is held at the 95% reading. The field converges after
+  // that, and swaps among near-level runners would read as a finish.
+  const frozen = progress > FINAL_PHASE_FROM;
+  const rows = orderFrame(scenarioFrame(runners, frozen ? FINAL_PHASE_FROM : progress, pace, seed).runners, seed);
+  return frozen
     ? { kind: "FINAL_PHASE", title: "SCENARIO ORDER — FINAL PHASE", rows }
     : { kind: "LIVE", title: "SCENARIO ORDER", rows };
 }
