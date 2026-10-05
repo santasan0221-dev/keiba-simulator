@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { orderFrame } from "./scenarioOrder";
+import { buildSim } from "./scenarioSim";
 import { cosmeticLane, LANE_MAX, LANE_MIN, type MotionInput } from "./scenarioMotion";
-import { demoField, scenarioFrame, scenarioSeed, type ScenarioStyle } from "./scenarioReplay";
+import { demoField, scenarioSeed, type ScenarioStyle } from "./scenarioReplay";
 import { resolveCourse } from "./courseAtlas";
 import { courseShare, straightness, turnness } from "./courseSections";
 import { createProgressStore } from "./progressStore";
@@ -66,15 +67,15 @@ describe("cosmetic runner motion", () => {
     }
   });
 
-  it("never changes who is ahead: the order is read from the scenario frame, not from the lanes", () => {
-    const field = demoField();
+  it("never changes who is ahead: the order is read from the simulation, not from the lanes", () => {
+    const course = resolveCourse("東京", "芝", 2000);
+    const sim = buildSim({ raceKey: "motion", variant: "STANDARD", runners: demoField(), course, pace: "平均" });
     for (let i = 0; i <= 100; i++) {
-      const frame = scenarioFrame(field, i / 100, "平均", seed);
-      const before = orderFrame(frame.runners, seed).map(r => r.no);
-      const course = resolveCourse("東京", "芝", 2000);
+      const frame = sim.frameAt(i / 100);
+      const before = orderFrame(sim, i / 100).map(r => r.no);
       // cosmetic lanes computed for every runner do not feed back into the order
-      frame.runners.forEach(runner => { const share = courseShare(course, runner.lap); cosmeticLane({ no: runner.no, style: runner.style, baseLane: runner.lane, progress: i / 100, seed, turn: turnness(course, share), straight: straightness(course, share) }); });
-      expect(orderFrame(frame.runners, seed).map(r => r.no)).toEqual(before);
+      frame.runners.forEach(runner => { const share = courseShare(course, runner.lap); cosmeticLane({ no: runner.no, style: runner.style, baseLane: runner.lane, progress: i / 100, seed: sim.seed, turn: turnness(course, share), straight: straightness(course, share) }); });
+      expect(orderFrame(sim, i / 100).map(r => r.no)).toEqual(before);
     }
   });
 

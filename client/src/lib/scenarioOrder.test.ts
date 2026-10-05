@@ -1,154 +1,111 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CHECKPOINTS, compactRows, createThrottledEmitter, deltaLabel, FINAL_PHASE_FROM, orderFrame, orderView, rankDelta, rankHistory, reachedCheckpoints } from "./scenarioOrder";
-import { demoField, PHASE_KEYFRAME, scenarioFrame, scenarioSeed } from "./scenarioReplay";
+import { resolveCourse } from "./courseAtlas";
+import {
+  CHECKPOINTS, compactRows, CROSSING_NOTE, createThrottledEmitter, deltaLabel, orderFrame, orderView, rankDelta, rankHistory, reachedCheckpoints,
+} from "./scenarioOrder";
+import { type ScenarioRunner, type ScenarioStyle } from "./scenarioReplay";
+import { buildSim } from "./scenarioSim";
 
-const field = demoField();
-const seed = scenarioSeed("JRA|2026-09-30|中山|11");
-const strip = (file: string) => readFileSync(resolve(import.meta.dirname, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+const field: ScenarioRunner[] = Array.from({ length: 12 }, (_, i) => ({ no: i + 1, name: `馬${i + 1}`, style: (["逃げ", "先行", "差し", "追込"] as ScenarioStyle[])[i % 4] }));
+const sim = buildSim({ raceKey: "JRA|2026-10-04|東京|05", variant: "STANDARD", runners: field, course: resolveCourse("東京", "芝", 2000), pace: "平均" });
+const strip = (file: string) => readFileSync(resolve(import.meta.dirname, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
-describe("SCENARIO ORDER follows continuous course progress", () => {
-  it("ranks are exactly the descending lap order of the frame", () => {
-    for (let step = 0; step < 100; step++) {
-      const frame = scenarioFrame(field, step / 100, "平均", seed);
-      const rows = orderFrame(frame.runners, seed);
-      const laps = rows.map(row => frame.runners.find(runner => runner.no === row.no)!.lap);
-      expect([...laps].sort((a, b) => b - a)).toEqual(laps);
-      expect(rows.map(row => row.rank)).toEqual(rows.map((_, i) => i + 1));
+describe("SCENARIO ORDER", () => {
+  it("every frame has ranks 1..n exactly once, deterministically", () => {
+    for (let step = 0; step <= 100; step++) {
+      const rows = orderFrame(sim, step / 100);
+      expect(rows.map(row => row.rank)).toEqual(Array.from({ length: field.length }, (_, i) => i + 1));
+      expect(new Set(rows.map(row => row.no)).size).toBe(field.length);
+      expect(orderFrame(sim, step / 100)).toEqual(rows);
     }
   });
 
-  it("a runner's rank changes only by passing runners whose course progress it actually crossed", () => {
-    let previous = scenarioFrame(field, 0, "平均", seed);
-    let changes = 0;
-    for (let step = 1; step <= 1000; step++) {
-      const frame = scenarioFrame(field, step / 1000, "平均", seed);
-      const before = new Map(orderFrame(previous.runners, seed).map(r => [r.no, r.rank]));
-      for (const row of orderFrame(frame.runners, seed)) {
-        const delta = Math.abs(row.rank - before.get(row.no)!);
-        if (!delta) continue;
-        changes++;
-        const a = previous.runners.find(r => r.no === row.no)!, b = frame.runners.find(r => r.no === row.no)!;
-        const [lo, hi] = [Math.min(a.lap, b.lap), Math.max(a.lap, b.lap)];
-        const swept = previous.runners.filter(r => r.no !== row.no).filter(r => { const c = frame.runners.find(x => x.no === r.no)!; return Math.min(r.lap, c.lap) <= hi && Math.max(r.lap, c.lap) >= lo; }).length;
-        expect(delta, `runner ${row.no} at ${step / 1000}`).toBeLessThanOrEqual(swept);
-      }
-      previous = frame;
-    }
-    expect(changes).toBeGreaterThan(0);
-  });
-
-  it("front-runners lead early; no style is hard-coded to win ground late", () => {
-    const early = orderFrame(scenarioFrame(field, PHASE_KEYFRAME.EARLY, "平均", seed).runners, seed);
-    expect(early[0].style).toBe("逃げ");
-  });
-
-  it("is deterministic per race_key and replay", () => {
-    expect(rankHistory(field, "平均", seed)).toEqual(rankHistory(field, "平均", seed));
-    expect(orderView(field, 0.5, "ハイ", seed)).toEqual(orderView(field, 0.5, "ハイ", seed));
-    expect(scenarioSeed("a")).not.toBe(scenarioSeed("b"));
-  });
-
-  it("keeps a rank history for every runner at every checkpoint (no FINISH rank)", () => {
-    const history = rankHistory(field, "平均", seed);
-    expect(history.size).toBe(field.length);
-    history.forEach(ranks => { expect(Object.keys(ranks).sort()).toEqual(CHECKPOINTS.map(c => c.id).sort()); expect(ranks).not.toHaveProperty("FINISH"); });
-  });
-});
-
-describe("FINISH handling", () => {
-  it("labels FINAL PHASE above 95% and holds no rows at 100%", () => {
-    expect(orderView(field, 0.5, "平均", seed).kind).toBe("LIVE");
-    expect(orderView(field, FINAL_PHASE_FROM, "平均", seed).kind).toBe("LIVE");
-    const final = orderView(field, 0.97, "平均", seed);
-    expect(final.kind).toBe("FINAL_PHASE");
-    expect(final.title).toBe("SCENARIO ORDER — FINAL PHASE");
-    expect(final.rows).toEqual(orderView(field, FINAL_PHASE_FROM, "平均", seed).rows);
-    const done = orderView(field, 1, "平均", seed);
-    expect(done).toEqual({ kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] });
-  });
-});
-
-describe("SCENARIO ORDER V3: checkpoints and rank delta", () => {
-  it("has the six checkpoints in order: START, EARLY, BACKSTRETCH, THIRD TURN, FINAL TURN, FINAL", () => {
-    expect(CHECKPOINTS.map(c => c.label)).toEqual(["START", "EARLY", "BACKSTRETCH", "THIRD TURN", "FINAL TURN", "FINAL"]);
-    const ts = CHECKPOINTS.map(c => c.t);
-    expect([...ts].sort((a, b) => a - b)).toEqual(ts);
-    expect(ts[ts.length - 1]).toBeLessThan(FINAL_PHASE_FROM);
-  });
-
-  it("reached checkpoints grow with progress and stop at the 95% hold", () => {
-    expect(reachedCheckpoints(0)).toEqual(["START"]);
-    expect(reachedCheckpoints(0.3)).toEqual(["START", "EARLY"]);
-    expect(reachedCheckpoints(0.73)).toHaveLength(5);
-    expect(reachedCheckpoints(0.95)).toHaveLength(6);
-    expect(reachedCheckpoints(1)).toHaveLength(6);
-  });
-
-  it("rank delta is measured against the last checkpoint passed (positive = moved up); START is not a reference", () => {
-    const history = { START: 9, EARLY: 5, BACKSTRETCH: 4 } as const;
-    expect(rankDelta(history, ["START"], 3)).toEqual({ previous: null, delta: null });
-    expect(rankDelta(history, ["START", "EARLY"], 3)).toEqual({ previous: 5, delta: 2 });
-    expect(rankDelta(history, ["START", "EARLY", "BACKSTRETCH"], 6)).toEqual({ previous: 4, delta: -2 });
-    expect(rankDelta(history, ["START", "EARLY", "BACKSTRETCH"], 4)).toEqual({ previous: 4, delta: 0 });
-    expect(rankDelta(undefined, ["START", "EARLY"], 2)).toEqual({ previous: null, delta: null });
-    expect([deltaLabel(2), deltaLabel(-1), deltaLabel(0), deltaLabel(null)]).toEqual(["↑2", "↓1", "－", ""]);
-  });
-
-  it("a runner's delta at any progress equals the checkpoint rank minus the current rank, deterministically", () => {
-    const history = rankHistory(field, "平均", seed);
-    for (const progress of [0.25, 0.5, 0.7, 0.9, 0.97]) {
-      const view = orderView(field, progress, "平均", seed);
-      const reached = reachedCheckpoints(progress);
-      const last = reached[reached.length - 1];
-      for (const row of view.rows) {
-        const { previous, delta } = rankDelta(history.get(row.no), reached, row.rank);
-        expect(previous).toBe(history.get(row.no)![last]);
-        expect(delta).toBe(previous! - row.rank);
-      }
+  it("ranks change smoothly: between neighbouring frames a runner moves a few places at most", () => {
+    // From just after the gate: at the very first instant the field is level and the order is only a tie-break.
+    let previous = new Map(orderFrame(sim, 0.02).map(row => [row.no, row.rank]));
+    for (let step = 21; step <= 1000; step++) {
+      const rows = orderFrame(sim, step / 1000);
+      for (const row of rows) expect(Math.abs(row.rank - (previous.get(row.no) ?? row.rank))).toBeLessThanOrEqual(3);
+      previous = new Map(rows.map(row => [row.no, row.rank]));
     }
   });
-});
 
-describe("final-order freeze (95% to 100%)", () => {
-  it("the rows never change between 95% and 100%, for every pace and race_key", () => {
-    for (const pace of ["スロー", "平均", "ハイ"] as const) {
-      for (const key of ["a", "JRA|2026-09-30|中山|11", "NAR|2026-09-30|大井|04"]) {
-        const s = scenarioSeed(key);
-        const held = orderView(field, FINAL_PHASE_FROM, pace, s).rows;
-        for (let step = 1; step < 50; step++) {
-          const p = FINAL_PHASE_FROM + (step / 50) * (1 - FINAL_PHASE_FROM) - 1e-9;
-          const view = orderView(field, p, pace, s);
-          expect(view.kind).toBe("FINAL_PHASE");
-          expect(view.rows).toEqual(held);
-        }
-        expect(orderView(field, 1, pace, s).rows).toEqual([]);
-      }
+  it("LIVE → CROSSING → COMPLETE: updates all the way to the line, then shows the crossing order", () => {
+    expect(orderView(sim, 0.5).kind).toBe("LIVE");
+    expect(orderView(sim, 0.95).kind).not.toBe("COMPLETE");
+    const first = Math.min(...sim.crossT);
+    const during = orderView(sim, (first + sim.allCrossedT) / 2);
+    expect(during.kind).toBe("CROSSING");
+    expect(during.rows.filter(row => row.crossed).length).toBeGreaterThan(0);
+    const done = orderView(sim, 1);
+    expect(done.kind).toBe("COMPLETE");
+    if (done.kind !== "COMPLETE") throw new Error("expected COMPLETE");
+    expect(done.title).toBe("SCENARIO CROSSING ORDER");
+    expect(done.subtitle).toBe("仮想ゴール通過順");
+    expect(done.rows.map(row => row.no)).toEqual(sim.crossOrder);
+    expect(done.sequence).toBe(sim.crossOrder.map(no => `#${no}`).join(" → "));
+    expect(orderView(sim, sim.allCrossedT).kind).toBe("COMPLETE");
+    expect(CROSSING_NOTE).toContain("実際の着順予測ではありません");
+  });
+
+  it("runners that crossed keep their crossing place: nobody who is across the line is overtaken by a runner behind it", () => {
+    for (let step = 0; step <= 1000; step++) {
+      const rows = orderFrame(sim, step / 1000);
+      const crossed = rows.filter(row => row.crossed);
+      expect(rows.slice(0, crossed.length).every(row => row.crossed)).toBe(true);
     }
+  });
+
+  it("is a pure reading of the simulation: same input, same view", () => {
+    expect(orderView(sim, 0.5)).toEqual(orderView(sim, 0.5));
   });
 });
 
-describe("safety: the order reads nothing but the scenario frame", () => {
+describe("checkpoints and rank history", () => {
+  const history = rankHistory(sim);
+  it("records START … HOME STRAIGHT and GOAL for every runner; GOAL is the crossing order", () => {
+    expect(CHECKPOINTS.map(checkpoint => checkpoint.id)).toEqual(["START", "EARLY", "BACKSTRETCH", "THIRD_TURN", "FINAL_TURN", "HOME_STRAIGHT", "GOAL"]);
+    for (const no of sim.nos) expect(Object.keys(history.get(no)!)).toHaveLength(CHECKPOINTS.length);
+    sim.crossOrder.forEach((no, index) => expect(history.get(no)!.GOAL).toBe(index + 1));
+  });
+
+  it("checkpoints are reached in order as progress advances; GOAL only once everyone has crossed", () => {
+    expect(reachedCheckpoints(sim, 0)).toEqual(["START"]);
+    let count = 0;
+    for (let step = 0; step <= 1000; step++) {
+      const reached = reachedCheckpoints(sim, step / 1000).length;
+      expect(reached).toBeGreaterThanOrEqual(count);
+      count = reached;
+    }
+    expect(reachedCheckpoints(sim, sim.allCrossedT - 0.01)).not.toContain("GOAL");
+    expect(reachedCheckpoints(sim, 1)).toHaveLength(CHECKPOINTS.length);
+  });
+
+  it("rank change is measured against the last checkpoint passed; START does not count", () => {
+    const record = history.get(1);
+    expect(rankDelta(record, ["START"], 5)).toEqual({ previous: null, delta: null });
+    const { previous, delta } = rankDelta(record, ["START", "EARLY"], 3);
+    expect(previous).toBe(record!.EARLY);
+    expect(delta).toBe(record!.EARLY! - 3);
+    expect(deltaLabel(2)).toBe("↑2");
+    expect(deltaLabel(-1)).toBe("↓1");
+    expect(deltaLabel(0)).toBe("－");
+    expect(deltaLabel(null)).toBe("");
+  });
+});
+
+describe("safety: the order reads nothing but the simulation", () => {
   it("source never references market, probability, honmei, popularity or result data", () => {
-    for (const file of ["scenarioOrder.ts", "courseAtlas.ts"]) {
-      const code = strip(file);
-      for (const forbidden of ["odds", "probab", "honmei", "popularity", "result", "ai_rank", "win_", "speed", "stamina", "Math.random", ...(file === "scenarioOrder.ts" ? ["official"] : [])]) {
-        expect(code.toLowerCase(), `${file} must not mention ${forbidden}`).not.toContain(forbidden.toLowerCase());
-      }
-    }
-    const imports = strip("scenarioOrder.ts").match(/from "[^"]+"/g)!;
-    expect(imports.sort()).toEqual(['from "@/lib/scenarioReplay"']);
-  });
-
-  it("the moving-runner module does not import the atlas (elevation cannot affect motion)", () => {
-    expect(strip("scenarioReplay.ts")).not.toContain("courseAtlas");
-    expect(strip("scenarioOrder.ts")).not.toContain("courseAtlas");
+    const code = strip("scenarioOrder.ts");
+    for (const forbidden of ["odds", "probab", "honmei", "popularity", "result", "ai_rank", "win_", "speed", "stamina", "Math.random", "official"]) expect(code.toLowerCase(), forbidden).not.toContain(forbidden.toLowerCase());
+    expect(code.match(/from "[^"]+"/g)!.sort()).toEqual(['from "@/lib/scenarioReplay"', 'from "@/lib/scenarioSim"']);
   });
 });
 
 describe("compact view", () => {
-  const rows = orderFrame(scenarioFrame(field, 0.5, "平均", seed).runners, seed);
+  const rows = orderFrame(sim, 0.5);
   it("shows the top 5, plus the pinned runner when outside it", () => {
     expect(compactRows(rows, null)).toHaveLength(5);
     const outside = rows[8].no;
@@ -185,9 +142,9 @@ describe("rank table update rate", () => {
     expect(emitted).toEqual([2]);
   });
   it("ordering one frame is cheap enough for 8 Hz redraw", () => {
-    const big = Array.from({ length: 18 }, (_, i) => ({ no: i + 1, name: null, style: (["逃げ", "先行", "差し", "追込"] as const)[i % 4] }));
+    const big = buildSim({ raceKey: "big", variant: "STANDARD", runners: Array.from({ length: 18 }, (_, i) => ({ no: i + 1, name: null, style: (["逃げ", "先行", "差し", "追込"] as const)[i % 4] })), course: resolveCourse("中山", "芝", 2500), pace: "平均" });
     const start = performance.now();
-    for (let i = 0; i < 500; i++) orderView(big, (i % 100) / 100, "平均", seed);
+    for (let i = 0; i < 500; i++) orderView(big, (i % 100) / 100);
     expect((performance.now() - start) / 500).toBeLessThan(2);
   });
 });

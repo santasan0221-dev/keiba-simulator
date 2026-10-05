@@ -761,3 +761,22 @@ body { background: var(--kt-bg); }
   .kt-camera-options { width: 100%; }
   .kt-marker text { font-size: 9px; }
 }
+
+/* Scenario variants, COURSE EFFECT, COURSE FIT, crossing order */
+.kt-variants { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.kt-variants > span { color: var(--kt-muted); font-size: 12px; margin-right: 2px; }
+.kt-variants button { min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--kt-border-strong, #ffffff30); border-radius: 10px; background: #0006; color: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em; cursor: pointer; }
+.kt-variants button.is-current { background: var(--kt-research); color: #150f24; border-color: var(--kt-research); }
+.kt-variants .kt-variant-next { font-weight: 600; letter-spacing: 0; }
+.kt-variants button:focus-visible { outline: 3px solid var(--kt-research); outline-offset: 2px; }
+.kt-course-effect, .kt-course-fit { display: grid; gap: 6px; margin-top: 14px; min-width: 0; font-size: 12px; color: var(--kt-muted); }
+.kt-course-effect header, .kt-course-fit header { display: flex; gap: 8px; align-items: baseline; }
+.kt-course-effect ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.kt-course-effect li { padding: 3px 9px; border-radius: 999px; background: #ffffff0d; border: 1px dashed var(--kt-research); color: inherit; font-size: 11px; }
+.kt-course-effect p, .kt-course-effect small, .kt-course-fit p { margin: 0; overflow-wrap: anywhere; }
+.kt-course-fit ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 4px 12px; margin: 0; padding: 0; list-style: none; }
+.kt-course-fit li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; min-width: 0; }
+.kt-course-fit li b { font-size: 14px; color: var(--kt-research); min-width: 1.2em; }
+.kt-order-subtitle { display: block; color: var(--kt-research); font-size: 13px; }
+.kt-order-sequence { margin: 0; font-size: 12px; overflow-wrap: anywhere; color: inherit; }
+.kt-order-goal { flex: none; padding: 1px 6px; border: 1px solid var(--kt-research); border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--kt-research); }

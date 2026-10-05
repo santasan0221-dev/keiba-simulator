@@ -27,20 +27,23 @@ import { type CameraMode } from "@/lib/camera";
 import { courseFacts, courseShare, SECTION_LABEL, SECTION_LABEL_JA, sectionAt } from "@/lib/courseSections";
 import {
   demoField,
-  formationAt,
+  nextVariant,
   normalizeStyle,
-  PHASE_KEYFRAME,
   PHASE_LABEL,
   PHASES,
-  scenarioFrame,
-  scenarioSeed,
+  VARIANT_LABEL,
+  VARIANTS,
   type Pace,
   type ScenarioPosition,
   type ScenarioRunner,
+  type ScenarioVariant,
 } from "@/lib/scenarioReplay";
+import { buildSim } from "@/lib/scenarioSim";
+import { buildHorseProfiles, type HorseProfile } from "@/lib/horseScenarioProfile";
+import { TERRAIN_NOTE } from "@/lib/terrainTempo";
 
-// Scenario progress runs 0..1 over SCENARIO_MS at 1x. It is playback of an
-// illustration, not race time: nothing on screen is labelled in seconds.
+// Scenario progress runs 0..1 over SCENARIO_MS at 1x (to the last runner's goal crossing and a short
+// run-out). It is playback of an illustration, not race time: nothing on screen is labelled in seconds.
 const SCENARIO_MS = 30_000;
 const SPEEDS = [1, 1.5, 2] as const;
 // React state (progress label, SCENARIO ORDER, section) follows at ~8 Hz; the track itself is
@@ -66,6 +69,7 @@ type Mode = "SCENARIO" | "RESULT";
 
 export default function SimulatorShell() {
   const [pace, setPace] = useState<Pace>("平均");
+  const [variant, setVariant] = useState<ScenarioVariant>("STANDARD");
   const store = useMemo(() => createProgressStore(0), []);
   const [progress, setProgressState] = useState(0);
   const [cameraMode, setCameraMode] = useState<CameraMode>("AUTO");
@@ -173,13 +177,22 @@ export default function SimulatorShell() {
     return () => cancelAnimationFrame(frame);
   }, [playing, speed, reducedMotion, store]);
 
+  const runners: ScenarioRunner[] = useMemo(() => race
+    ? race.horses.filter(horse => typeof horse.no === "number" && !horse.withdrawn).map(horse => ({ no: horse.no as number, name: horse.name, style: normalizeStyle(horse.style) }))
+    : demoField(), [race]);
+  const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
+  // Pre-race horse profiles and the whole simulated run are built once per race / variant / pace;
+  // the animation only looks them up.
+  const profiles = useMemo<Map<number, HorseProfile>>(() => race ? buildHorseProfiles(race.horses, { distance: race.race.distance ?? null, going: race.race.going ?? null, course }) : new Map(), [race, course]);
+  const sim = useMemo(() => buildSim({ raceKey: race?.race.race_key ?? "demo", variant, runners, profiles, course, pace }), [race, variant, runners, profiles, course, pace]);
+
   useEffect(() => {
     if (!playing || !reducedMotion) return;
-    const next = PHASES.map(phase => PHASE_KEYFRAME[phase]).find(value => value > progress + 1e-6);
+    const next = PHASES.map(phase => sim.phaseKey[phase]).find(value => value > progress + 1e-6);
     if (next === undefined) return;
     const timer = window.setTimeout(() => seek(next), 1800 / speed);
     return () => window.clearTimeout(timer);
-  }, [playing, reducedMotion, speed, progress, seek]);
+  }, [playing, reducedMotion, speed, progress, seek, sim]);
 
   const complete = progress >= 1;
   useEffect(() => { if (complete) setPlaying(false); }, [complete]);
@@ -195,7 +208,7 @@ export default function SimulatorShell() {
   useEffect(() => {
     if (!complete || !confirmed || autoSwitched.current) return;
     autoSwitched.current = true;
-    const timer = window.setTimeout(() => setMode("RESULT"), 1500);
+    const timer = window.setTimeout(() => setMode("RESULT"), 4500);
     return () => window.clearTimeout(timer);
   }, [complete, confirmed]);
 
@@ -224,11 +237,7 @@ export default function SimulatorShell() {
   }, [raceKey]);
   useEffect(() => { pollerRef.current?.notify(); }, [pollState]);
 
-  const runners: ScenarioRunner[] = useMemo(() => race
-    ? race.horses.filter(horse => typeof horse.no === "number" && !horse.withdrawn).map(horse => ({ no: horse.no as number, name: horse.name, style: normalizeStyle(horse.style) }))
-    : demoField(), [race]);
-  const seed = scenarioSeed(race?.race.race_key ?? "demo");
-  const frame = scenarioFrame(runners, progress, pace, seed);
+  const frame = sim.frameAt(progress);
   const phase = frame.phase;
   const packLap = frame.runners.length ? frame.runners.reduce((sum, runner) => sum + runner.lap, 0) / frame.runners.length : 0;
   const picks = race ? pickCards(race) : null;
@@ -237,7 +246,6 @@ export default function SimulatorShell() {
   const raceTitle = race ? `${race.race.venue ?? "—"} ${race.race.race_no ?? "—"}R` : "デモ隊列（10頭・番号のみ）";
   const backPath = race?.race.race_key ? raceKeyToPath(race.race.race_key) : null;
   const pct = Math.round(progress * 100);
-  const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
   const section = sectionAt(course, courseShare(course, packLap), progress);
   const facts = useMemo(() => courseFacts(course), [course]);
 
@@ -253,12 +261,12 @@ export default function SimulatorShell() {
           <div>
             <span className="kt-eyebrow"><FlaskConical size={12} aria-hidden="true" /> KEIBA TRACE / SCENARIO LAB</span>
             <h1>展開を読む、研究室。</h1>
-            <p>仮想シミュレーション · {race ? "出走馬の公開脚質から作る隊列シナリオ" : "サンプルデータ未読込 · デモ隊列を表示中"}</p>
+            <p>仮想シミュレーション · {race ? "出走馬の脚質・コース形状・事前データから作る展開シナリオ" : "サンプルデータ未読込 · デモ隊列を表示中"}</p>
           </div>
           <span className="kt-research-badge" role="note">RESEARCH_ONLY<small>SIMULATION / SCENARIO</small></span>
         </header>
         <p className="kt-sim-notice">
-          隊列は<strong>脚質と仮定ペースだけ</strong>から描いたシナリオです。実際のレース映像・通過順位・計測値ではなく、着順や走行中の勝率も算出しません。実AI予測は「本日の予想」ページをご覧ください。
+          展開は<strong>脚質・仮定ペース・コース形状・出走馬の事前データ</strong>と、小さなシード付きノイズから計算したシナリオです。公式結果・オッズ・印・AI確率は使いません。実際のレース映像・通過順位・計測値ではなく、ゴール通過順も着順予想ではありません。実AI予測は「本日の予想」ページをご覧ください。
         </p>
 
         <section className="kt-sim-controls" aria-label="シナリオ条件">
@@ -285,6 +293,11 @@ export default function SimulatorShell() {
               <option>ハイ</option>
             </select>
           </label>
+          <div className="kt-variants" role="radiogroup" aria-label="シナリオの展開">
+            <span id="kt-variant-title">展開</span>
+            {VARIANTS.map(value => <button type="button" key={value} role="radio" aria-checked={variant === value} className={variant === value ? "is-current" : ""} onClick={() => { setVariant(value); setPlaying(true); seek(0); autoSwitched.current = false; setMode("SCENARIO"); }}>{VARIANT_LABEL[value]}</button>)}
+            <button type="button" className="kt-variant-next" onClick={() => { setVariant(nextVariant(variant)); setPlaying(true); seek(0); autoSwitched.current = false; setMode("SCENARIO"); }}>別の展開を見る</button>
+          </div>
           <span className="kt-sim-assumption">pace scenario · {pace} <b className="kt-research-chip">RESEARCH_ONLY</b></span>
           {source.kind === "loading" ? <span role="status">出走馬を読み込み中…</span> : null}
           {source.kind === "error" ? <span role="alert">出走馬を取得できません。デモ隊列を表示しています。</span> : null}
@@ -306,12 +319,12 @@ export default function SimulatorShell() {
                 <span className="kt-phase-badge" aria-live="polite">{complete ? "SCENARIO COMPLETE" : `${phase} · ${PHASE_LABEL[phase]}`}</span>
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
-              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              <TrackStage store={store} sim={sim} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
               <CameraSelector mode={cameraMode} onChange={setCameraMode} reducedMotion={reducedMotion} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
               <div className="kt-phase-rail" role="group" aria-label="レース区間">
-                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
+                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : sim.phaseKey[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); seek(sim.phaseKey[item]); }}>{item}</button>)}
               </div>
               <footer className="kt-playback">
                 <button type="button" className="kt-play" onClick={togglePlay} aria-label={playing ? "一時停止" : complete ? "もう一度再生" : "再生"}>{playing ? <Pause size={18} /> : <Play size={18} />}</button>
@@ -335,12 +348,13 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
-              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} />
+              <ScenarioOrderPanel sim={sim} progress={progress} compact={compact} profiles={profiles} course={course} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
-              <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
-              <PositionStrip formation={formationAt(runners, phase, pace)} honmeiNo={honmeiNo} finish={phase === "FINISH"} />
+              <p>公式通過順位ではありません。脚質は公開データ、並びはシナリオ計算です。</p>
+              <PositionStrip formation={frame.runners.map((runner): ScenarioPosition => ({ no: runner.no, name: runner.name, style: runner.style, lengthsBehind: runner.lengthsBehind, group: runner.crossed ? "ゴール通過後" : runner.style === "不明" ? "脚質不明" : runner.lengthsBehind < 2.5 ? "前団" : runner.lengthsBehind < 6 ? "中団" : "後方" })).sort((a, b) => a.lengthsBehind - b.lengthsBehind || a.no - b.no)} honmeiNo={honmeiNo} finish={frame.runners.some(runner => runner.crossed)} />
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
+              <CourseEffect sim={sim} />
               <ElevationPanel course={course} />
             </section>
           </div>
@@ -348,9 +362,9 @@ export default function SimulatorShell() {
           <div className="kt-result-mode">
             <OfficialResultPanel view={official} loading={!officialReady} race={race} onRefresh={race ? () => loadResult(race) : undefined} />
             <section className="kt-result-scenario" aria-label="シナリオ（研究用）">
-              <header><span className="kt-research-chip">SCENARIO</span><strong>研究用シナリオ（ゴール前）</strong></header>
-              <p>脚質と仮定ペースから描いた隊列です。実際の展開を再現したものではなく、公式結果とは無関係です。</p>
-              <TrackStage fixedProgress={1} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} label="シナリオ終了時の隊列（順位なし）" />
+              <header><span className="kt-research-chip">SCENARIO</span><strong>研究用シナリオ（ゴール通過後）</strong></header>
+              <p>脚質・仮定ペース・コース形状・事前データから計算したシナリオです。実際の展開を再現したものではなく、公式結果とは無関係です。</p>
+              <TrackStage fixedProgress={1} sim={sim} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} label="シナリオ終了時の隊列（仮想ゴール通過後）" />
             </section>
           </div>
         )}
@@ -428,9 +442,9 @@ export function OfficialResultPanel({ view, loading, race, onRefresh }: { view: 
 }
 
 function PositionStrip({ formation, honmeiNo, finish }: { formation: ScenarioPosition[]; honmeiNo: number | null; finish: boolean }) {
-  const groups = (["前団", "中団", "後方", "脚質不明", "ゴール前（順位なし）"] as const).map(group => [group, formation.filter(runner => runner.group === group)] as const).filter(([, list]) => list.length);
+  const groups = (["前団", "中団", "後方", "脚質不明", "ゴール通過後"] as const).map(group => [group, formation.filter(runner => runner.group === group)] as const).filter(([, list]) => list.length);
   return <div className="kt-strip">
-    {finish ? <p className="kt-strip-note">ゴール前は隊列が収束します。シナリオは着順を描きません（馬番順に表示）。</p> : null}
+    {finish ? <p className="kt-strip-note">ゴール通過後の馬は「ゴール通過後」に表示します。通過順は上のSCENARIO ORDERを参照してください（仮想）。</p> : null}
     {groups.map(([group, list]) => <div key={group} className="kt-strip-group">
       <small>{group}</small>
       <ol>{list.map(runner => <li key={runner.no} className={runner.no === honmeiNo ? "is-honmei" : ""}>
@@ -438,4 +452,14 @@ function PositionStrip({ formation, honmeiNo, finish }: { formation: ScenarioPos
       </li>)}</ol>
     </div>)}
   </div>;
+}
+
+/** COURSE EFFECT: what the course shape does to the pace of the whole scenario (never a betting view). */
+function CourseEffect({ sim }: { sim: ReturnType<typeof buildSim> }) {
+  const effects = sim.terrain.effects;
+  return <section className="kt-course-effect" aria-label="COURSE EFFECT（コース形状によるテンポ）">
+    <header><span className="kt-eyebrow">COURSE EFFECT</span></header>
+    {effects.length ? <ul>{effects.map(effect => <li key={effect.id} data-effect={effect.id}>{effect.label}</li>)}</ul> : <p>このコースの形状データがないため、テンポは中立（補正なし）です。</p>}
+    <small>{TERRAIN_NOTE}</small>
+  </section>;
 }

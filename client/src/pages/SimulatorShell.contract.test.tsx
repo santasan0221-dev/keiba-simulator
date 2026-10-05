@@ -55,8 +55,8 @@ describe("simulator v3: SCENARIO ORDER wiring", () => {
     expect(html).toContain("SCENARIO ORDER");
     expect(html).toContain("シナリオ上の仮想順位です。実測・着順予測ではありません。");
   });
-  it("feeds the order panel only runners / pace / seed and the throttled progress -- no race, picks, result or odds", () => {
-    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{progress\} compact=\{compact\} \/>/);
+  it("feeds the order panel only the simulation, the throttled progress and the horse profiles -- no race, picks, result or odds", () => {
+    expect(source).toMatch(/<ScenarioOrderPanel sim=\{sim\} progress=\{progress\} compact=\{compact\} profiles=\{profiles\} course=\{course\} \/>/);
     expect(source).toContain("createThrottledEmitter");
     expect(source).not.toMatch(/ScenarioOrderPanel[^>]*(race=|honmei|official|result)/);
   });
@@ -121,8 +121,47 @@ describe("simulator v3: broadcast experience wiring", () => {
     expect(css).toMatch(/\.kt-order-list li button \{ min-height: 44px; \}/);
   });
 
-  it("the final freeze holds: camera target is not updated once the scenario is complete", () => {
-    expect(stage).toMatch(/if \(progress >= 1 && fixedProgress === undefined\) return;/);
+  it("the camera holds once the last runner has crossed, and the goal line stays framed through the finish", () => {
+    expect(stage).toMatch(/if \(progress >= s\.sim\.allCrossedT && fixedProgress === undefined\) \{/);
+    expect(stage).toContain("GOAL_IN_VIEW_FROM");
+    expect(stage).toMatch(/\.\.\.points, \.\.\.s\.goal/);
+    expect(stage).toMatch(/cameraTarget\(\{ points: framed,/);
+  });
+});
+
+describe("simulator v3.1: terrain, compatibility, variants and full finish wiring", () => {
+  const html = renderToStaticMarkup(<SimulatorShell />);
+  const stage = readFileSync(resolve(import.meta.dirname, "../components/trace/TrackStage.tsx"), "utf8");
+
+  it("shows COURSE EFFECT with its note, and the variant switch with 'another run'", () => {
+    expect(html).toContain("COURSE EFFECT");
+    expect(html).toContain("コース形状によるシナリオテンポです。馬券評価ではありません。");
+    for (const label of ["STANDARD", "ALT A", "ALT B", "別の展開を見る"]) expect(html, label).toContain(label);
+    expect(html).toContain('aria-label="シナリオの展開"');
+  });
+
+  it("builds the simulation once per race / variant / pace from runners, horse profiles and the course -- nothing else", () => {
+    expect(source).toMatch(/buildSim\(\{ raceKey: race\?\.race\.race_key \?\? "demo", variant, runners, profiles, course, pace \}\)/);
+    expect(source).toMatch(/buildHorseProfiles\(race\.horses, \{ distance: race\.race\.distance \?\? null, going: race\.race\.going \?\? null, course \}\)/);
+    expect(source).toMatch(/<TrackStage store=\{store\} sim=\{sim\}/);
+    expect(source).not.toMatch(/buildSim\([^)]*(honmei|official|picks|odds)/);
+    expect(stage).not.toContain("Math.random");
+  });
+
+  it("the scenario never shows finish-position wording", () => {
+    expect(html).not.toMatch(/[123]着|winner|予想着順/);
+  });
+
+  it("the stage draws the run-out past the goal on the straight course and frames the goal line", () => {
+    expect(stage).toContain("OPEN_RUNOUT");
+    expect(stage).toContain("goal: [goalIn, goalOut]");
+  });
+
+  it("the order panel shows COURSE FIT only for the selected horse, with the reference note", () => {
+    const panel = readFileSync(resolve(import.meta.dirname, "../components/trace/ScenarioOrderPanel.tsx"), "utf8");
+    expect(panel).toMatch(/pinnedProfile \? <CourseFit/);
+    expect(panel).toContain("過去データから見たコース適性の参考表示です。");
+    expect(readFileSync(resolve(import.meta.dirname, "../lib/scenarioOrder.ts"), "utf8")).toContain("SCENARIO CROSSING ORDER");
   });
 });
 

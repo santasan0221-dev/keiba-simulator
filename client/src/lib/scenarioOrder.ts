@@ -1,36 +1,40 @@
 /**
- * SCENARIO ORDER: the virtual order of the scenario at one progress value.
+ * SCENARIO ORDER: the virtual order of the scenario at one progress value, up to and including the
+ * virtual goal crossing (SCENARIO CROSSING ORDER).
  *
- * Inputs are the scenario frame only (course progress `lap` per runner, plus
- * the cosmetic lane and race_key seed for tie-breaking). Nothing else reaches
- * this module: no market, popularity, probability, published pick or
- * official-result data. The order is a reading of the drawn positions, never a
- * finish prediction, and it is never kept as a result.
+ * Inputs are the scenario simulation only (lib/scenarioSim). Nothing else reaches this module: no
+ * market, popularity, probability, published pick or official-result data. The order is a reading of
+ * the simulated positions -- a virtual outcome of the scenario, never a finish prediction and never
+ * kept or shown as a result.
  */
-import { scenarioFrame, type FrameRunner, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
+import type { FrameRunner } from "@/lib/scenarioReplay";
+import type { Sim } from "@/lib/scenarioSim";
 
 export const ORDER_NOTE = "シナリオ上の仮想順位です。実測・着順予測ではありません。";
-export const FINAL_PHASE_FROM = 0.95;
+export const CROSSING_NOTE = "この通過順はシナリオ上の仮想結果です。実際の着順予測ではありません。";
+export const CROSSING_TITLE = "SCENARIO CROSSING ORDER";
+export const CROSSING_TITLE_JA = "仮想ゴール通過順";
 
 /**
- * Checkpoints that keep a rank, on the scenario progress axis. FINISH is not one: no rank is held
- * at the line. FINAL is the 85% reading; the order itself is frozen at 95% (FINAL_PHASE_FROM).
+ * Checkpoints that keep a rank. `lap` is the leader's lap at which the order is read (the field is
+ * read as the front of it passes that point); GOAL is the virtual goal-crossing order.
  */
 export const CHECKPOINTS = [
-  { id: "START", t: 0, label: "START", short: "START" },
-  { id: "EARLY", t: 0.2, label: "EARLY", short: "EARLY" },
-  { id: "BACKSTRETCH", t: 0.425, label: "BACKSTRETCH", short: "BACK" },
-  { id: "THIRD_TURN", t: 0.6, label: "THIRD TURN", short: "3角" },
-  { id: "FINAL_TURN", t: 0.72, label: "FINAL TURN", short: "4角" },
-  { id: "FINAL", t: 0.85, label: "FINAL", short: "FINAL" },
+  { id: "START", lap: 0, label: "START", short: "START" },
+  { id: "EARLY", lap: 0.2, label: "EARLY", short: "EARLY" },
+  { id: "BACKSTRETCH", lap: 0.425, label: "BACKSTRETCH", short: "BACK" },
+  { id: "THIRD_TURN", lap: 0.6, label: "THIRD TURN", short: "3角" },
+  { id: "FINAL_TURN", lap: 0.72, label: "FINAL TURN", short: "4角" },
+  { id: "HOME_STRAIGHT", lap: 0.85, label: "HOME STRAIGHT", short: "直線" },
+  { id: "GOAL", lap: 1, label: "GOAL", short: "GOAL" },
 ] as const;
 export type CheckpointId = (typeof CHECKPOINTS)[number]["id"];
 export type RankRecord = Partial<Record<CheckpointId, number>>;
 
-export type OrderRow = { rank: number; no: number; name: string | null; style: FrameRunner["style"] };
+export type OrderRow = { rank: number; no: number; name: string | null; style: FrameRunner["style"]; crossed: boolean };
 export type OrderView =
-  | { kind: "LIVE" | "FINAL_PHASE"; title: string; rows: OrderRow[] }
-  | { kind: "COMPLETE"; title: "SCENARIO COMPLETE"; message: "着順は予測していません"; rows: [] };
+  | { kind: "LIVE" | "CROSSING"; title: string; rows: OrderRow[] }
+  | { kind: "COMPLETE"; title: typeof CROSSING_TITLE; subtitle: typeof CROSSING_TITLE_JA; rows: OrderRow[]; sequence: string };
 
 /** Cosmetic, deterministic tie-break key: seed-derived, then lane, then number. */
 function tieKey(seed: number, runner: FrameRunner): number {
@@ -39,39 +43,45 @@ function tieKey(seed: number, runner: FrameRunner): number {
   return x >>> 0;
 }
 
-/** Runners front to back by course progress; ties broken cosmetically. */
-export function orderFrame(runners: FrameRunner[], seed: number): OrderRow[] {
-  return [...runners]
-    .sort((a, b) => b.lap - a.lap || tieKey(seed, a) - tieKey(seed, b) || a.lane - b.lane || a.no - b.no)
-    .map((runner, index) => ({ rank: index + 1, no: runner.no, name: runner.name, style: runner.style }));
+/**
+ * Runners front to back: those already across the line in the order they crossed, then the rest by
+ * course progress; ties broken cosmetically.
+ */
+export function orderFrame(sim: Sim, progress: number): OrderRow[] {
+  const frame = sim.frameAt(progress);
+  const crossAt = new Map(sim.nos.map((no, i) => [no, sim.crossT[i]]));
+  return [...frame.runners]
+    .sort((a, b) => {
+      if (a.crossed !== b.crossed) return a.crossed ? -1 : 1;
+      if (a.crossed && b.crossed) return (crossAt.get(a.no) ?? 1) - (crossAt.get(b.no) ?? 1) || a.no - b.no;
+      return b.lap - a.lap || tieKey(sim.seed, a) - tieKey(sim.seed, b) || a.lane - b.lane || a.no - b.no;
+    })
+    .map((runner, index) => ({ rank: index + 1, no: runner.no, name: runner.name, style: runner.style, crossed: runner.crossed }));
 }
 
-export function orderView(runners: ScenarioRunner[], progress: number, pace: Pace, seed: number): OrderView {
-  if (progress >= 1) return { kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] };
-  // FINAL PHASE: the order is held at the 95% reading. The field converges after
-  // that, and swaps among near-level runners would read as a finish.
-  const frozen = progress > FINAL_PHASE_FROM;
-  const rows = orderFrame(scenarioFrame(runners, frozen ? FINAL_PHASE_FROM : progress, pace, seed).runners, seed);
-  return frozen
-    ? { kind: "FINAL_PHASE", title: "SCENARIO ORDER — FINAL PHASE", rows }
+export function orderView(sim: Sim, progress: number): OrderView {
+  const rows = orderFrame(sim, progress);
+  if (sim.nos.length > 0 && progress >= sim.allCrossedT) {
+    return { kind: "COMPLETE", title: CROSSING_TITLE, subtitle: CROSSING_TITLE_JA, rows, sequence: rows.map(row => `#${row.no}`).join(" → ") };
+  }
+  return rows.some(row => row.crossed)
+    ? { kind: "CROSSING", title: "SCENARIO ORDER — GOAL", rows }
     : { kind: "LIVE", title: "SCENARIO ORDER", rows };
 }
 
-/** Virtual rank of every runner at each checkpoint (no FINISH entry). */
-export function rankHistory(runners: ScenarioRunner[], pace: Pace, seed: number): Map<number, RankRecord> {
+/** Virtual rank of every runner at each checkpoint, GOAL being the crossing order. */
+export function rankHistory(sim: Sim): Map<number, RankRecord> {
   const history = new Map<number, RankRecord>();
   for (const checkpoint of CHECKPOINTS) {
-    for (const row of orderFrame(scenarioFrame(runners, checkpoint.t, pace, seed).runners, seed)) {
-      history.set(row.no, { ...history.get(row.no), [checkpoint.id]: row.rank });
-    }
+    const at = checkpoint.id === "GOAL" ? sim.allCrossedT : sim.leaderReachT(checkpoint.lap);
+    for (const row of orderFrame(sim, at)) history.set(row.no, { ...history.get(row.no), [checkpoint.id]: row.rank });
   }
   return history;
 }
 
-/** Checkpoints already reached. The order is held at FINAL_PHASE_FROM, so nothing later counts. */
-export function reachedCheckpoints(progress: number): CheckpointId[] {
-  const effective = Math.min(progress, FINAL_PHASE_FROM);
-  return CHECKPOINTS.filter(checkpoint => checkpoint.t <= effective + 1e-9).map(checkpoint => checkpoint.id);
+/** Checkpoints already reached at `progress` (GOAL once the last runner has crossed). */
+export function reachedCheckpoints(sim: Sim, progress: number): CheckpointId[] {
+  return CHECKPOINTS.filter(checkpoint => progress + 1e-9 >= (checkpoint.id === "GOAL" ? sim.allCrossedT : sim.leaderReachT(checkpoint.lap))).map(checkpoint => checkpoint.id);
 }
 
 /**

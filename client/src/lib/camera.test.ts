@@ -111,6 +111,17 @@ describe("the pack is never lost, even while the easing lags", () => {
     }
   });
 
+  it("a pack hugging the world's edge (with the goal line framed too) is still contained: the view widens instead of excluding it", () => {
+    const box = BOXES[0];
+    // Pack and goal line near the bottom edge of the world: at zoom 1.6 the world-clamped window cannot reach them.
+    const points = [{ x: 260, y: 285 }, { x: 270, y: 278 }, { x: 300, y: 281 }, { x: 330, y: 150 }, { x: 330, y: 285 }];
+    const fixed = keepInView({ cx: 320, cy: 150, zoom: 1.6 }, points, box, 16);
+    const rect = viewRect(fixed, box);
+    for (const p of points) expect(rectContains(rect, p, 0)).toBe(true);
+    expect(fixed.zoom).toBeLessThan(1.6);
+    expect(fixed.zoom).toBeGreaterThanOrEqual(1);
+  });
+
   it("a fast-moving pack followed by a slow camera stays in view on every frame", () => {
     const box = BOXES[0];
     let camera = wholeTrack(box);

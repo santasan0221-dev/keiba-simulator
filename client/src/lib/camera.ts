@@ -62,12 +62,17 @@ export function keepInView(camera: CameraState, points: Point[], box: Box, margi
   if (points.length === 0) return camera;
   const xs = points.map(p => p.x), ys = points.map(p => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const zoom = Math.max(1, Math.min(camera.zoom, box.w / (x1 - x0 + 2 * margin), box.h / (y1 - y0 + 2 * margin)));
-  const halfW = box.w / zoom / 2, halfH = box.h / zoom / 2;
+  let zoom = Math.max(1, Math.min(camera.zoom, box.w / (x1 - x0 + 2 * margin), box.h / (y1 - y0 + 2 * margin)));
+  // The camera never leaves the world, so a pack near the world's edge may be unreachable at this zoom:
+  // widen the view (never narrow it) until the pack fits inside the world-clamped window. Zoom 1 always does.
+  const window = (z: number) => {
+    const halfW = box.w / z / 2, halfH = box.h / z / 2;
+    return { halfW, halfH, lox: Math.max(halfW, x1 + margin - halfW), hix: Math.min(box.w - halfW, x0 - margin + halfW), loy: Math.max(halfH, y1 + margin - halfH), hiy: Math.min(box.h - halfH, y0 - margin + halfH) };
+  };
+  let w = window(zoom);
+  while (zoom > 1 && (w.lox > w.hix || w.loy > w.hiy)) { zoom = Math.max(1, zoom * 0.97); w = window(zoom); }
   const range = (lo: number, hi: number, fallback: number, value: number) => (lo <= hi ? Math.min(hi, Math.max(lo, value)) : fallback);
-  const cx = range(Math.max(halfW, x1 + margin - halfW), Math.min(box.w - halfW, x0 - margin + halfW), box.w / 2, camera.cx);
-  const cy = range(Math.max(halfH, y1 + margin - halfH), Math.min(box.h - halfH, y0 - margin + halfH), box.h / 2, camera.cy);
-  return { cx, cy, zoom };
+  return { cx: range(w.lox, w.hix, box.w / 2, camera.cx), cy: range(w.loy, w.hiy, box.h / 2, camera.cy), zoom };
 }
 
 /** Time constants (ms) of the camera easing. Slower once the order is frozen. */
