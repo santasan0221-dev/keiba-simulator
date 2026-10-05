@@ -28,7 +28,7 @@ describe("formation scenario (RESEARCH_ONLY)", () => {
   });
 });
 
-import { crossingTimes, FRONT_END, frontAt, PHASE_KEYFRAME, phaseAt, scenarioFrame, scenarioSeed } from "./scenarioReplay";
+import { crossingTimes, FRONT_END, frontAt, PHASE_KEYFRAME, phaseAt, scenarioFrame, scenarioSeed, scenarioSeedFor, STANDARD_VARIANT, type ScenarioRunner } from "./scenarioReplay";
 
 describe("continuous scenario timeline", () => {
   const field = demoField();
@@ -89,12 +89,11 @@ describe("continuous scenario timeline", () => {
     expect(formationAt(field, "FINISH", "ハイ").some(entry => entry.group === "前団")).toBe(true);
   });
 
-  it("the order of crossing depends on style and pace only, never on the race_key seed", () => {
+  it("the seed only permutes runners inside a style group: with one runner per style the order is seed-independent", () => {
+    const mixed: ScenarioRunner[] = [{ no: 1, name: null, style: "追込" }, { no: 2, name: null, style: "逃げ" }, { no: 3, name: null, style: "差し" }, { no: 4, name: null, style: "先行" }];
+    const order = (key: number, pace: "スロー" | "平均" | "ハイ") => [...crossingTimes(mixed, pace, key).entries()].sort((x, y) => x[1] - y[1]).map(([no]) => no);
     const other = scenarioSeed("NAR|2026-09-30|大井|04");
-    for (const pace of ["スロー", "平均", "ハイ"] as const) {
-      const order = (key: number) => [...crossingTimes(field, pace, key).entries()].sort((x, y) => x[1] - y[1]).map(([no]) => no);
-      expect(order(seed)).toEqual(order(other));
-    }
+    for (const pace of ["スロー", "平均", "ハイ"] as const) expect(order(seed, pace)).toEqual(order(other, pace));
   });
 
   it("is deterministic per race_key and replay", () => {
@@ -108,5 +107,66 @@ describe("continuous scenario timeline", () => {
   it("frames carry only number, name, style and drawing coordinates -- no probability or ability fields", () => {
     const keys = Object.keys(scenarioFrame(field, 0.5, "平均", seed).runners[0]).sort();
     expect(keys).toEqual(["lane", "lap", "lengthsBehind", "name", "no", "style"]);
+  });
+});
+
+describe("seeded order inside a run-style group (no horse-number bias)", () => {
+  const unknownField = (n: number): ScenarioRunner[] => Array.from({ length: n }, (_, i) => ({ no: i + 1, name: null, style: "不明" as const }));
+  const crossingNos = (runners: ScenarioRunner[], key: number, pace: "スロー" | "平均" | "ハイ" = "平均") =>
+    [...scenarioFrame(runners, 1, pace, key).runners].sort((a, b) => b.lap - a.lap).map(runner => runner.no);
+
+  it("a field of all-unknown styles is not crossed in horse-number order", () => {
+    const field = unknownField(12);
+    const ascending = field.map(runner => runner.no).join();
+    let inOrder = 0;
+    for (let i = 0; i < 300; i++) if (crossingNos(field, scenarioSeed(`JRA|2026-10-04|東京|${i}`)).join() === ascending) inOrder++;
+    expect(inOrder).toBe(0);
+  });
+
+  it("same race + same variant reproduces exactly; a different variant can reorder", () => {
+    const field = unknownField(14);
+    const key = "JRA|2026-10-04|東京|05";
+    expect(scenarioSeedFor(key)).toBe(scenarioSeed(key));
+    expect(scenarioSeedFor(key, STANDARD_VARIANT)).toBe(scenarioSeed(key));
+    expect(crossingNos(field, scenarioSeedFor(key, "ALT_A"))).toEqual(crossingNos(field, scenarioSeedFor(key, "ALT_A")));
+    expect(scenarioFrame(field, 0.5, "平均", scenarioSeedFor(key, "ALT_B"))).toEqual(scenarioFrame(field, 0.5, "平均", scenarioSeedFor(key, "ALT_B")));
+    const orders = ["STANDARD", "ALT_A", "ALT_B"].map(variant => crossingNos(field, scenarioSeedFor(key, variant)).join());
+    expect(new Set(orders).size).toBeGreaterThan(1);
+  });
+
+  it("audit: on a neutral synthetic field no horse number is favoured (mean place flat, no rank correlation)", () => {
+    const n = 16, runs = 1500;
+    const field = unknownField(n);
+    const sum = new Array(n).fill(0);
+    let corr = 0;
+    for (let i = 0; i < runs; i++) {
+      const order = crossingNos(field, scenarioSeed(`audit|${i}`));
+      const place = new Map(order.map((no, index) => [no, index + 1]));
+      let d2 = 0;
+      for (let no = 1; no <= n; no++) { sum[no - 1] += place.get(no)!; d2 += (place.get(no)! - no) ** 2; }
+      corr += 1 - (6 * d2) / (n * (n * n - 1)); // Spearman correlation between number and place
+    }
+    const means = sum.map(total => total / runs);
+    for (const mean of means) expect(Math.abs(mean - (n + 1) / 2)).toBeLessThan(0.6);
+    expect(Math.abs(corr / runs)).toBeLessThan(0.05);
+    // and the same audit per run style: the first-in-group slot is spread over every number
+    for (const style of ["逃げ", "先行", "差し", "追込"] as const) {
+      const group: ScenarioRunner[] = Array.from({ length: 8 }, (_, i) => ({ no: i + 1, name: null, style }));
+      const firsts = new Set<number>();
+      for (let i = 0; i < 400; i++) firsts.add(crossingNos(group, scenarioSeed(`first|${style}|${i}`))[0]);
+      expect(firsts.size).toBe(8);
+    }
+  });
+
+  it("a missing seed falls back to one fixed order (never to horse-number order, never random)", () => {
+    const field = unknownField(10);
+    const a = formationAt(field, "FINAL", "平均").map(entry => entry.no);
+    expect(formationAt(field, "FINAL", "平均").map(entry => entry.no)).toEqual(a);
+    expect(a.join()).not.toBe(field.map(runner => runner.no).join());
+  });
+
+  it("the order reads nothing but style, pace and the seed (source scan)", () => {
+    const code = readFileSync(resolve(import.meta.dirname, "scenarioReplay.ts"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    for (const forbidden of ["odds", "popularity", "probab", "honmei", "official", "result", "Math.random", "Date.now"]) expect(code.toLowerCase(), forbidden).not.toContain(forbidden.toLowerCase());
   });
 });

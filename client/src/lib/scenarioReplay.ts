@@ -42,6 +42,26 @@ const FINISH_KEEP: Record<Pace, Record<ScenarioStyle, number>> = {
 /** Soft cap (lengths) on the gap at the line, so the last runner always crosses before 100%. */
 const GAP_CAP = 5;
 
+/** Seed used when a caller supplies none: fixed, so a missing seed never changes the picture between runs. */
+const FALLBACK_SEED = 0x5eed5eed;
+const ORDER_SALT = 31;
+
+/**
+ * Place of each runner inside its own run-style group (0 = front of the group). The place comes from a
+ * deterministic hash of (seed, runner number), so it carries no information about the horse number: the
+ * seed is built from race_key (+ scenario variant), the same inputs always give the same places, and a
+ * different race or variant reshuffles them. Nothing about the runner itself (ability, market, pick,
+ * result) is read.
+ */
+function styleSlots(runners: ScenarioRunner[], seed: number): Map<number, number> {
+  const slots = new Map<number, number>();
+  for (const style of Array.from(new Set(runners.map(runner => runner.style)))) {
+    const group = runners.filter(runner => runner.style === style).sort((a, b) => seededUnit(seed, a.no, ORDER_SALT) - seededUnit(seed, b.no, ORDER_SALT) || a.no - b.no);
+    group.forEach((runner, index) => slots.set(runner.no, index));
+  }
+  return slots;
+}
+
 export type ScenarioRunner = { no: number; name: string | null; style: ScenarioStyle };
 export type ScenarioGroup = "前団" | "中団" | "後方" | "脚質不明";
 export type ScenarioPosition = ScenarioRunner & { lengthsBehind: number; group: ScenarioGroup };
@@ -54,24 +74,24 @@ export function normalizeStyle(value: string | null | undefined): ScenarioStyle 
 
 /**
  * Formation at one phase, front to back. Runners of the same style are
- * spaced by horse number only so the picture is deterministic -- the order
- * inside a style group carries no meaning, and FINISH is drawn as a
- * converging field, not a result.
+ * spaced by a seeded order (race_key + variant + runner), never by horse
+ * number, so the picture is deterministic and the order inside a style
+ * group carries no information about the horse.
  */
-export function formationAt(runners: ScenarioRunner[], phase: Phase, pace: Pace): ScenarioPosition[] {
+export function formationAt(runners: ScenarioRunner[], phase: Phase, pace: Pace, seed: number = FALLBACK_SEED): ScenarioPosition[] {
   if (phase === "FINISH") {
     // The gaps at the line: the FINAL gaps scaled by style and pace, then softly capped (tanh is
     // strictly increasing, so the order of the gaps is never changed by the cap).
-    return formationAt(runners, "FINAL", pace).map(entry => {
+    return formationAt(runners, "FINAL", pace, seed).map(entry => {
       const lengthsBehind = Math.round(GAP_CAP * Math.tanh((entry.lengthsBehind * FINISH_KEEP[pace][entry.style]) / GAP_CAP) * 1000) / 1000;
       const group: ScenarioGroup = entry.style === "不明" ? "脚質不明" : lengthsBehind < 2.5 ? "前団" : lengthsBehind < 6 ? "中団" : "後方";
       return { ...entry, lengthsBehind, group };
     }).sort((a, b) => a.lengthsBehind - b.lengthsBehind || a.no - b.no);
   }
   const spread = PACE_SPREAD[pace];
-  const seen: Record<string, number> = {};
+  const slot = styleSlots(runners, seed);
   const positions = [...runners].sort((a, b) => a.no - b.no).map(runner => {
-    const index = (seen[runner.style] = (seen[runner.style] ?? -1) + 1);
+    const index = slot.get(runner.no) ?? 0;
     const base = runner.style === "不明" ? GAP.先行[phase] + 2 : GAP[runner.style][phase];
     const fade = pace === "ハイ" && runner.style === "逃げ" && phase === "FINAL" ? 1.5 : 0;
     const lengthsBehind = Math.round((base * spread + fade + index * 0.45) * 10) / 10;
@@ -121,6 +141,18 @@ export function phaseAt(t: number): Phase {
   return PHASES.find(phase => value < PHASE_WINDOWS[phase][1]) ?? "FINISH";
 }
 
+/** The default scenario variant. Its seed is exactly scenarioSeed(race_key), so existing pictures are unchanged. */
+export const STANDARD_VARIANT = "STANDARD";
+
+/**
+ * Seed for one scenario variant of one race. STANDARD is scenarioSeed(race_key); any other variant mixes
+ * its name into the key, so a different variant can reorder runners inside a style group while the same
+ * (race_key, variant) always reproduces the same scenario.
+ */
+export function scenarioSeedFor(key: string | null | undefined, variant: string = STANDARD_VARIANT): number {
+  return variant === STANDARD_VARIANT ? scenarioSeed(key) : scenarioSeed(`${key ?? "demo"}|${variant}`);
+}
+
 /** Stable 32-bit seed from a race_key (FNV-1a). Same key → same picture, every replay. */
 export function scenarioSeed(key: string | null | undefined): number {
   let hash = 0x811c9dc5;
@@ -164,8 +196,8 @@ export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, 
   const from = PHASES[next < 0 ? last : Math.max(0, next - 1)];
   const span = FORMATION_KEYFRAME[to] - FORMATION_KEYFRAME[from];
   const mix = span > 0 && next >= 0 ? smooth((progress - FORMATION_KEYFRAME[from]) / span) : 1;
-  const a = new Map(formationAt(runners, from, pace).map(entry => [entry.no, entry.lengthsBehind]));
-  const b = new Map(formationAt(runners, to, pace).map(entry => [entry.no, entry.lengthsBehind]));
+  const a = new Map(formationAt(runners, from, pace, seed).map(entry => [entry.no, entry.lengthsBehind]));
+  const b = new Map(formationAt(runners, to, pace, seed).map(entry => [entry.no, entry.lengthsBehind]));
   const front = frontAt(progress);
   // Cosmetic spacing is gone before the home straight, so the order into the line is style and pace only.
   const settle = 1 - smooth(clamp01((progress - 0.65) / (PHASE_KEYFRAME.FINAL - 0.65)));

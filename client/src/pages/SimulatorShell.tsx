@@ -343,7 +343,7 @@ export default function SimulatorShell() {
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
-              <PositionStrip formation={formationAt(runners, phase, pace)} honmeiNo={honmeiNo} />
+              <PositionStrip formation={formationAt(runners, phase, pace, seed)} honmeiNo={honmeiNo} />
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
               <ElevationPanel course={course} />
             </section>
