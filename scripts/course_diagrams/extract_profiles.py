@@ -30,6 +30,8 @@ SPECS = {
     "22.gif": ("札幌 芝 (右)", 1640.9, 53.5, 10.75, True),
     "29.gif": ("中京 ダート (左)", 1530.0, 58.0, 19.0, False),
     "30.gif": ("中京 芝 (左)", 1705.9, 52.5, 17.25, False),
+    "33.gif": ("函館 ダート (右)", 1475.8, 56.0, 10.8, True),
+    "34.gif": ("函館 芝 (右)", 1626.6, 57.0, 10.8, True),
     "25.gif": ("福島 ダート (右)", 1444.6, 56.5, 10.8, True),
     "26.gif": ("福島 芝 (右)", 1600.0, 56.0, 10.8, True),
     "16.gif": ("中山 ダート (右)", 1493.0, 68.0, 13.5, True),
@@ -56,7 +58,8 @@ def extract(path, length_m, y0, ppm, reverse=False):
     im = np.array(Image.open(path).convert("RGB")).astype(int)
     h, w, _ = im.shape
     fill = ((im.max(axis=2) - im.min(axis=2)) > 60) & (im.sum(axis=2) < 700)
-    cols = np.where(fill.any(axis=0))[0]
+    # columns holding only a few filled pixels are chart-border / tick artifacts, not terrain
+    cols = np.where(fill.sum(axis=0) >= 20)[0]
     xs, xg = int(cols.min()), int(cols.max())
     pts = []
     for x in range(xs, xg + 1):

@@ -3,20 +3,20 @@
  *
  * Provenance (ValueBasis)
  * - OFFICIAL: copied from a JRA course-introduction page (text and tables) that the
- *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Fukushima and Chukyo (plan and sections), Hakodate (page text) so far.
+ *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Hakodate, Fukushima and Chukyo (plan and sections) so far.
  * - OFFICIAL_DIAGRAM_APPROXIMATION: read off an official diagram image (plan view /
  *   section view): about 5 m in the plan, about 0.1 m vertically in the profiles.
  * - DERIVED_FROM_LAP_AND_DISTANCE: arithmetic on an official lap length and a race
  *   distance. Only valid for starts on the loop itself, so chute / extension starts
  *   are never derived this way (they stay UNKNOWN until a diagram is read).
  * - SECONDARY_SOURCE: a JRA page as quoted in a search excerpt, not yet checked
- *   against the page itself. Hanshin and Kokura.
+ *   against the page itself. Hanshin and Kokura only.
  * - STYLIZED: drawn for looks only. Not a survey map.
  * - UNKNOWN: not established. Nothing is guessed.
  *
  * Elevation is display-only. No module that moves runners imports this file.
  */
-import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
+import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 
 export type Unknown = "UNKNOWN";
 export type CoursePoint = { x: number; y: number };
@@ -239,15 +239,14 @@ export const COURSE_SPECS: CourseSpec[] = [
     slopes: [] },
   { venue: "札幌", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1487, straight: 264.3, elevation: 0.9 } },
     distances: [1000, 1700, 2400], diagrams: { DEFAULT: ring(SAPPORO_DIAGRAM.dirt) }, ref: ref("sapporo"), sourceNote: SUPPLIED, slopes: [] },
-  // Hakodate: page text only so far (plan / section images not read yet).
+  // Hakodate: page text, plan view and section views.
   { venue: "函館", surface: "TURF", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1626.6, straight: 262.1, elevation: 3.5 } },
-    distances: [1000, 1200, 1700, 1800, 2000, 2600],
-    offLoopStarts: { 1200: "2コーナーポケット（シュート）発走。ゲート位置の読取が必要", 2000: "平面図で右手のポケットに表示。ゲート位置の読取が必要" },
+    distances: [1000, 1200, 1700, 1800, 2000, 2600], diagrams: { DEFAULT: ring(HAKODATE_DIAGRAM.turf) },
     ref: ref("hakodate"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: U, where: "ゴール板から2コーナー（ゆるやかな下り）" }, { kind: "UP", riseMeters: U, where: "2コーナー以降4コーナーまで（だらだらとした上り。3〜4コーナーに小高い丘）" },
       { kind: "DOWN", riseMeters: U, where: "4コーナーから直線（なだらかな下り）" }] },
   { venue: "函館", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1475.8, straight: 260.3, elevation: 3.5 } },
-    distances: [1000, 1700, 2400], ref: ref("hakodate"), sourceNote: SUPPLIED,
+    distances: [1000, 1700, 2400], diagrams: { DEFAULT: ring(HAKODATE_DIAGRAM.dirt) }, ref: ref("hakodate"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: U, where: "2コーナー以降4コーナーまで（芝コースと同じ起伏）" }] },
   // Fukushima: page text, plan view and section views.
   { venue: "福島", surface: "TURF", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1600, straight: 292.0, elevation: 1.9 } },
