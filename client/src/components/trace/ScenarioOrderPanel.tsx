@@ -69,15 +69,22 @@ function RankHistoryChart({ history, reached, count, pinned }: { history: Return
   </svg>;
 }
 
-/** ELEVATION: display-only profile. Draws only positions a source gives; otherwise lists slopes in words. */
+/** ELEVATION: display-only profile. Draws the section view only when one was read off an official diagram; otherwise lists slopes in words. */
 export function ElevationPanel({ course }: { course: CourseLayout }) {
   const profile = course.elevationProfile;
   const gain = course.elevationGainMeters === "UNKNOWN" ? "UNKNOWN" : `${course.elevationGainMeters}m`;
+  const ys = profile?.map(point => point.meters) ?? [];
+  const lo = Math.min(0, ...ys), hi = Math.max(0.5, ...ys), span = hi - lo || 1;
+  const y = (meters: number) => 4 + (1 - (meters - lo) / span) * 40;
   return <section className="kt-elevation" aria-label="ELEVATION（表示のみ）">
     <header><span className="kt-eyebrow">ELEVATION</span><small>高低差 {gain} · 表示専用（展開・順位には影響しません）</small></header>
-    {profile && profile.length > 1 ? <svg viewBox="0 0 240 48" role="img" aria-label="コース断面図（簡易）" className="kt-elevation-svg">
-      <polyline className="kt-elevation-line" points={profile.map(point => `${(point.at * 240).toFixed(1)},${(44 - point.meters * 8).toFixed(1)}`).join(" ")} />
-    </svg> : null}
-    {course.slopes.length ? <ul>{course.slopes.map(slope => <li key={slope.where}>{slope.kind === "UP" ? "上り" : "下り"} {slope.riseMeters === "UNKNOWN" ? "高低差 UNKNOWN" : `${slope.riseMeters}m`} · {slope.where}</li>)}</ul> : <p>この条件の高低差図は未取得です（UNKNOWN）。</p>}
+    {profile && profile.length > 1 ? <>
+      <svg viewBox="0 0 240 48" role="img" aria-label="コース断面図（公式断面図からの近似）" className="kt-elevation-svg" data-profile-points={profile.length}>
+        <line x1="0" x2="240" y1={y(0)} y2={y(0)} className="kt-rank-grid" />
+        <polyline className="kt-elevation-line" points={profile.map(point => `${(point.at * 240).toFixed(1)},${y(point.meters).toFixed(1)}`).join(" ")} />
+      </svg>
+      <small>ゴール線から走行方向へ · 公式断面図の読取（±0.1m程度の近似）</small>
+    </> : null}
+    {course.slopes.length ? <ul>{course.slopes.map(slope => <li key={slope.where}>{slope.kind === "UP" ? "上り" : "下り"} {slope.riseMeters === "UNKNOWN" ? "高低差 UNKNOWN" : `${slope.riseMeters}m`} · {slope.where}</li>)}</ul> : profile ? null : <p>この条件の高低差図は未取得です（UNKNOWN）。</p>}
   </section>;
 }

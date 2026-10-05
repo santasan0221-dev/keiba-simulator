@@ -19,7 +19,7 @@ import { fetchResultRow, officialResultView, type OfficialResultView } from "@/l
 import { createResultPoller } from "@/lib/resultPoller";
 import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioOrderPanel";
 import { createThrottledEmitter } from "@/lib/scenarioOrder";
-import { cornerShare, fitPath, GEOMETRY_DISCLAIMER, pointOnPath, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
+import { fitPath, GEOMETRY_DISCLAIMER, pointOnPath, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
 import {
   demoField,
   formationAt,
@@ -371,7 +371,8 @@ function courseNote(course: CourseLayout): string {
   const turn = course.direction === "LEFT" ? "左回り" : course.direction === "RIGHT" ? "右回り" : course.direction === "STRAIGHT" ? "直線コース" : "回り方向: 未確認(UNKNOWN)";
   const variant = course.variant === "INNER" ? "内回り" : course.variant === "OUTER" ? "外回り" : course.variant === "UNKNOWN" && course.lapMeters === "UNKNOWN" && course.direction !== "UNKNOWN" ? "内外区分: 未確認" : "";
   const start = course.startLapShare === "UNKNOWN"
-    ? "スタート位置: 未確認(UNKNOWN)・ゴール線起点の概略"
+    ? `スタート位置: 未確認(UNKNOWN)${course.startNote ? `（${course.startNote}）` : ""}・ゴール線起点の概略`
+    : course.basis.startPoint === "OFFICIAL_DIAGRAM_APPROXIMATION" ? `スタート位置: 公式コース図からの近似${course.startNote ? `（${course.startNote}）` : ""}`
     : course.pathClosed ? "スタート位置: 周回距離と発走距離からの概算（公式図の読取ではありません）" : "";
   const name = course.venue === "UNKNOWN" ? "汎用コース" : `${course.venue}${course.surface === "TURF" ? "芝" : course.surface === "DIRT" ? "ダート" : ""}${course.distance === "UNKNOWN" ? "" : course.distance}`;
   return [name, turn, variant, start].filter(Boolean).join(" · ") + `。${GEOMETRY_DISCLAIMER}`;
@@ -402,14 +403,14 @@ function TrackView({ frame, course, compact, honmeiNo, label }: { frame: Scenari
       <polygon points={toPoints(edge(4.2))} className="kt-track-outer" />
       <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
     </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2))} className="kt-track-outer" />}
-    {closed ? course.corners.map((corner, index) => {
-      const pos = pointOnPath(pxPath, cornerShare(course, index), 6.2 * g.laneX);
+    {closed ? course.corners.map(corner => {
+      const pos = pointOnPath(pxPath, corner.share, 6.2 * g.laneX);
       return <text key={corner.label} x={pos.x} y={pos.y + 4} className="kt-corner" data-corner={corner.label}>{corner.label}</text>;
     }) : null}
     {startKnown ? <line x1={startIn.x} y1={startIn.y} x2={startOut.x} y2={startOut.y} className="kt-track-start" data-start="true" /> : null}
-    {startKnown ? <text x={startOut.x} y={startOut.y + (startOut.y > g.h / 2 ? 14 : -6)} className="kt-track-label kt-track-label--start">START</text> : null}
+    {startKnown ? <text x={startOut.x + (startOut.x > g.w * 0.75 ? -4 : 0)} y={startOut.y + (startOut.y > g.h / 2 ? 14 : -6)} textAnchor={startOut.x > g.w * 0.75 ? "end" : "start"} className="kt-track-label kt-track-label--start">START</text> : null}
     <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" data-goal="true" />
-    <text x={goalOut.x + 6} y={goalOut.y + 14} className="kt-track-label">GOAL</text>
+    <text x={goalOut.x + 6} y={Math.min(goalOut.y + 14, g.h - 4)} className="kt-track-label">GOAL</text>
     {runners.map(runner => {
       const p = point(runner.lap, runner.lane);
       return <g key={runner.no} data-runner={runner.no} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`} opacity={fade} transform={`translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`}>
