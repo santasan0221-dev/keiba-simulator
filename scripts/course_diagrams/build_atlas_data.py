@@ -223,6 +223,19 @@ hanshin = {
     "turfOuter": {"profile": profile_only("38.gif")["profile"], "sectionShares": section_shares([159, 228, 304, 418, 462, 499], 60, 507, True)},
 }
 
+# ------------------------------------------------------------------ Kokura (44.gif plan, cw / RIGHT)
+im = load("44.gif"); c = centroid(im, T.DIRT)
+res_kt, tot_kt = trace(IMG + "44.gif", c, T.TURF, T.DIRT, (217, 252), False, reach=8)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT, gap=8)
+res_kd, tot_kd2 = trace(IMG + "44.gif", c, T.DIRT, T.BLUE, (217, 232), False, outer=turf_edge, reach=10)
+# Top moves right, bottom moves left (clockwise): the gate is the tick at the arrow's tail.
+KOKURA_TURF_GATES = {1000: (212.5, 30), 1200: (61, 25), 2600: (221, 22), 1700: (278.75, 252), 1800: (353.75, 252), 2000: (502.5, 252)}
+KOKURA_DIRT_GATES = {1000: (145.75, 50), 2400: (179.25, 52), 1700: (407, 232)}
+kokura = {
+    "turf": ring_entry(res_kt, tot_kt, 1615.1, KOKURA_TURF_GATES, "43.gif", [132, 194, 262, 377, 439, 509]),
+    "dirt": ring_entry(res_kd, tot_kd2, 1445.4, KOKURA_DIRT_GATES, "42.gif", [138, 191, 255, 386, 438, 501]),
+}
+
 # ------------------------------------------------------------------ Niigata: section views only
 niigata = {
     "dirt": section_view("5.gif", [61.5, 114, 166, 301.5, 357.5, 411]),
@@ -248,4 +261,5 @@ emit("FUKUSHIMA_DIAGRAM", fukushima, "JRA 福島競馬場 コース紹介 plan v
 emit("CHUKYO_DIAGRAM", chukyo, "JRA 中京競馬場 コース紹介 plan view and section views")
 emit("HAKODATE_DIAGRAM", hakodate, "JRA 函館競馬場 コース紹介 plan view and section views")
 emit("HANSHIN_DIAGRAM", hanshin, "JRA 阪神競馬場 コース紹介 plan view (inner turf ring, dirt ring) and section views")
+emit("KOKURA_DIAGRAM", kokura, "JRA 小倉競馬場 コース紹介 plan view and section views")
 emit("NIIGATA_DIAGRAM", niigata, "JRA 新潟競馬場 コース紹介 section views; corner sections are shares from the goal line")

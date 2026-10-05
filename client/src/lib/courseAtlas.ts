@@ -3,20 +3,20 @@
  *
  * Provenance (ValueBasis)
  * - OFFICIAL: copied from a JRA course-introduction page (text and tables) that the
- *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Hakodate, Fukushima, Chukyo and Hanshin (plan and sections) so far.
+ *   maintainer supplied. All ten JRA venues.
  * - OFFICIAL_DIAGRAM_APPROXIMATION: read off an official diagram image (plan view /
  *   section view): about 5 m in the plan, about 0.1 m vertically in the profiles.
  * - DERIVED_FROM_LAP_AND_DISTANCE: arithmetic on an official lap length and a race
  *   distance. Only valid for starts on the loop itself, so chute / extension starts
  *   are never derived this way (they stay UNKNOWN until a diagram is read).
- * - SECONDARY_SOURCE: a JRA page as quoted in a search excerpt, not yet checked
- *   against the page itself. Kokura only.
+ * - SECONDARY_SOURCE: a JRA page as quoted in a search excerpt, not checked against
+ *   the page itself. No venue uses it any more; it is kept for future additions.
  * - STYLIZED: drawn for looks only. Not a survey map.
  * - UNKNOWN: not established. Nothing is guessed.
  *
  * Elevation is display-only. No module that moves runners imports this file.
  */
-import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, HANSHIN_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
+import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, HANSHIN_DIAGRAM, KOKURA_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 
 export type Unknown = "UNKNOWN";
 export type CoursePoint = { x: number; y: number };
@@ -268,7 +268,6 @@ export const COURSE_SPECS: CourseSpec[] = [
     distances: [1200, 1400, 1800, 1900, 2500], diagrams: { DEFAULT: ring(CHUKYO_DIAGRAM.dirt) },
     ref: ref("chukyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2, where: "直線入口の坂（芝コースとほぼ同じ起伏）" }] },
-  // ---- SECONDARY_SOURCE: JRA pages as quoted in search excerpts, not yet checked against the pages
   { venue: "阪神", surface: "TURF", direction: "RIGHT", official: true, loops: { INNER: { lap: 1689, straight: 356.5, elevation: 1.9 }, OUTER: { lap: 2089, straight: 473.6, elevation: 2.4 } },
     distances: [1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 3000, 3200],
     // 1400 and 3200 are listed for both loops (1400: 内 and 外; 3200: 外・内).
@@ -283,9 +282,14 @@ export const COURSE_SPECS: CourseSpec[] = [
     distances: [1200, 1400, 1800, 2000, 2600], diagrams: { DEFAULT: ring(HANSHIN_DIAGRAM.dirt) }, ref: ref("hanshin"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: U, where: "残り900mから直線にかけて緩やかな下り" },
       { kind: "UP", riseMeters: 1.6, where: "残り200m地点の上り坂", startRemainingMeters: 200 }] },
-  { venue: "小倉", surface: "TURF", direction: "RIGHT", official: false, loops: { DEFAULT: { lap: 1615.1, straight: 293.0, elevation: U } }, ref: ref("kokura"), slopes: [] },
-  { venue: "小倉", surface: "DIRT", direction: "RIGHT", official: false, loops: { DEFAULT: { lap: 1445.4, straight: 291.3, elevation: 2.9 } }, ref: ref("kokura"),
-    slopes: [{ kind: "DOWN", riseMeters: U, where: "2コーナーの丘から4コーナー" }, { kind: "UP", riseMeters: 0.6, where: "残り400mから直線" }] },
+  { venue: "小倉", surface: "TURF", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1615.1, straight: 293, elevation: 3 } },
+    distances: [1000, 1200, 1700, 1800, 2000, 2600], diagrams: { DEFAULT: ring(KOKURA_DIAGRAM.turf) }, ref: ref("kokura"), sourceNote: SUPPLIED,
+    slopes: [{ kind: "UP", riseMeters: U, where: "ゴールラインから2コーナー（2コーナーに小高い丘）" },
+      { kind: "DOWN", riseMeters: U, where: "2コーナーから向正面、3コーナーから4コーナー（3コーナー手前にわずかな上り）。直線は平たん" }] },
+  { venue: "小倉", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1445.4, straight: 291.3, elevation: 2.9 } },
+    distances: [1000, 1700, 2400], diagrams: { DEFAULT: ring(KOKURA_DIAGRAM.dirt) }, ref: ref("kokura"), sourceNote: SUPPLIED,
+    slopes: [{ kind: "DOWN", riseMeters: U, where: "2コーナーの丘から4コーナー" },
+      { kind: "UP", riseMeters: 0.6, where: "残り400mから直線にかけて緩やかな上り", startRemainingMeters: 400 }] },
 ];
 
 export const JRA_VENUES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"] as const;
