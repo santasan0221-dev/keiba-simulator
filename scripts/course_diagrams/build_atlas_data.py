@@ -57,12 +57,12 @@ def smooth_polar(c, pts, med_k=15):
     return [(c[0] + r[i] * math.cos(math.radians(grid[i])), c[1] + r[i] * math.sin(math.radians(grid[i]))) for i in range(720)]
 
 
-def trace(plan, c, band, inner, goal_xy, ccw, outer=None):
+def trace(plan, c, band, inner, goal_xy, ccw, outer=None, reach=3):
     """Closed centre-line (360 px points) starting at the goal, running ccw / cw on screen."""
     if outer is None:
-        pts, _ = T.ring_centerline(plan, band, inner, c)
+        pts, _ = T.ring_centerline(plan, band, inner, c, gap=reach)
     else:  # ring touching an outer ring: centre = outer edge - median width / 2
-        sm = T.ring_inward(plan, band, outer, c)
+        sm = T.ring_inward(plan, band, outer, c, reach=max(8, reach))
         med = sorted(s[2] for s in sm)[len(sm) // 2]
         pts = [(c[0] + math.cos(math.radians(a)) * (ro - med / 2), c[1] + math.sin(math.radians(a)) * (ro - med / 2)) for a, ro, _ in sm]
     res, total = T.resample_closed(smooth_polar(c, pts), 360)
@@ -169,6 +169,33 @@ sapporo = {
     "dirt": ring_entry(res_sd, tot_sd, 1487.0, SAPPORO_DIRT_GATES, "21.gif", [124, 198, 271, 369, 444, 516]),
 }
 
+# ------------------------------------------------------------------ Fukushima (27.gif plan, cw / RIGHT)
+im = load("27.gif"); c = centroid(im, T.DIRT)
+# A wider white gap separates turf and dirt on the top straight here, so the edge search reaches further.
+res_ft, tot_ft = trace(IMG + "27.gif", c, T.TURF, T.DIRT, (207, 278), False, reach=16)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT, gap=16)
+res_fd, tot_fd = trace(IMG + "27.gif", c, T.DIRT, T.BLUE, (207, 256), False, outer=turf_edge, reach=18)
+# Top moves right, bottom moves left (clockwise): the gate is the tick at the arrow's tail.
+FUKUSHIMA_TURF_GATES = {1000: (192.5, 50), 1200: (40.5, 52), 2600: (192.5, 50), 1700: (285, 272), 1800: (362.7, 272), 2000: (516, 272)}
+FUKUSHIMA_DIRT_GATES = {1000: (138.75, 72), 1150: (34.5, 72), 2400: (194.5, 72), 1700: (403.3, 255)}
+fukushima = {
+    "turf": ring_entry(res_ft, tot_ft, 1600.0, FUKUSHIMA_TURF_GATES, "26.gif", [129, 187, 278, 367, 431, 498]),
+    "dirt": ring_entry(res_fd, tot_fd, 1444.6, FUKUSHIMA_DIRT_GATES, "25.gif", [136, 185, 260, 374, 435, 498]),
+}
+
+# ------------------------------------------------------------------ Chukyo (31.gif plan, ccw / LEFT)
+im = load("31.gif"); c = centroid(im, T.DIRT)
+res_ct, tot_ct = trace(IMG + "31.gif", c, T.TURF, T.DIRT, (381, 233), True, reach=8)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT, gap=8)
+res_cd, tot_cd = trace(IMG + "31.gif", c, T.DIRT, T.BLUE, (381, 213), True, outer=turf_edge, reach=10)
+# Top moves left, bottom moves right (counter-clockwise): the gate is the tick at the arrow's tail.
+CHUKYO_TURF_GATES = {1200: (344, 45), 1300: (406, 48), 1400: (474, 53), 1600: (545, 188), 2000: (189, 233), 2200: (58.3, 232), 3000: (406, 48)}
+CHUKYO_DIRT_GATES = {1200: (402, 66), 1400: (532, 78), 1800: (204.3, 213), 1900: (139.3, 213), 2500: (252.5, 52)}
+chukyo = {
+    "turf": ring_entry(res_ct, tot_ct, 1705.9, CHUKYO_TURF_GATES, "30.gif", [45, 102.3, 160, 274.7, 342.3, 410.3]),
+    "dirt": ring_entry(res_cd, tot_cd, 1530.0, CHUKYO_DIRT_GATES, "29.gif", [49.3, 98.3, 149, 275.7, 336, 397.3]),
+}
+
 # ------------------------------------------------------------------ Niigata: section views only
 niigata = {
     "dirt": section_view("5.gif", [61.5, 114, 166, 301.5, 357.5, 411]),
@@ -190,4 +217,6 @@ emit("TOKYO_DIAGRAM", tokyo, "JRA 東京競馬場 コース紹介 plan view and 
 emit("KYOTO_DIAGRAM", kyoto, "JRA 京都競馬場 コース紹介 plan view (dirt ring) and section views")
 emit("NAKAYAMA_DIAGRAM", nakayama, "JRA 中山競馬場 コース紹介 plan view (inner turf ring, dirt ring) and section views")
 emit("SAPPORO_DIAGRAM", sapporo, "JRA 札幌競馬場 コース紹介 plan view and section views")
+emit("FUKUSHIMA_DIAGRAM", fukushima, "JRA 福島競馬場 コース紹介 plan view and section views")
+emit("CHUKYO_DIAGRAM", chukyo, "JRA 中京競馬場 コース紹介 plan view and section views")
 emit("NIIGATA_DIAGRAM", niigata, "JRA 新潟競馬場 コース紹介 section views; corner sections are shares from the goal line")

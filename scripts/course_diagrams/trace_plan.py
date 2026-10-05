@@ -52,7 +52,7 @@ def ring_centerline(path, band, inner, center, step_deg=0.5, gap=3):
     return pts, med
 
 
-def ring_inward(path, band, outer_samples, center, step_deg=0.5, gap=3):
+def ring_inward(path, band, outer_samples, center, step_deg=0.5, gap=3, reach=8):
     """Ring whose OUTER edge touches an already-traced outer ring (e.g. dirt inside turf).
 
     `outer_samples` are (angle, r_in, width) of the outer ring; scanning starts at its
@@ -80,7 +80,7 @@ def ring_inward(path, band, outer_samples, center, step_deg=0.5, gap=3):
             elif r_out is not None and (end - r) > gap:
                 break
             r -= 0.5
-            if r_out is None and r0 - r > 8: break
+            if r_out is None and r0 - r > reach: break
         if r_out is not None and end is not None:
             samples.append((k * step_deg, r_out, r_out - end))
     return samples

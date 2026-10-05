@@ -3,7 +3,7 @@
  *
  * Provenance (ValueBasis)
  * - OFFICIAL: copied from a JRA course-introduction page (text and tables) that the
- *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo (plan and sections), Hakodate, Fukushima and Chukyo (page text) so far.
+ *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Fukushima and Chukyo (plan and sections), Hakodate (page text) so far.
  * - OFFICIAL_DIAGRAM_APPROXIMATION: read off an official diagram image (plan view /
  *   section view): about 5 m in the plan, about 0.1 m vertically in the profiles.
  * - DERIVED_FROM_LAP_AND_DISTANCE: arithmetic on an official lap length and a race
@@ -16,7 +16,7 @@
  *
  * Elevation is display-only. No module that moves runners imports this file.
  */
-import { KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
+import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 
 export type Unknown = "UNKNOWN";
 export type CoursePoint = { x: number; y: number };
@@ -249,25 +249,24 @@ export const COURSE_SPECS: CourseSpec[] = [
   { venue: "函館", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1475.8, straight: 260.3, elevation: 3.5 } },
     distances: [1000, 1700, 2400], ref: ref("hakodate"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: U, where: "2コーナー以降4コーナーまで（芝コースと同じ起伏）" }] },
-  // Fukushima: page text only so far (plan / section images not read yet).
+  // Fukushima: page text, plan view and section views.
   { venue: "福島", surface: "TURF", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1600, straight: 292.0, elevation: 1.9 } },
-    distances: [1000, 1200, 1700, 1800, 2000, 2600], ref: ref("fukushima"), sourceNote: SUPPLIED,
+    distances: [1000, 1200, 1700, 1800, 2000, 2600], diagrams: { DEFAULT: ring(FUKUSHIMA_DIAGRAM.turf) }, ref: ref("fukushima"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: 1.7, where: "ゴール板を過ぎてから2コーナー" }, { kind: "UP", riseMeters: 1.3, where: "向正面" },
       { kind: "DOWN", riseMeters: U, where: "4コーナーから直線の残り170m付近（緩やかな下り）" },
       { kind: "UP", riseMeters: 1.2, where: "直線 残り170m〜50m", startRemainingMeters: 170, endRemainingMeters: 50 }] },
   { venue: "福島", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1444.6, straight: 295.7, elevation: 2.1 } },
-    distances: [1000, 1150, 1700, 2400], offLoopStarts: { 1150: "芝スタート（ポケット／シュート）。ゲート位置の読取が必要" },
+    distances: [1000, 1150, 1700, 2400], diagrams: { DEFAULT: ring(FUKUSHIMA_DIAGRAM.dirt) },
     ref: ref("fukushima"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: U, where: "芝コースとほぼ同じ起伏（コース1周で上り下りを2回）" }] },
-  // Chukyo: page text only so far (plan / section images not read yet).
+  // Chukyo: page text, plan view and section views.
   { venue: "中京", surface: "TURF", direction: "LEFT", official: true, loops: { DEFAULT: { lap: 1705.9, straight: 412.5, elevation: 3.5 } },
-    distances: [1200, 1300, 1400, 1600, 2000, 2200, 3000],
-    offLoopStarts: { 1600: "平面図で右手のシュートに表示。ゲート位置の読取が必要" },
+    distances: [1200, 1300, 1400, 1600, 2000, 2200, 3000], diagrams: { DEFAULT: ring(CHUKYO_DIAGRAM.turf) },
     ref: ref("chukyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: U, where: "ゴールから向正面半ば（最高点）までなだらかな上り" }, { kind: "DOWN", riseMeters: U, where: "向正面半ばから直線入口（3〜4コーナーはスパイラルカーブ）" },
       { kind: "UP", riseMeters: 2, where: "直線に向いてすぐの急坂（勾配約2%、ゴールまで200m余り）" }] },
   { venue: "中京", surface: "DIRT", direction: "LEFT", official: true, loops: { DEFAULT: { lap: 1530, straight: 410.7, elevation: 3.4 } },
-    distances: [1200, 1400, 1800, 1900, 2500], offLoopStarts: { 1400: "芝スタート（シュート）。ゲート位置の読取が必要" },
+    distances: [1200, 1400, 1800, 1900, 2500], diagrams: { DEFAULT: ring(CHUKYO_DIAGRAM.dirt) },
     ref: ref("chukyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2, where: "直線入口の坂（芝コースとほぼ同じ起伏）" }] },
   // ---- SECONDARY_SOURCE: JRA pages as quoted in search excerpts, not yet checked against the pages
