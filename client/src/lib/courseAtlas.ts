@@ -55,6 +55,9 @@ export type CourseLayout = {
   finishPoint: CoursePoint;
   path: CoursePoint[];
   corners: CornerMarker[];
+  /** Section boundaries from the goal line: [0, 1C start, 2C start, backstretch start, 3C start, 4C start, home straight start, 1]. UNKNOWN for the straight course. */
+  sectionShares: readonly number[] | Unknown;
+  sectionBasis: ValueBasis;
   elevationProfile?: ElevationPoint[];
   slopes: Slope[];
   basis: { direction: ValueBasis; lapMeters: ValueBasis; homeStraightMeters: ValueBasis; elevation: ValueBasis; elevationProfile: ValueBasis; startPoint: ValueBasis; finishPoint: ValueBasis; corners: ValueBasis; path: ValueBasis };
@@ -315,6 +318,14 @@ function stylizedCorners(path: CoursePoint[], straightShare: number): CornerMark
   return [mark("1", g + arc * 0.25), mark("2", g + arc * 0.75), mark("3", g + arc + s + g + arc * 0.25), mark("4", g + arc + s + g + arc * 0.75)];
 }
 
+/** Section boundaries of the stylized stadium path (same proportions as `stadiumPath`). */
+export function stylizedSections(straightShare: number): number[] {
+  const s = clampStraight(straightShare);
+  const g = POST_GOAL_SHARE, arc = 0.5 - (s + g);
+  const b4 = g + arc + s + g;
+  return [0, g, g + arc / 2, g + arc, b4, b4 + arc / 2, 1 - s, 1];
+}
+
 /** Corner markers at the middle of each corner section read from the official section view. */
 function diagramCorners(path: CoursePoint[], sections: readonly number[]): CornerMarker[] {
   const mid = (k: number) => (sections[k] + sections[k + 1]) / 2;
@@ -331,7 +342,7 @@ export function genericLayout(venue: string | null, surface: Surface = "TURF", d
     venue: venue ?? "UNKNOWN", organization: "JRA", surface, distance: distance ?? U, distanceListed: listed, variant: U,
     direction, lapMeters: U, homeStraightMeters: U, elevationGainMeters: U,
     pathClosed: true, startLapShare: U, raceLaps: 1, startPoint: U, startOnRing: U, firstCornerDistanceMeters: U,
-    finishPoint: path[0], path, corners: stylizedCorners(path, 0.2), slopes: [],
+    finishPoint: path[0], path, corners: stylizedCorners(path, 0.2), sectionShares: stylizedSections(0.2), sectionBasis: "STYLIZED", slopes: [],
     basis: { ...UNKNOWN_BASIS, direction: direction === U ? "UNKNOWN" : official ? "OFFICIAL" : "SECONDARY_SOURCE" },
     sourceRefs: [],
   };
@@ -380,6 +391,8 @@ function buildLayout(spec: CourseSpec, variant: Variant, loop: LoopSpec, distanc
     pathClosed: true, startLapShare, raceLaps, startPoint, startOnRing, startNote, firstCornerDistanceMeters: U,
     finishPoint: path[0], path,
     corners: diagramPath && sections ? diagramCorners(path, sections) : stylizedCorners(path, straightShare),
+    sectionShares: diagramPath && sections ? sections : stylizedSections(straightShare),
+    sectionBasis: diagramPath && sections ? "OFFICIAL_DIAGRAM_APPROXIMATION" : "STYLIZED",
     elevationProfile: profile, slopes: spec.slopes,
     basis: {
       direction: text, lapMeters: text, homeStraightMeters: text,
@@ -400,7 +413,7 @@ function buildStraight(spec: CourseSpec, distance: number): CourseLayout {
     venue: spec.venue, organization: "JRA", surface: spec.surface, distance, distanceListed: true, variant: "DEFAULT",
     direction: "STRAIGHT", lapMeters: U, homeStraightMeters: distance, elevationGainMeters: U,
     pathClosed: false, startLapShare: 0, raceLaps: 1, startPoint: path[0], startOnRing: true, firstCornerDistanceMeters: U,
-    finishPoint: path[path.length - 1], path, corners: [],
+    finishPoint: path[path.length - 1], path, corners: [], sectionShares: U, sectionBasis: "UNKNOWN",
     elevationProfile: NIIGATA_DIAGRAM.straight.profile.map(p => ({ at: p.at, meters: p.meters })), slopes: [],
     basis: {
       direction: text, lapMeters: "UNKNOWN", homeStraightMeters: text, elevation: "UNKNOWN", elevationProfile: "OFFICIAL_DIAGRAM_APPROXIMATION",

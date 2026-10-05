@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { compactRows, createThrottledEmitter, FINAL_PHASE_FROM, orderFrame, orderView, rankHistory, RANK_CHECKPOINTS } from "./scenarioOrder";
+import { CHECKPOINTS, compactRows, createThrottledEmitter, deltaLabel, FINAL_PHASE_FROM, orderFrame, orderView, rankDelta, rankHistory, reachedCheckpoints } from "./scenarioOrder";
 import { demoField, PHASE_KEYFRAME, scenarioFrame, scenarioSeed } from "./scenarioReplay";
 
 const field = demoField();
@@ -53,7 +53,7 @@ describe("SCENARIO ORDER follows continuous course progress", () => {
   it("keeps a rank history for every runner at every checkpoint (no FINISH rank)", () => {
     const history = rankHistory(field, "平均", seed);
     expect(history.size).toBe(field.length);
-    history.forEach(ranks => { expect(Object.keys(ranks).sort()).toEqual([...RANK_CHECKPOINTS].sort()); expect(ranks).not.toHaveProperty("FINISH"); });
+    history.forEach(ranks => { expect(Object.keys(ranks).sort()).toEqual(CHECKPOINTS.map(c => c.id).sort()); expect(ranks).not.toHaveProperty("FINISH"); });
   });
 });
 
@@ -67,6 +67,47 @@ describe("FINISH handling", () => {
     expect(final.rows).toEqual(orderView(field, FINAL_PHASE_FROM, "平均", seed).rows);
     const done = orderView(field, 1, "平均", seed);
     expect(done).toEqual({ kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] });
+  });
+});
+
+describe("SCENARIO ORDER V3: checkpoints and rank delta", () => {
+  it("has the six checkpoints in order: START, EARLY, BACKSTRETCH, THIRD TURN, FINAL TURN, FINAL", () => {
+    expect(CHECKPOINTS.map(c => c.label)).toEqual(["START", "EARLY", "BACKSTRETCH", "THIRD TURN", "FINAL TURN", "FINAL"]);
+    const ts = CHECKPOINTS.map(c => c.t);
+    expect([...ts].sort((a, b) => a - b)).toEqual(ts);
+    expect(ts[ts.length - 1]).toBeLessThan(FINAL_PHASE_FROM);
+  });
+
+  it("reached checkpoints grow with progress and stop at the 95% hold", () => {
+    expect(reachedCheckpoints(0)).toEqual(["START"]);
+    expect(reachedCheckpoints(0.3)).toEqual(["START", "EARLY"]);
+    expect(reachedCheckpoints(0.73)).toHaveLength(5);
+    expect(reachedCheckpoints(0.95)).toHaveLength(6);
+    expect(reachedCheckpoints(1)).toHaveLength(6);
+  });
+
+  it("rank delta is measured against the last checkpoint passed (positive = moved up); START is not a reference", () => {
+    const history = { START: 9, EARLY: 5, BACKSTRETCH: 4 } as const;
+    expect(rankDelta(history, ["START"], 3)).toEqual({ previous: null, delta: null });
+    expect(rankDelta(history, ["START", "EARLY"], 3)).toEqual({ previous: 5, delta: 2 });
+    expect(rankDelta(history, ["START", "EARLY", "BACKSTRETCH"], 6)).toEqual({ previous: 4, delta: -2 });
+    expect(rankDelta(history, ["START", "EARLY", "BACKSTRETCH"], 4)).toEqual({ previous: 4, delta: 0 });
+    expect(rankDelta(undefined, ["START", "EARLY"], 2)).toEqual({ previous: null, delta: null });
+    expect([deltaLabel(2), deltaLabel(-1), deltaLabel(0), deltaLabel(null)]).toEqual(["↑2", "↓1", "－", ""]);
+  });
+
+  it("a runner's delta at any progress equals the checkpoint rank minus the current rank, deterministically", () => {
+    const history = rankHistory(field, "平均", seed);
+    for (const progress of [0.25, 0.5, 0.7, 0.9, 0.97]) {
+      const view = orderView(field, progress, "平均", seed);
+      const reached = reachedCheckpoints(progress);
+      const last = reached[reached.length - 1];
+      for (const row of view.rows) {
+        const { previous, delta } = rankDelta(history.get(row.no), reached, row.rank);
+        expect(previous).toBe(history.get(row.no)![last]);
+        expect(delta).toBe(previous! - row.rank);
+      }
+    }
   });
 });
 

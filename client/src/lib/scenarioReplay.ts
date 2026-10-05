@@ -97,7 +97,8 @@ export function scenarioSeed(key: string | null | undefined): number {
   return hash >>> 0;
 }
 
-function unit(seed: number, no: number, salt: number): number {
+/** Deterministic 0..1 value from (seed, horse number, salt). Cosmetic spacing only. */
+export function seededUnit(seed: number, no: number, salt: number): number {
   let x = (seed ^ Math.imul(no + 1, 0x9e3779b1) ^ Math.imul(salt, 0x85ebca6b)) >>> 0;
   x ^= x >>> 15; x = Math.imul(x, 0x2c1b3c6d) >>> 0; x ^= x >>> 12; x = Math.imul(x, 0x297a2d39) >>> 0; x ^= x >>> 15;
   return (x >>> 0) / 0xffffffff;
@@ -138,9 +139,9 @@ export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, 
   const settle = 1 - smooth(clamp01((progress - PHASE_KEYFRAME.FINAL) / (1 - PHASE_KEYFRAME.FINAL)));
   const ordered = [...runners].sort((x, y) => x.no - y.no).map(runner => {
     const base = (a.get(runner.no) ?? 0) + ((b.get(runner.no) ?? 0) - (a.get(runner.no) ?? 0)) * mix;
-    const stagger = unit(seed, runner.no, 1) * 0.35 * settle;
+    const stagger = seededUnit(seed, runner.no, 1) * 0.35 * settle;
     const lengthsBehind = Math.round((base + stagger) * 1000) / 1000;
-    const lane = LANE[runner.style] + (unit(seed, runner.no, 2) - 0.5) * 0.7;
+    const lane = LANE[runner.style] + (seededUnit(seed, runner.no, 2) - 0.5) * 0.7;
     return { ...runner, lengthsBehind, lane, lap: Math.max(0, front - lengthsBehind * LENGTH_SHARE) };
   });
   return { progress, phase: phaseAt(progress), runners: ordered };

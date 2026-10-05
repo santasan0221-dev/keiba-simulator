@@ -720,3 +720,44 @@ body { background: var(--kt-bg); }
 .kt-track-start { stroke: var(--kt-research); stroke-width: 2; stroke-dasharray: 3 2; }
 .kt-track-label--start { fill: var(--kt-research); }
 .kt-corner { fill: var(--kt-faint); font-size: 10px; text-anchor: middle; }
+
+/* ------------------------------------------- V3 experience: camera, section, markers */
+.kt-track-svg { overflow: hidden; }
+.kt-track-outer, .kt-track-inner, .kt-track-post, .kt-track-start, .kt-marker line, .kt-slope polyline, .kt-parallax line { vector-effect: non-scaling-stroke; }
+.kt-section-chip { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--kt-research); color: var(--kt-research); font-weight: 800; font-size: 12px; letter-spacing: .1em; }
+.kt-section-chip small { font-weight: 600; letter-spacing: 0; opacity: .85; }
+.kt-motion-note b + b { margin-left: 4px; }
+.kt-parallax line { stroke: #ffffff; stroke-opacity: .035; stroke-width: 1; }
+.kt-parallax line.kt-parallax-h { stroke-opacity: .025; }
+.kt-straight-hl { fill: #ffffff14; stroke: none; }
+.kt-marker line { stroke: #ffffff55; stroke-width: 1; stroke-dasharray: 2 2; }
+.kt-marker text { fill: #ffffffaa; font-size: 8px; font-weight: 700; letter-spacing: .02em; }
+.kt-slope polyline { fill: none; stroke: var(--kt-warning, #e5c47e); stroke-width: 3; stroke-linecap: round; opacity: .85; }
+.kt-slope--down polyline { stroke: var(--kt-info, #8ab4f8); }
+.kt-slope text { fill: var(--kt-warning, #e5c47e); font-size: 9px; font-weight: 800; }
+.kt-dot-shadow { fill: #000; opacity: .28; }
+.kt-camera { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+.kt-camera-title { color: var(--kt-faint); font-size: 11px; font-weight: 700; letter-spacing: .14em; }
+.kt-camera-options { display: inline-grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.kt-camera-options button { min-height: 44px; padding: 0 12px; border: 1px solid var(--kt-border-strong, #ffffff30); border-radius: 10px; background: #0006; color: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em; cursor: pointer; }
+.kt-camera-options button.is-current { background: var(--kt-research); color: #150f24; border-color: var(--kt-research); }
+.kt-camera small { grid-column: 1 / -1; color: var(--kt-muted); font-size: 11px; overflow-wrap: anywhere; }
+.kt-course-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.kt-course-facts li { padding: 3px 9px; border-radius: 999px; background: #ffffff0d; border: 1px solid var(--kt-border); color: var(--kt-muted); font-size: 11px; }
+.kt-order-checkpoint { color: var(--kt-faint); font-size: 11px; letter-spacing: .06em; }
+.kt-delta { min-width: 30px; font-style: normal; font-size: 12px; font-weight: 800; text-align: left; color: var(--kt-faint); flex: none; }
+.kt-delta.is-up { color: var(--kt-positive, #5fd39a); }
+.kt-delta.is-down { color: var(--kt-danger, #ff8a80); }
+.kt-order-selected { color: var(--kt-research); font-size: 10px; flex: none; }
+.kt-order-list li button:focus-visible, .kt-camera-options button:focus-visible, .kt-order-toggle:focus-visible { outline: 3px solid var(--kt-research); outline-offset: 2px; }
+.kt-order-list li button { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) {
+  .kt-parallax { display: none; }
+}
+@media (max-width: 760px) {
+  .kt-track-head { gap: 6px; }
+  .kt-section-chip { font-size: 11px; padding: 3px 9px; }
+  .kt-camera { grid-template-columns: 1fr; }
+  .kt-camera-options { width: 100%; }
+  .kt-marker text { font-size: 9px; }
+}

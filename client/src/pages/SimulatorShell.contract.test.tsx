@@ -56,7 +56,7 @@ describe("simulator v3: SCENARIO ORDER wiring", () => {
     expect(html).toContain("シナリオ上の仮想順位です。実測・着順予測ではありません。");
   });
   it("feeds the order panel only runners / pace / seed and the throttled progress -- no race, picks, result or odds", () => {
-    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{orderProgress\} compact=\{compact\} \/>/);
+    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{progress\} compact=\{compact\} \/>/);
     expect(source).toContain("createThrottledEmitter");
     expect(source).not.toMatch(/ScenarioOrderPanel[^>]*(race=|honmei|official|result)/);
   });
@@ -71,6 +71,58 @@ describe("simulator v3: SCENARIO ORDER wiring", () => {
     const css = readFileSync(resolve(import.meta.dirname, "../trace.css"), "utf8");
     expect(css).toMatch(/\.kt-order-name \{[^}]*min-width: 0[^}]*text-overflow: ellipsis/);
     expect(css).toMatch(/\.kt-order \{[^}]*min-width: 0/);
+  });
+});
+
+describe("simulator v3: broadcast experience wiring", () => {
+  const html = renderToStaticMarkup(<SimulatorShell />);
+  const read = (file: string) => readFileSync(resolve(import.meta.dirname, file), "utf8");
+  const stage = read("../components/trace/TrackStage.tsx").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const selector = read("../components/trace/CameraSelector.tsx");
+  const css = read("../trace.css");
+
+  it("shows the camera selector, the current section and the always-on position note", () => {
+    for (const label of ["CAMERA", "TRACK", "BROADCAST", "AUTO", "SECTION · START", "SCENARIO POSITION", "実測位置ではありません"]) expect(html, label).toContain(label);
+    expect(html).toContain('role="radiogroup"');
+    expect(html).toContain('aria-checked="true"');
+    expect(html).toContain("コースの特徴");
+  });
+
+  it("the animation writes straight to the DOM: progress store, no per-frame React state, no layout reads", () => {
+    expect(source).toContain("createProgressStore");
+    expect(source).toContain("store.set(next)");
+    expect(source).not.toMatch(/tick = [^\n]*\n[^\n]*setProgress/);
+    expect(stage).toContain("requestAnimationFrame");
+    expect(stage).toContain("setAttribute");
+    for (const forbidden of ["getBoundingClientRect", "offsetWidth", "offsetHeight", "clientWidth", "getComputedStyle", "useState", "setState"]) expect(stage, forbidden).not.toContain(forbidden);
+  });
+
+  it("the stage and camera read no market, probability, pick or result data", () => {
+    for (const forbidden of ["singlePickAi", "raceView", "pickCards", "odds", "probability", "popularity", "officialResult", "LabResult"]) expect(stage, forbidden).not.toContain(forbidden);
+    expect(stage).toContain("honmeiNo"); // the ◎ is only a static class on its dot, never an input to motion or camera
+    expect(stage).not.toMatch(/cosmeticLane\([^)]*honmei/);
+    expect(stage).not.toMatch(/cameraTarget\([^)]*honmei/);
+  });
+
+  it("reduced motion: AUTO falls back to the whole track, no easing loop, no parallax", () => {
+    expect(stage).toContain('s.reduced && s.mode === "AUTO" ? "TRACK"');
+    expect(stage).toMatch(/if \(s\.reduced\) \{ camera\.current = target\.current; apply\(camera\.current\); return; \}/);
+    expect(stage).toMatch(/parallaxRef\.current && !live\.current\.reduced/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.kt-parallax \{ display: none; \}/);
+  });
+
+  it("camera selector is a keyboard-operable radio group with focus rings and 44px targets", () => {
+    expect(selector).toContain('role="radio"');
+    expect(selector).toContain("aria-checked");
+    expect(selector).toContain("tabIndex={mode === value ? 0 : -1}");
+    for (const key of ["ArrowRight", "ArrowLeft"]) expect(selector).toContain(key);
+    expect(css).toMatch(/\.kt-camera-options button \{[^}]*min-height: 44px/);
+    expect(css).toMatch(/\.kt-camera-options button:focus-visible/);
+    expect(css).toMatch(/\.kt-order-list li button \{ min-height: 44px; \}/);
+  });
+
+  it("the final freeze holds: camera target is not updated once the scenario is complete", () => {
+    expect(stage).toMatch(/if \(progress >= 1 && fixedProgress === undefined\) return;/);
   });
 });
 
