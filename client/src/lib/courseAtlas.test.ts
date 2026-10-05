@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "./courseDiagramData";
+import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, HANSHIN_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "./courseDiagramData";
 import { COURSE_SPECS, fitPath, isFlatDistance, JRA_VENUES, pointOnPath, resolveCourse, stadiumPath, straightPath } from "./courseAtlas";
 
 const area = (path: { x: number; y: number }[]) => path.reduce((sum, p, i) => { const q = path[(i + 1) % path.length]; return sum + (p.x * q.y - q.x * p.y); }, 0);
@@ -45,7 +45,7 @@ describe("course atlas coverage", () => {
   });
 
   it("gates read off the official plan views reproduce the race distance (Tokyo, Kyoto dirt, Nakayama)", () => {
-    const rings = { "東京芝": TOKYO_DIAGRAM.turf, "東京ダート": TOKYO_DIAGRAM.dirt, "京都ダート": KYOTO_DIAGRAM.dirt, "中山芝内": NAKAYAMA_DIAGRAM.turfInner, "中山ダート": NAKAYAMA_DIAGRAM.dirt, "札幌芝": SAPPORO_DIAGRAM.turf, "札幌ダート": SAPPORO_DIAGRAM.dirt, "福島芝": FUKUSHIMA_DIAGRAM.turf, "福島ダート": FUKUSHIMA_DIAGRAM.dirt, "中京芝": CHUKYO_DIAGRAM.turf, "中京ダート": CHUKYO_DIAGRAM.dirt, "函館芝": HAKODATE_DIAGRAM.turf, "函館ダート": HAKODATE_DIAGRAM.dirt };
+    const rings = { "東京芝": TOKYO_DIAGRAM.turf, "東京ダート": TOKYO_DIAGRAM.dirt, "京都ダート": KYOTO_DIAGRAM.dirt, "中山芝内": NAKAYAMA_DIAGRAM.turfInner, "中山ダート": NAKAYAMA_DIAGRAM.dirt, "札幌芝": SAPPORO_DIAGRAM.turf, "札幌ダート": SAPPORO_DIAGRAM.dirt, "福島芝": FUKUSHIMA_DIAGRAM.turf, "福島ダート": FUKUSHIMA_DIAGRAM.dirt, "中京芝": CHUKYO_DIAGRAM.turf, "中京ダート": CHUKYO_DIAGRAM.dirt, "函館芝": HAKODATE_DIAGRAM.turf, "函館ダート": HAKODATE_DIAGRAM.dirt, "阪神芝内": HANSHIN_DIAGRAM.turfInner, "阪神ダート": HANSHIN_DIAGRAM.dirt };
     let checked = 0;
     for (const [name, table] of Object.entries(rings)) {
       for (const [dist, start] of Object.entries(table.starts)) {
@@ -58,7 +58,7 @@ describe("course atlas coverage", () => {
         checked++;
       }
     }
-    expect(checked).toBe(9 + 6 + 4 + 4 + 4 + 6 + 3 + 6 + 4 + 7 + 5 + 6 + 3);
+    expect(checked).toBe(9 + 6 + 4 + 4 + 4 + 6 + 3 + 6 + 4 + 7 + 5 + 6 + 3 + 4 + 5);
     const t2000 = resolveCourse("東京", "芝", 2000);
     expect(t2000.basis.startPoint).toBe("OFFICIAL_DIAGRAM_APPROXIMATION");
     expect(t2000.startOnRing).toBe(false); // chute start on the right-hand spur
@@ -94,10 +94,10 @@ describe("course atlas coverage", () => {
   });
 
   it("lap arithmetic is only used for starts on the loop, and is labelled as derived", () => {
-    const hanshin = resolveCourse("阪神", "芝", 2000);
-    expect(hanshin.startLapShare).toBeCloseTo(1 - ((2000 / 1689) % 1), 10);
-    expect(hanshin.basis.startPoint).toBe("DERIVED_FROM_LAP_AND_DISTANCE");
-    expect(hanshin.basis.lapMeters).toBe("SECONDARY_SOURCE");
+    const kokura = resolveCourse("小倉", "芝", 2000);
+    expect(kokura.startLapShare).toBeCloseTo(1 - ((2000 / 1615.1) % 1), 10);
+    expect(kokura.basis.startPoint).toBe("DERIVED_FROM_LAP_AND_DISTANCE");
+    expect(kokura.basis.lapMeters).toBe("SECONDARY_SOURCE");
     const chukyo = resolveCourse("中京", "芝", 2000);
     expect(chukyo.basis.lapMeters).toBe("OFFICIAL");
     expect(chukyo.basis.startPoint).toBe("OFFICIAL_DIAGRAM_APPROXIMATION");
@@ -132,6 +132,22 @@ describe("course atlas coverage", () => {
     expect(Math.abs((resolveCourse("函館", "芝", 2600).startLapShare as number) - (resolveCourse("函館", "芝", 1000).startLapShare as number))).toBeLessThan(0.06);
     expect(resolveCourse("函館", "ダート", 1700).homeStraightMeters).toBe(260.3);
     expect(resolveCourse("函館", "芝", 1500).distanceListed).toBe(false);
+  });
+
+  it("Hanshin: official page values; inner-loop and dirt starts from the plan view, ambiguous 1400 / 3200 stay UNKNOWN", () => {
+    const inner = resolveCourse("阪神", "芝", 2000);
+    expect(inner.variant).toBe("INNER");
+    expect(inner.basis.startPoint).toBe("OFFICIAL_DIAGRAM_APPROXIMATION");
+    expect(inner.startOnRing).toBe(true);
+    expect(resolveCourse("阪神", "芝", 2200).startOnRing).toBe(false); // right-hand pocket
+    expect(resolveCourse("阪神", "芝", 1600).variant).toBe("OUTER");
+    expect(resolveCourse("阪神", "芝", 1600).startLapShare).toBe("UNKNOWN"); // outer loop not traced
+    for (const d of [1400, 3200]) expect(resolveCourse("阪神", "芝", d).variant, `hanshin ${d}`).toBe("UNKNOWN");
+    expect(resolveCourse("阪神", "芝", 1200).startLapShare).not.toBe("UNKNOWN");
+    expect(resolveCourse("阪神", "ダート", 1400).startOnRing).toBe(false); // turf start (the page)
+    expect(resolveCourse("阪神", "ダート", 2000).startOnRing).toBe(false); // turf start (the page)
+    expect(resolveCourse("阪神", "ダート", 1800).startOnRing).toBe(true);
+    expect(resolveCourse("阪神", "ダート", 1800).slopes.find(sl => sl.startRemainingMeters)).toMatchObject({ kind: "UP", riseMeters: 1.6, startRemainingMeters: 200 });
   });
 
   it("Fukushima: official page values; plan-view starts, with the 1150m dirt race starting off the ring (turf pocket)", () => {
@@ -186,7 +202,8 @@ describe("course atlas coverage", () => {
         expect(course.basis.direction, `${venue}${specSurface}`).toBe("OFFICIAL");
       }
     }
-    for (const venue of ["阪神", "小倉"]) expect(resolveCourse(venue, "芝", 2000).basis.direction).toBe("SECONDARY_SOURCE");
+    expect(resolveCourse("小倉", "芝", 2000).basis.direction).toBe("SECONDARY_SOURCE");
+    expect(resolveCourse("阪神", "芝", 2000).basis.direction).toBe("OFFICIAL");
     for (const venue of ["札幌", "函館", "福島"]) expect(resolveCourse(venue, "芝", 1800).basis.direction).toBe("OFFICIAL");
     expect(resolveCourse("中京", "芝", 2000).basis.direction).toBe("OFFICIAL");
     expect(resolveCourse("京都", "ダート", 1800).elevationGainMeters).toBe(3.0);
@@ -233,7 +250,7 @@ describe("official diagram data (Tokyo plan view and section views)", () => {
   };
 
   it("every traced path agrees with its section view: corners turn, straights do not", () => {
-    const rings = { "東京芝": TOKYO_DIAGRAM.turf, "東京ダート": TOKYO_DIAGRAM.dirt, "京都ダート": KYOTO_DIAGRAM.dirt, "中山芝内": NAKAYAMA_DIAGRAM.turfInner, "中山ダート": NAKAYAMA_DIAGRAM.dirt, "札幌芝": SAPPORO_DIAGRAM.turf, "札幌ダート": SAPPORO_DIAGRAM.dirt, "福島芝": FUKUSHIMA_DIAGRAM.turf, "福島ダート": FUKUSHIMA_DIAGRAM.dirt, "中京芝": CHUKYO_DIAGRAM.turf, "中京ダート": CHUKYO_DIAGRAM.dirt, "函館芝": HAKODATE_DIAGRAM.turf, "函館ダート": HAKODATE_DIAGRAM.dirt };
+    const rings = { "東京芝": TOKYO_DIAGRAM.turf, "東京ダート": TOKYO_DIAGRAM.dirt, "京都ダート": KYOTO_DIAGRAM.dirt, "中山芝内": NAKAYAMA_DIAGRAM.turfInner, "中山ダート": NAKAYAMA_DIAGRAM.dirt, "札幌芝": SAPPORO_DIAGRAM.turf, "札幌ダート": SAPPORO_DIAGRAM.dirt, "福島芝": FUKUSHIMA_DIAGRAM.turf, "福島ダート": FUKUSHIMA_DIAGRAM.dirt, "中京芝": CHUKYO_DIAGRAM.turf, "中京ダート": CHUKYO_DIAGRAM.dirt, "函館芝": HAKODATE_DIAGRAM.turf, "函館ダート": HAKODATE_DIAGRAM.dirt, "阪神芝内": HANSHIN_DIAGRAM.turfInner, "阪神ダート": HANSHIN_DIAGRAM.dirt };
     for (const [name, d] of Object.entries(rings)) {
       const path = d.path.map(([x, y]) => ({ x, y }));
       const [, c1, , back, c3, , home] = d.sectionShares;
@@ -260,6 +277,9 @@ describe("official diagram data (Tokyo plan view and section views)", () => {
     check(CHUKYO_DIAGRAM.dirt.sectionShares, 1530, 410.7);
     check(HAKODATE_DIAGRAM.turf.sectionShares, 1626.6, 262.1);
     check(HAKODATE_DIAGRAM.dirt.sectionShares, 1475.8, 260.3);
+    check(HANSHIN_DIAGRAM.turfInner.sectionShares, 1689, 356.5);
+    check(HANSHIN_DIAGRAM.turfOuter.sectionShares, 2089, 473.6);
+    check(HANSHIN_DIAGRAM.dirt.sectionShares, 1517.6, 352.7);
     check(TOKYO_DIAGRAM.turf.sectionShares, 2083.1, 525.9);
     check(NIIGATA_DIAGRAM.outer.sectionShares, 2223, 658.7);
   });
@@ -295,6 +315,9 @@ describe("official diagram data (Tokyo plan view and section views)", () => {
     expect(Math.abs(relief(CHUKYO_DIAGRAM.dirt.profile) - 3.4)).toBeLessThan(0.4);
     expect(Math.abs(relief(HAKODATE_DIAGRAM.turf.profile) - 3.5)).toBeLessThan(0.4);
     expect(Math.abs(relief(HAKODATE_DIAGRAM.dirt.profile) - 3.5)).toBeLessThan(0.4);
+    expect(Math.abs(relief(HANSHIN_DIAGRAM.turfInner.profile) - 1.9)).toBeLessThan(0.4);
+    expect(Math.abs(relief(HANSHIN_DIAGRAM.turfOuter.profile) - 2.4)).toBeLessThan(0.4);
+    expect(Math.abs(relief(HANSHIN_DIAGRAM.dirt.profile) - 1.6)).toBeLessThan(0.4);
     for (const profile of [TOKYO_DIAGRAM.turf.profile, TOKYO_DIAGRAM.dirt.profile, NIIGATA_DIAGRAM.straight.profile]) {
       expect(profile[0].at).toBe(0);
       expect(profile[profile.length - 1].at).toBe(1);

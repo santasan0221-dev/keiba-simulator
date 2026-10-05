@@ -209,6 +209,20 @@ hakodate = {
     "dirt": ring_entry(res_hd, tot_hd, 1475.8, HAKODATE_DIRT_GATES, "33.gif", [122, 184, 248, 370, 429, 492]),
 }
 
+# ------------------------------------------------------------------ Hanshin (40.gif plan, cw / RIGHT) -- inner turf ring and dirt ring
+im = load("40.gif"); c = centroid(im, T.DIRT)
+res_hti, tot_hti = trace(IMG + "40.gif", c, T.TURF, T.DIRT, (168, 288), False, reach=8)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT, gap=8)
+res_hd2, tot_hd2 = trace(IMG + "40.gif", c, T.DIRT, T.BLUE, (168, 272), False, outer=turf_edge, reach=10)
+# Top (back stretch) moves right, bottom moves left: the gate is the tick at the arrow's tail.
+HANSHIN_INNER_GATES = {1200: (175.6, 108), 2000: (343.3, 287), 2200: (456.7, 287), 3000: (115, 128)}
+HANSHIN_DIRT_GATES = {1200: (130, 142), 1400: (23.5, 178), 1800: (328, 268), 2000: (442, 266), 2600: (191, 116)}
+hanshin = {
+    "turfInner": ring_entry(res_hti, tot_hti, 1689.0, HANSHIN_INNER_GATES, "39.gif", [154.5, 229, 309, 401, 458.5, 499]),
+    "dirt": ring_entry(res_hd2, tot_hd2, 1517.6, HANSHIN_DIRT_GATES, "37.gif", [163, 238, 313, 417, 462, 499]),
+    "turfOuter": {"profile": profile_only("38.gif")["profile"], "sectionShares": section_shares([159, 228, 304, 418, 462, 499], 60, 507, True)},
+}
+
 # ------------------------------------------------------------------ Niigata: section views only
 niigata = {
     "dirt": section_view("5.gif", [61.5, 114, 166, 301.5, 357.5, 411]),
@@ -233,4 +247,5 @@ emit("SAPPORO_DIAGRAM", sapporo, "JRA 札幌競馬場 コース紹介 plan view 
 emit("FUKUSHIMA_DIAGRAM", fukushima, "JRA 福島競馬場 コース紹介 plan view and section views")
 emit("CHUKYO_DIAGRAM", chukyo, "JRA 中京競馬場 コース紹介 plan view and section views")
 emit("HAKODATE_DIAGRAM", hakodate, "JRA 函館競馬場 コース紹介 plan view and section views")
+emit("HANSHIN_DIAGRAM", hanshin, "JRA 阪神競馬場 コース紹介 plan view (inner turf ring, dirt ring) and section views")
 emit("NIIGATA_DIAGRAM", niigata, "JRA 新潟競馬場 コース紹介 section views; corner sections are shares from the goal line")

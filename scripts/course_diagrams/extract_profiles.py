@@ -30,6 +30,9 @@ SPECS = {
     "22.gif": ("札幌 芝 (右)", 1640.9, 53.5, 10.75, True),
     "29.gif": ("中京 ダート (左)", 1530.0, 58.0, 19.0, False),
     "30.gif": ("中京 芝 (左)", 1705.9, 52.5, 17.25, False),
+    "37.gif": ("阪神 ダート (右)", 1517.6, 50.5, 18.85, True),
+    "38.gif": ("阪神 芝 外回り (右)", 2089.0, 50.5, 18.85, True),
+    "39.gif": ("阪神 芝 内回り (右)", 1689.0, 50.5, 18.85, True),
     "33.gif": ("函館 ダート (右)", 1475.8, 56.0, 10.8, True),
     "34.gif": ("函館 芝 (右)", 1626.6, 57.0, 10.8, True),
     "25.gif": ("福島 ダート (右)", 1444.6, 56.5, 10.8, True),
@@ -57,7 +60,10 @@ def douglas_peucker(points, tol):
 def extract(path, length_m, y0, ppm, reverse=False):
     im = np.array(Image.open(path).convert("RGB")).astype(int)
     h, w, _ = im.shape
-    fill = ((im.max(axis=2) - im.min(axis=2)) > 60) & (im.sum(axis=2) < 700)
+    sat = im.max(axis=2) - im.min(axis=2)
+    fill = (sat > 60) & (im.sum(axis=2) < 700)
+    if fill.sum() < 8000:  # muted fill colours (tan / teal charts): loosen the saturation test
+        fill = (sat > 40) & (im.sum(axis=2) < 700)
     # columns holding only a few filled pixels are chart-border / tick artifacts, not terrain
     cols = np.where(fill.sum(axis=0) >= 20)[0]
     xs, xg = int(cols.min()), int(cols.max())

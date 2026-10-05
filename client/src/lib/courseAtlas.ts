@@ -3,20 +3,20 @@
  *
  * Provenance (ValueBasis)
  * - OFFICIAL: copied from a JRA course-introduction page (text and tables) that the
- *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Hakodate, Fukushima and Chukyo (plan and sections) so far.
+ *   maintainer supplied. Tokyo, Kyoto, Nakayama, Niigata, Sapporo, Hakodate, Fukushima, Chukyo and Hanshin (plan and sections) so far.
  * - OFFICIAL_DIAGRAM_APPROXIMATION: read off an official diagram image (plan view /
  *   section view): about 5 m in the plan, about 0.1 m vertically in the profiles.
  * - DERIVED_FROM_LAP_AND_DISTANCE: arithmetic on an official lap length and a race
  *   distance. Only valid for starts on the loop itself, so chute / extension starts
  *   are never derived this way (they stay UNKNOWN until a diagram is read).
  * - SECONDARY_SOURCE: a JRA page as quoted in a search excerpt, not yet checked
- *   against the page itself. Hanshin and Kokura only.
+ *   against the page itself. Kokura only.
  * - STYLIZED: drawn for looks only. Not a survey map.
  * - UNKNOWN: not established. Nothing is guessed.
  *
  * Elevation is display-only. No module that moves runners imports this file.
  */
-import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
+import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, HANSHIN_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 
 export type Unknown = "UNKNOWN";
 export type CoursePoint = { x: number; y: number };
@@ -269,11 +269,20 @@ export const COURSE_SPECS: CourseSpec[] = [
     ref: ref("chukyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2, where: "直線入口の坂（芝コースとほぼ同じ起伏）" }] },
   // ---- SECONDARY_SOURCE: JRA pages as quoted in search excerpts, not yet checked against the pages
-  { venue: "阪神", surface: "TURF", direction: "RIGHT", official: false, loops: { INNER: { lap: 1689, straight: 356.5, elevation: 1.9 }, OUTER: { lap: 2089, straight: 473.6, elevation: 2.4 } },
-    variantOf: { 1200: "INNER", 1600: "OUTER", 1800: "OUTER", 2000: "INNER", 2200: "INNER", 2400: "OUTER" }, ref: ref("hanshin"),
-    slopes: [{ kind: "UP", riseMeters: 1.8, where: "ゴール前（勾配1.5%）" }] },
-  { venue: "阪神", surface: "DIRT", direction: "RIGHT", official: false, loops: { DEFAULT: { lap: 1517.6, straight: 352.7, elevation: 1.6 } }, ref: ref("hanshin"),
-    slopes: [{ kind: "UP", riseMeters: 1.6, where: "残り200m" }] },
+  { venue: "阪神", surface: "TURF", direction: "RIGHT", official: true, loops: { INNER: { lap: 1689, straight: 356.5, elevation: 1.9 }, OUTER: { lap: 2089, straight: 473.6, elevation: 2.4 } },
+    distances: [1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 3000, 3200],
+    // 1400 and 3200 are listed for both loops (1400: 内 and 外; 3200: 外・内).
+    variantOf: { 1200: "INNER", 2000: "INNER", 2200: "INNER", 3000: "INNER", 1600: "OUTER", 1800: "OUTER", 2400: "OUTER", 2600: "OUTER" },
+    // The outer loop's plan is not traced yet.
+    offLoopStarts: { 1600: "外回りの平面図は未トレース", 1800: "外回りの平面図は未トレース", 2400: "外回りの平面図は未トレース", 2600: "外回りの平面図は未トレース" },
+    diagrams: { INNER: ring(HANSHIN_DIAGRAM.turfInner), OUTER: { profile: HANSHIN_DIAGRAM.turfOuter.profile } },
+    ref: ref("hanshin"), sourceNote: SUPPLIED,
+    slopes: [{ kind: "DOWN", riseMeters: U, where: "直線半ばまで緩やかな下り（内回りは残り800m、外回りは残り600mから）" },
+      { kind: "UP", riseMeters: 1.8, where: "ゴール前の急坂（勾配1.5%）" }] },
+  { venue: "阪神", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1517.6, straight: 352.7, elevation: 1.6 } },
+    distances: [1200, 1400, 1800, 2000, 2600], diagrams: { DEFAULT: ring(HANSHIN_DIAGRAM.dirt) }, ref: ref("hanshin"), sourceNote: SUPPLIED,
+    slopes: [{ kind: "DOWN", riseMeters: U, where: "残り900mから直線にかけて緩やかな下り" },
+      { kind: "UP", riseMeters: 1.6, where: "残り200m地点の上り坂", startRemainingMeters: 200 }] },
   { venue: "小倉", surface: "TURF", direction: "RIGHT", official: false, loops: { DEFAULT: { lap: 1615.1, straight: 293.0, elevation: U } }, ref: ref("kokura"), slopes: [] },
   { venue: "小倉", surface: "DIRT", direction: "RIGHT", official: false, loops: { DEFAULT: { lap: 1445.4, straight: 291.3, elevation: 2.9 } }, ref: ref("kokura"),
     slopes: [{ kind: "DOWN", riseMeters: U, where: "2コーナーの丘から4コーナー" }, { kind: "UP", riseMeters: 0.6, where: "残り400mから直線" }] },
