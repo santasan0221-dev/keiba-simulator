@@ -13,15 +13,22 @@ import sys
 import numpy as np
 from PIL import Image
 
-# name -> (label, lap/straight metres for the x axis, y of the 0 m line, px per metre)
-# Calibrated against each image's own gridlines (+/-2 m, +/-4 m rows) and axis labels.
+# name -> (label, lap/straight metres for the x axis, y of the 0 m line, px per metre, reversed)
+# Calibrated against each image's own gridlines (+/-2 m, +/-4 m, +6 m rows) and axis labels.
+# reversed=True: the chart runs from the goal (left, 0 m) back to the lap start (right).
 SPECS = {
-    "2.gif": ("東京 芝 (左)", 2083.1, 59.0, 11.25),
-    "1.gif": ("東京 ダート (左)", 1899.0, 60.0, 11.3),
-    "5.gif": ("新潟 ダート (左)", 1472.5, 37.0, 11.0),
-    "6.gif": ("新潟 芝 内回り (左)", 1623.0, 60.0, 11.0),
-    "7.gif": ("新潟 芝 外回り (左)", 2223.0, 59.0, 11.0),
-    "8.gif": ("新潟 芝 直線 1000m", 1000.0, 52.0, 20.5),
+    "2.gif": ("東京 芝 (左)", 2083.1, 59.0, 11.25, False),
+    "1.gif": ("東京 ダート (左)", 1899.0, 60.0, 11.3, False),
+    "5.gif": ("新潟 ダート (左)", 1472.5, 37.0, 11.0, False),
+    "6.gif": ("新潟 芝 内回り (左)", 1623.0, 60.0, 11.0, False),
+    "7.gif": ("新潟 芝 外回り (左)", 2223.0, 59.0, 11.0, False),
+    "8.gif": ("新潟 芝 直線 1000m", 1000.0, 52.0, 20.5, False),
+    "11.gif": ("京都 ダート (右)", 1607.6, 96.0, 13.5, True),
+    "12.gif": ("京都 芝 外回り (右)", 1894.3, 97.0, 13.5, True),
+    "13.gif": ("京都 芝 内回り (右)", 1782.8, 97.5, 13.5, True),
+    "16.gif": ("中山 ダート (右)", 1493.0, 68.0, 13.5, True),
+    "17.gif": ("中山 芝 外回り (右)", 1839.7, 67.0, 13.5, True),
+    "18.gif": ("中山 芝 内回り (右)", 1667.1, 67.0, 13.5, True),
 }
 BIAS_PX = 1.5  # the profile outline is ~1.5 px thick; the fill starts below it
 
@@ -39,7 +46,7 @@ def douglas_peucker(points, tol):
     return [points[0], points[-1]]
 
 
-def extract(path, length_m, y0, ppm):
+def extract(path, length_m, y0, ppm, reverse=False):
     im = np.array(Image.open(path).convert("RGB")).astype(int)
     h, w, _ = im.shape
     fill = ((im.max(axis=2) - im.min(axis=2)) > 60) & (im.sum(axis=2) < 700)
@@ -52,29 +59,22 @@ def extract(path, length_m, y0, ppm):
             pts.append((x, (y0 - (rows.min() - BIAS_PX)) / ppm))
     simplified = douglas_peucker(pts, 0.1)
     span = xg - xs
-    profile = [{"at": round((x - xs) / span, 4), "meters": round(m, 2)} for x, m in simplified]
+    if reverse:  # at = share from the goal in the running direction = 1 - remaining/lap
+        profile = [{"at": round(1 - (x - xs) / span, 4), "meters": round(m, 2)} for x, m in reversed(simplified)]
+    else:
+        profile = [{"at": round((x - xs) / span, 4), "meters": round(m, 2)} for x, m in simplified]
 
-    # corner boundaries: vertical ticks of the bracket row under the chart
-    dark = im.sum(axis=2) < 520
-    below = [y for y in range(int(np.where(fill.any(axis=1))[0].max()) + 12, h) if dark[y, xs - 10: xg + 10].sum() > span * 0.5]
-    separators = []
-    if below:
-        yb = below[0]
-        band = dark[yb - 5: yb + 6, :]
-        cand = [x for x in range(xs - 8, xg + 8) if band[:, x].sum() >= 7]
-        runs = []
-        for x in cand:
-            if runs and x - runs[-1][-1] <= 2:
-                runs[-1].append(x)
-            else:
-                runs.append([x])
-        separators = [round(sum(r) / len(r), 1) for r in runs]
     return {
         "xStart": xs, "xGoal": xg, "lengthMeters": length_m,
         "profile": profile,
-        "separatorsX": separators,
-        "separatorsRemainingMeters": [round((xg - x) / span * length_m, 1) for x in separators],
     }
+
+
+def section_shares(seps_x, x_start, x_goal, reverse=False):
+    """Corner boundaries as shares from the goal line in the running direction: [0, ..., 1]."""
+    span = x_goal - x_start
+    vals = [1 - (x - x_start) / span if reverse else (x - x_start) / span for x in seps_x]
+    return [0.0] + [round(v, 4) for v in sorted(vals)] + [1.0]
 
 
 if __name__ == "__main__":

@@ -1,32 +1,51 @@
 """
 Build client/src/lib/courseDiagramData.ts from JRA diagram images.
 
-Everything emitted is OFFICIAL_DIAGRAM_APPROXIMATION: coordinates / meters read off
-the official plan view and section-view images (not committed, they are JRA's).
-Approximate: ~2-3 px in the plan (about 5 m), ~0.1 m vertically in the profiles.
+Everything emitted is OFFICIAL_DIAGRAM_APPROXIMATION: coordinates / meters read off the
+official plan-view and section-view images (not committed, they are JRA's). Approximate:
+~2-3 px in the plan (about 5 m), ~0.1 m vertically in the profiles.
 
 Needs: pillow, numpy.   Usage: python build_atlas_data.py <image-dir> > courseDiagramData.ts
+Image numbering is the order the maintainer supplied them in (see README.md).
 """
-import json, math, sys
+import json, math, os, sys
 import numpy as np
 from PIL import Image
-sys.path.insert(0, __import__("os").path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(__file__))
 import trace_plan as T
-from extract_profiles import SPECS, extract
+from extract_profiles import SPECS, extract, section_shares
 
 IMG = sys.argv[1].rstrip("/") + "/"
 N_PATH = 160
 
 
-def trace(path, band, inner, goal_xy, n=360, med_k=15, outer=None):
-    im = np.array(Image.open(path).convert("RGB")).astype(int)
-    ys, xs = np.where(T.mask(im, T.BLUE)); c = (xs.mean(), ys.mean())
-    if outer is None:
-        pts, med = T.ring_centerline(path, band, inner, c)
-    else:  # ring touching an outer ring: centre = outer edge - median width / 2
-        sm = T.ring_inward(path, band, outer, c)
-        med = sorted(s[2] for s in sm)[len(sm) // 2]
-        pts = [(c[0] + math.cos(math.radians(a)) * (ro - med / 2), c[1] + math.sin(math.radians(a)) * (ro - med / 2)) for a, ro, _ in sm]
+def load(name):
+    return np.array(Image.open(IMG + name).convert("RGB")).astype(int)
+
+
+def centroid(im, rgb):
+    ys, xs = np.where(T.mask(im, rgb))
+    return (xs.mean(), ys.mean())
+
+
+def inner_edge_samples(im, c, band, inner, gap=5):
+    """Per 0.5 degree: radius where `band` begins right after `inner` (the ring's inner edge)."""
+    band_m, inner_m = T.mask(im, band), T.mask(im, inner)
+    out = []
+    for k in range(720):
+        a = math.radians(k * 0.5); dx, dy = math.cos(a), math.sin(a)
+        r, last_inner = 5.0, -99.0
+        while True:
+            x, y = int(round(c[0] + dx * r)), int(round(c[1] + dy * r))
+            if not (0 <= x < im.shape[1] and 0 <= y < im.shape[0]): break
+            if inner_m[y, x]: last_inner = r
+            if band_m[y, x] and r - last_inner <= gap and last_inner > 0:
+                out.append((k * 0.5, r - 1.0, 0)); break
+            r += 0.5
+    return out
+
+
+def smooth_polar(c, pts, med_k=15):
     ang = np.array([math.degrees(math.atan2(y - c[1], x - c[0])) % 360 for x, y in pts])
     rad = np.array([math.hypot(x - c[0], y - c[1]) for x, y in pts])
     o = np.argsort(ang); ang, rad = ang[o], rad[o]
@@ -35,9 +54,19 @@ def trace(path, band, inner, goal_xy, n=360, med_k=15, outer=None):
         m = len(a); h = k // 2
         return np.array([np.median(a[[(i + j) % m for j in range(-h, h + 1)]]) for i in range(m)])
     r = medfilt(r, med_k); r = np.convolve(np.r_[r[-4:], r, r[:4]], np.ones(9) / 9, mode="valid")
-    poly = [(c[0] + r[i] * math.cos(math.radians(grid[i])), c[1] + r[i] * math.sin(math.radians(grid[i]))) for i in range(720)]
-    res, total = T.resample_closed(poly, n)
-    return T.orient_from_goal(res, goal_xy), total
+    return [(c[0] + r[i] * math.cos(math.radians(grid[i])), c[1] + r[i] * math.sin(math.radians(grid[i]))) for i in range(720)]
+
+
+def trace(plan, c, band, inner, goal_xy, ccw, outer=None):
+    """Closed centre-line (360 px points) starting at the goal, running ccw / cw on screen."""
+    if outer is None:
+        pts, _ = T.ring_centerline(plan, band, inner, c)
+    else:  # ring touching an outer ring: centre = outer edge - median width / 2
+        sm = T.ring_inward(plan, band, outer, c)
+        med = sorted(s[2] for s in sm)[len(sm) // 2]
+        pts = [(c[0] + math.cos(math.radians(a)) * (ro - med / 2), c[1] + math.sin(math.radians(a)) * (ro - med / 2)) for a, ro, _ in sm]
+    res, total = T.resample_closed(smooth_polar(c, pts), 360)
+    return T.orient_from_goal(res, goal_xy, ccw_on_screen=ccw), total
 
 
 def project(res, pt):
@@ -55,81 +84,96 @@ def project(res, pt):
     return best[1], best[0]
 
 
-# Start gates read off the plan view (original GIF pixels): the vertical tick at the
-# end of each underlined distance label, the end the arrow points away from.
-GATES = {
-    "turf": {1400: (310, 66), 1600: (434, 66), 1800: (528, 151), 2000: (540, 237),
-             2300: (270, 283), 2400: (213, 283), 2500: (157.5, 283), 2600: (100, 283), 3400: (269, 66)},
-    "dirt": {1200: (260, 75), 1300: (310.5, 75), 1400: (369, 75), 1600: (487, 82), 2100: (277, 255), 2400: (106, 255)},
-}
-GOAL = {"turf": (398, 292), "dirt": (398, 262)}
-LAP = {"turf": 2083.1, "dirt": 1899.0}
-PROFILE = {"turf": "2.gif", "dirt": "1.gif"}
-STRAIGHT = {"turf": 525.9, "dirt": 501.6}
-
-plan = IMG + "3.gif"
-out = {}
-_im = np.array(Image.open(plan).convert("RGB")).astype(int)
-_ys, _xs = np.where(T.mask(_im, T.BLUE)); _c = (_xs.mean(), _ys.mean())
-_turf_samples, _ = T.ring_centerline(plan, T.TURF, T.DIRT, _c)  # only for the angle list
-TURF_EDGE = None
-for kind, band, inner in [("turf", T.TURF, T.DIRT), ("dirt", T.DIRT, T.BLUE)]:
-    if kind == "turf":
-        res, total = trace(plan, band, inner, GOAL[kind])
-    else:
-        # turf inner-edge samples (angle, r_in, width) from the raw scan
-        samples = []
-        im2 = _im; band_m, inner_m = T.mask(im2, T.TURF), T.mask(im2, T.DIRT)
-        raw = []
-        for k in range(720):
-            a = math.radians(k * 0.5); dx, dy = math.cos(a), math.sin(a)
-            r, last_inner, r_in = 5.0, -99, None
-            while True:
-                x, y = int(round(_c[0] + dx * r)), int(round(_c[1] + dy * r))
-                if not (0 <= x < im2.shape[1] and 0 <= y < im2.shape[0]): break
-                if inner_m[y, x]: last_inner = r
-                if band_m[y, x] and r - last_inner <= 5 and last_inner > 0: r_in = r; break
-                r += 0.5
-            if r_in is not None: raw.append((k * 0.5, r_in - 1.0, 0))
-        res, total = trace(plan, band, inner, GOAL[kind], outer=raw)
+def ring_entry(res, total, lap, gates, profile_name, seps):
     xs = [p[0] for p in res]; ys = [p[1] for p in res]
     scale = 0.92 / (max(xs) - min(xs)); cy = (max(ys) + min(ys)) / 2
     norm = lambda p: (round(0.04 + (p[0] - min(xs)) * scale, 4), round(0.5 + (p[1] - cy) * scale, 4))
     small, _ = T.resample_closed(res, N_PATH)  # even arc-length spacing, starts at the goal, closes on itself
-    path = [norm(p) for p in small]
-    mpp = LAP[kind] / total
-    prof = extract(IMG + PROFILE[kind], *SPECS[PROFILE[kind]][1:])
-    # corner sections from the profile's bracket row (shares from the goal line)
-    sep = [0.0] + [round((x - prof["xStart"]) / (prof["xGoal"] - prof["xStart"]), 4) for x in
-                   {"turf": [69, 131, 192, 296, 359, 417], "dirt": [65, 123, 182, 296, 357, 413]}[kind]] + [1.0]
+    mpp = lap / total
+    label, length, y0, ppm, rev = SPECS[profile_name]
+    prof = extract(IMG + profile_name, length, y0, ppm, rev)
     starts = {}
-    for dist, gate in GATES[kind].items():
+    for dist, gate in gates.items():
         share, off = project(res, gate)
-        partial = (1 - share) * LAP[kind]
-        laps_full = max(0, round((dist - partial) / LAP[kind]))
+        partial = (1 - share) * lap
+        full = max(0, round((dist - partial) / lap))
         starts[dist] = {"gate": norm(gate), "share": round(share, 4), "offRingMeters": round(off * mpp, 1),
-                        "fullLaps": laps_full,
-                        "ringMetersToGoal": round(partial + laps_full * LAP[kind], 1)}
-    out[kind] = {"metersPerPx": round(mpp, 3), "path": path, "sectionShares": sep, "starts": starts,
-                 "profile": [{"at": p["at"], "meters": p["meters"]} for p in prof["profile"]]}
+                        "fullLaps": full, "ringMetersToGoal": round(partial + full * lap, 1)}
+    return {"metersPerPx": round(mpp, 3), "path": [norm(p) for p in small],
+            "sectionShares": section_shares(seps, prof["xStart"], prof["xGoal"], rev),
+            "starts": starts, "profile": [{"at": p["at"], "meters": p["meters"]} for p in prof["profile"]]}
 
-# --- Niigata: section views only (plan not traced: its inner/outer loops and chutes need separate work)
+
 def section_view(name, seps):
-    p = extract(IMG + name, *SPECS[name][1:])
-    shares = [0.0] + [round((x - p["xStart"]) / (p["xGoal"] - p["xStart"]), 4) for x in seps] + [1.0]
-    return {"sectionShares": shares, "profile": [{"at": q["at"], "meters": q["meters"]} for q in p["profile"]]}
+    label, length, y0, ppm, rev = SPECS[name]
+    p = extract(IMG + name, length, y0, ppm, rev)
+    return {"sectionShares": section_shares(seps, p["xStart"], p["xGoal"], rev), "profile": [{"at": q["at"], "meters": q["meters"]} for q in p["profile"]]}
 
+
+def profile_only(name):
+    label, length, y0, ppm, rev = SPECS[name]
+    p = extract(IMG + name, length, y0, ppm, rev)
+    return {"profile": [{"at": q["at"], "meters": q["meters"]} for q in p["profile"]]}
+
+
+# ------------------------------------------------------------------ Tokyo (3.gif plan, ccw / LEFT)
+im = load("3.gif"); c = centroid(im, T.BLUE)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT)
+res_t, tot_t = trace(IMG + "3.gif", c, T.TURF, T.DIRT, (398, 292), True)
+res_d, tot_d = trace(IMG + "3.gif", c, T.DIRT, T.BLUE, (398, 262), True, outer=turf_edge)
+TOKYO_GATES = {
+    "turf": {1400: (310, 66), 1600: (434, 66), 1800: (528, 151), 2000: (540, 237),
+             2300: (270, 283), 2400: (213, 283), 2500: (157.5, 283), 2600: (100, 283), 3400: (269, 66)},
+    "dirt": {1200: (260, 75), 1300: (310.5, 75), 1400: (369, 75), 1600: (487, 82), 2100: (277, 255), 2400: (106, 255)},
+}
+tokyo = {
+    "turf": ring_entry(res_t, tot_t, 2083.1, TOKYO_GATES["turf"], "2.gif", [69, 131, 192, 296, 359, 417]),
+    "dirt": ring_entry(res_d, tot_d, 1899.0, TOKYO_GATES["dirt"], "1.gif", [65, 123, 182, 296, 357, 413]),
+}
+
+# ------------------------------------------------------------------ Kyoto (14.gif plan, cw / RIGHT) -- dirt ring
+im = load("14.gif"); c = centroid(im, T.DIRT)
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT)
+res_kd, tot_kd = trace(IMG + "14.gif", c, T.DIRT, T.BLUE, (284, 193), False, outer=turf_edge)
+KYOTO_DIRT_GATES = {1200: (218, 72), 1400: (117, 96), 1800: (382.5, 194), 1900: (432.5, 194)}
+kyoto = {
+    "dirt": ring_entry(res_kd, tot_kd, 1607.6, KYOTO_DIRT_GATES, "11.gif", [147, 218, 293, 416, 465, 513]),
+    "turfOuter": {"profile": profile_only("12.gif")["profile"], "sectionShares": section_shares([142, 206, 270, 406, 458, 509], 38, 532, True)},
+    "turfInner": {"profile": profile_only("13.gif")["profile"], "sectionShares": section_shares([128, 204, 282, 394, 452, 507], 38, 531, True)},
+}
+
+# ------------------------------------------------------------------ Nakayama (19.gif plan, cw / RIGHT)
+im = load("19.gif"); c = centroid(im, T.DIRT)
+res_ni, tot_ni = trace(IMG + "19.gif", c, T.TURF, T.DIRT, (235.5, 322), False)           # inner course ring
+turf_edge = inner_edge_samples(im, c, T.TURF, T.DIRT)
+res_nd, tot_nd = trace(IMG + "19.gif", c, T.DIRT, T.BLUE, (235.5, 296), False, outer=turf_edge)
+# Inner course: tick at the right end of each underlined label (arrows run left). 2500(内) is on the outer-course track.
+NAKAYAMA_INNER_GATES = {1800: (317.5, 322), 2000: (433.75, 322), 3600: (383, 322), 2500: (427, 80)}
+NAKAYAMA_DIRT_GATES = {1700: (361, 296), 1800: (424, 296), 2400: (273, 135), 2500: (214, 135)}
+nakayama = {
+    "turfInner": ring_entry(res_ni, tot_ni, 1667.1, NAKAYAMA_INNER_GATES, "18.gif", [130, 195, 272, 372, 439, 512]),
+    "dirt": ring_entry(res_nd, tot_nd, 1493.0, NAKAYAMA_DIRT_GATES, "16.gif", [141, 205, 269, 383, 446, 510]),
+    "turfOuter": {"profile": profile_only("17.gif")["profile"], "sectionShares": section_shares([121, 181, 287, 341, 449, 512], 41, 534, True)},
+}
+
+# ------------------------------------------------------------------ Niigata: section views only
 niigata = {
     "dirt": section_view("5.gif", [61.5, 114, 166, 301.5, 357.5, 411]),
     "inner": section_view("6.gif", [57, 119, 176, 303, 365, 423]),
     "outer": section_view("7.gif", [53, 98, 140, 299, 344, 386]),
+    "straight": profile_only("8.gif"),
 }
-_straight = extract(IMG + "8.gif", *SPECS["8.gif"][1:])
-niigata["straight"] = {"profile": [{"at": q["at"], "meters": q["meters"]} for q in _straight["profile"]]}
+
+
+def emit(name, data, note, first=False):
+    if not first:
+        print()
+    print(f"// Source: {note} (OFFICIAL_DIAGRAM_APPROXIMATION).")
+    print(f"export const {name} = " + json.dumps(data, ensure_ascii=False, indent=1) + " as const;")
+
 
 print("// GENERATED by scripts/course_diagrams/build_atlas_data.py -- do not edit by hand.")
-print("// Source: JRA 東京競馬場 コース紹介 plan view and section views (OFFICIAL_DIAGRAM_APPROXIMATION).")
-print("export const TOKYO_DIAGRAM = " + json.dumps(out, ensure_ascii=False, indent=1) + " as const;")
-print()
-print("// Source: JRA 新潟競馬場 コース紹介 section views (OFFICIAL_DIAGRAM_APPROXIMATION). Corner sections: shares from the goal line.")
-print("export const NIIGATA_DIAGRAM = " + json.dumps(niigata, ensure_ascii=False, indent=1) + " as const;")
+emit("TOKYO_DIAGRAM", tokyo, "JRA 東京競馬場 コース紹介 plan view and section views", first=True)
+emit("KYOTO_DIAGRAM", kyoto, "JRA 京都競馬場 コース紹介 plan view (dirt ring) and section views")
+emit("NAKAYAMA_DIAGRAM", nakayama, "JRA 中山競馬場 コース紹介 plan view (inner turf ring, dirt ring) and section views")
+emit("NIIGATA_DIAGRAM", niigata, "JRA 新潟競馬場 コース紹介 section views; corner sections are shares from the goal line")

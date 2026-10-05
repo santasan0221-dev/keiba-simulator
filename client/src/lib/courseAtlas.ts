@@ -16,7 +16,7 @@
  *
  * Elevation is display-only. No module that moves runners imports this file.
  */
-import { NIIGATA_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
+import { KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 
 export type Unknown = "UNKNOWN";
 export type CoursePoint = { x: number; y: number };
@@ -177,39 +177,47 @@ type CourseSpec = {
 const ref = (venue: string) => `https://www.jra.go.jp/facilities/race/${venue}/course/index.html`;
 const SUPPLIED = "JRA公式コース紹介ページの本文・表（保守者から受領した写し、2026-10-04/05）";
 
-type TokyoKind = { path: readonly (readonly [number, number])[]; sectionShares: readonly number[]; starts: unknown; profile: readonly { at: number; meters: number }[] };
-const tokyo = (d: TokyoKind): LoopDiagram => ({ path: d.path, sectionShares: d.sectionShares, starts: d.starts as Record<number, DiagramStart>, profile: d.profile });
+type RingData = { path: readonly (readonly [number, number])[]; sectionShares: readonly number[]; starts: unknown; profile: readonly { at: number; meters: number }[] };
+const ring = (d: RingData): LoopDiagram => ({ path: d.path, sectionShares: d.sectionShares, starts: d.starts as Record<number, DiagramStart>, profile: d.profile });
 
 export const COURSE_SPECS: CourseSpec[] = [
   // ---- OFFICIAL (page text) + OFFICIAL_DIAGRAM_APPROXIMATION (plan / section views)
   { venue: "東京", surface: "TURF", direction: "LEFT", official: true, loops: { DEFAULT: { lap: 2083.1, straight: 525.9, elevation: 2.7 } },
-    distances: [1400, 1600, 1800, 2000, 2300, 2400, 2500, 2600, 3400], diagrams: { DEFAULT: tokyo(TOKYO_DIAGRAM.turf) }, ref: ref("tokyo"), sourceNote: SUPPLIED,
+    distances: [1400, 1600, 1800, 2000, 2300, 2400, 2500, 2600, 3400], diagrams: { DEFAULT: ring(TOKYO_DIAGRAM.turf) }, ref: ref("tokyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: 1.9, where: "1コーナーから向正面半ば" }, { kind: "UP", riseMeters: 1.5, where: "3コーナー手前" },
       { kind: "UP", riseMeters: 2, where: "直線 残り460m〜300m", startRemainingMeters: 460, endRemainingMeters: 300 }] },
   { venue: "東京", surface: "DIRT", direction: "LEFT", official: true, loops: { DEFAULT: { lap: 1899, straight: 501.6, elevation: 2.5 } },
-    distances: [1200, 1300, 1400, 1600, 2100, 2400], diagrams: { DEFAULT: tokyo(TOKYO_DIAGRAM.dirt) }, ref: ref("tokyo"), sourceNote: SUPPLIED,
+    distances: [1200, 1300, 1400, 1600, 2100, 2400], diagrams: { DEFAULT: ring(TOKYO_DIAGRAM.dirt) }, ref: ref("tokyo"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2.4, where: "直線の上り坂（バックストレッチにももう1つ坂）" }] },
   { venue: "京都", surface: "TURF", direction: "RIGHT", official: true, loops: { INNER: { lap: 1782.8, straight: 328.4, elevation: 3.1 }, OUTER: { lap: 1894.3, straight: 403.7, elevation: 4.3 } },
     distances: [1100, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 3000, 3200],
     // 1400 / 1600 / 2000 are listed for both loops: the page does not say which one a race uses.
     variantOf: { 1100: "INNER", 1200: "INNER", 1800: "OUTER", 2200: "OUTER", 2400: "OUTER", 3000: "OUTER", 3200: "OUTER" },
     // 外回り1800 starts in the deep chute off the backstretch (向正面左手の奥深い地点).
-    offLoopStarts: { 1800: "向正面左手の引き込み線（シュート）発走。公式図の読取が必要" },
+    offLoopStarts: { 1800: "向正面左手の引き込み線（シュート）発走。ゲート位置の読取が必要" },
+    diagrams: { INNER: { profile: KYOTO_DIAGRAM.turfInner.profile }, OUTER: { profile: KYOTO_DIAGRAM.turfOuter.profile } },
     ref: ref("kyoto"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: U, where: "向正面の半ばから3コーナー" }, { kind: "DOWN", riseMeters: U, where: "3コーナーから4コーナー（それ以外はほぼ平坦）" }] },
   { venue: "京都", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1607.6, straight: 329.1, elevation: 3.0 } },
-    distances: [1000, 1100, 1200, 1400, 1800, 1900, 2600], ref: ref("kyoto"), sourceNote: SUPPLIED,
+    distances: [1000, 1100, 1200, 1400, 1800, 1900, 2600], diagrams: { DEFAULT: ring(KYOTO_DIAGRAM.dirt) },
+    offLoopStarts: { 1000: "plan未読取", 1100: "plan未読取", 2600: "plan未読取" },
+    ref: ref("kyoto"), sourceNote: SUPPLIED,
     slopes: [{ kind: "DOWN", riseMeters: U, where: "3コーナーの丘から4コーナー" }] },
   { venue: "中山", surface: "TURF", direction: "RIGHT", official: true, loops: { INNER: { lap: 1667.1, straight: 310, elevation: 5.3 }, OUTER: { lap: 1839.7, straight: 310, elevation: 5.3 } },
     distances: [1200, 1600, 1800, 2000, 2200, 2500, 2600, 3200, 3600, 4000],
     variantOf: { 1200: "OUTER", 1600: "OUTER", 1800: "INNER", 2000: "INNER", 2200: "OUTER", 2500: "INNER", 2600: "OUTER", 3600: "INNER", 4000: "OUTER" },
-    // 3200 is listed for both loops. 内回り2500 starts on the OUTER course track so it can enter the corner straight.
-    offLoopStarts: { 2500: "発走地点は外回りコース上（内回り周回では算出不可）。公式図の読取が必要" },
+    // 3200 is listed for both loops. 内回り2500 starts on the OUTER course track so it can enter the corner straight:
+    // its gate lies off the inner ring and is projected onto it (see startOnRing / startNote).
+    // The outer loop's plan is not traced yet.
+    offLoopStarts: { 1200: "外回りの平面図は未トレース", 1600: "外回りの平面図は未トレース", 2200: "外回りの平面図は未トレース", 2600: "外回りの平面図は未トレース", 4000: "外回りの平面図は未トレース" },
+    diagrams: { INNER: ring(NAKAYAMA_DIAGRAM.turfInner), OUTER: { profile: NAKAYAMA_DIAGRAM.turfOuter.profile } },
     ref: ref("nakayama"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2.2, where: "ゴール前の急坂 残り180m〜70m（最大勾配2.24%）", startRemainingMeters: 180, endRemainingMeters: 70 },
       { kind: "UP", riseMeters: U, where: "ゴールから1コーナー（2コーナー手前が最高点）" }, { kind: "DOWN", riseMeters: U, where: "2コーナー手前からホームストレッチ半ば（最深部）" }] },
   { venue: "中山", surface: "DIRT", direction: "RIGHT", official: true, loops: { DEFAULT: { lap: 1493, straight: 308, elevation: 4.5 } },
-    distances: [1000, 1200, 1700, 1800, 2400, 2500], ref: ref("nakayama"), sourceNote: SUPPLIED,
+    distances: [1000, 1200, 1700, 1800, 2400, 2500], diagrams: { DEFAULT: ring(NAKAYAMA_DIAGRAM.dirt) },
+    offLoopStarts: { 1000: "plan未読取", 1200: "芝スタート（シュート）。plan未読取" },
+    ref: ref("nakayama"), sourceNote: SUPPLIED,
     slopes: [{ kind: "UP", riseMeters: 2.2, where: "ゴール前の急坂（芝コースと同様の高低差）" }] },
   { venue: "新潟", surface: "TURF", direction: "LEFT", official: true, loops: { INNER: { lap: 1623, straight: 358.7, elevation: 0.8 }, OUTER: { lap: 2223, straight: 658.7, elevation: 2.2 } },
     distances: [1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 3000, 3200],

@@ -408,7 +408,7 @@ function TrackView({ frame, course, compact, honmeiNo, label }: { frame: Scenari
       return <text key={corner.label} x={pos.x} y={pos.y + 4} className="kt-corner" data-corner={corner.label}>{corner.label}</text>;
     }) : null}
     {startKnown ? <line x1={startIn.x} y1={startIn.y} x2={startOut.x} y2={startOut.y} className="kt-track-start" data-start="true" /> : null}
-    {startKnown ? <text x={startOut.x + (startOut.x > g.w * 0.75 ? -4 : 0)} y={startOut.y + (startOut.y > g.h / 2 ? 14 : -6)} textAnchor={startOut.x > g.w * 0.75 ? "end" : "start"} className="kt-track-label kt-track-label--start">START</text> : null}
+    {startKnown ? <text x={startOut.x + (startOut.x > g.w * 0.75 ? -4 : 0)} y={Math.max(12, Math.min(g.h - 4, startOut.y + (startOut.y > g.h / 2 ? 14 : -6)))} textAnchor={startOut.x > g.w * 0.75 ? "end" : "start"} className="kt-track-label kt-track-label--start">START</text> : null}
     <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" data-goal="true" />
     <text x={goalOut.x + 6} y={Math.min(goalOut.y + 14, g.h - 4)} className="kt-track-label">GOAL</text>
     {runners.map(runner => {
