@@ -29,15 +29,17 @@ const TURN_SHIFT: Record<ScenarioStyle, number> = { 逃げ: -0.3, 先行: -0.15,
 
 export function cosmeticLane(input: MotionInput): number {
   const { no, style, baseLane, progress, seed, turn, straight } = input;
-  // The drift and spreading fade out towards FINAL so the converged field stays calm.
+  // The drift eases (but never stops) through the home straight, while the field widens a little
+  // towards the line; both are lane-only and never touch course progress or the order.
   const calm = 1 - smooth((progress - 0.8) / 0.2);
+  const homeSpread = smooth((progress - 0.8) / 0.15);
   const amp = 0.14 + seededUnit(seed, no, 11) * 0.16;
   const freq = 1.1 + seededUnit(seed, no, 12) * 1.6;
   const phase = seededUnit(seed, no, 13) * Math.PI * 2;
-  const drift = Math.sin(progress * freq * Math.PI * 2 + phase) * amp * calm;
+  const drift = Math.sin(progress * freq * Math.PI * 2 + phase) * amp * (0.4 + 0.6 * calm);
   const spacing = (seededUnit(seed, no, 14) - 0.5) * 0.12;
   const squeezed = baseLane * (1 - 0.2 * turn);
-  const widened = squeezed * (1 + 0.22 * straight * calm);
+  const widened = squeezed * (1 + 0.22 * straight * calm + 0.3 * straight * homeSpread);
   const lane = widened + TURN_SHIFT[style] * turn + drift + spacing;
   return Math.min(LANE_MAX, Math.max(LANE_MIN, lane));
 }

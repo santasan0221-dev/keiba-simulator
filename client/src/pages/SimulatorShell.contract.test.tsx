@@ -121,8 +121,12 @@ describe("simulator v3: broadcast experience wiring", () => {
     expect(css).toMatch(/\.kt-order-list li button \{ min-height: 44px; \}/);
   });
 
-  it("the final freeze holds: camera target is not updated once the scenario is complete", () => {
-    expect(stage).toMatch(/if \(progress >= 1 && fixedProgress === undefined\) return;/);
+  it("full finish: no freeze, no fade, no end caption; the goal line is framed and a straight course runs on past the line", () => {
+    expect(stage).not.toMatch(/if \(progress >= 1 && fixedProgress === undefined\) return;/);
+    expect(stage).not.toContain("kt-track-end");
+    expect(stage).not.toContain("setAttribute(\"opacity\"");
+    expect(stage).toContain("anchors: s.goalPoints");
+    expect(stage).toContain("(share - 1) * pathLength");
   });
 });
 

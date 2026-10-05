@@ -28,7 +28,7 @@ describe("formation scenario (RESEARCH_ONLY)", () => {
   });
 });
 
-import { FINISH_LAP, PHASE_KEYFRAME, phaseAt, scenarioFrame, scenarioSeed } from "./scenarioReplay";
+import { crossingTimes, FRONT_END, frontAt, PHASE_KEYFRAME, phaseAt, scenarioFrame, scenarioSeed } from "./scenarioReplay";
 
 describe("continuous scenario timeline", () => {
   const field = demoField();
@@ -57,25 +57,52 @@ describe("continuous scenario timeline", () => {
     expect(leader.style).toBe("逃げ");
   });
 
-  it("never produces a winner: at 100% every runner is level and short of the line", () => {
-    for (const pace of ["スロー", "平均", "ハイ"] as const) {
-      const frame = scenarioFrame(field, 1, pace, seed);
-      expect(new Set(frame.runners.map(runner => runner.lap)).size).toBe(1);
-      expect(new Set(frame.runners.map(runner => runner.lengthsBehind)).size).toBe(1);
-      expect(frame.runners[0].lap).toBeLessThan(FINISH_LAP);
-      expect(frame.runners.map(runner => runner.no)).toEqual(field.map(runner => runner.no).sort((a, b) => a - b));
+  it("runs through the line: every runner crosses before 100%, the field is past the line at 100%, and nobody stops dead", () => {
+    expect(frontAt(0)).toBe(0);
+    expect(frontAt(1)).toBeCloseTo(FRONT_END, 9);
+    let previous = frontAt(0);
+    let slowest = Infinity;
+    for (let step = 1; step <= 1000; step++) {
+      const front = frontAt(step / 1000);
+      expect(front).toBeGreaterThan(previous); // strictly increasing: nothing ever pauses
+      slowest = Math.min(slowest, (front - previous) * 1000);
+      previous = front;
     }
-    expect(formationAt(field, "FINISH", "ハイ").every(entry => entry.group === "ゴール前（順位なし）")).toBe(true);
+    expect(slowest).toBeGreaterThan(0.3); // the front is still moving at 100%
+    for (const pace of ["スロー", "平均", "ハイ"] as const) {
+      const end = scenarioFrame(field, 1, pace, seed);
+      expect(end.runners.every(runner => runner.lap >= 1)).toBe(true);
+      const mid = scenarioFrame(field, 0.85, pace, seed);
+      expect(mid.runners.every(runner => runner.lap < 1)).toBe(true);
+      const times = crossingTimes(field, pace, seed);
+      expect(times.size).toBe(field.length);
+      for (const time of times.values()) { expect(time).toBeGreaterThan(0.85); expect(time).toBeLessThan(1); }
+      expect(new Set([...times.values()]).size).toBe(field.length); // distinct crossing moments
+    }
   });
 
-  it("is deterministic per race_key and replay, and the seed never changes the FINISH picture", () => {
-    expect(scenarioFrame(field, 0.37, "ハイ", seed)).toEqual(scenarioFrame(field, 0.37, "ハイ", seed));
-    expect(scenarioSeed("JRA|2026-09-30|中山|11")).toBe(seed);
+  it("the field is spread at the line (a real crossing order), not collapsed to one position", () => {
+    for (const pace of ["スロー", "平均", "ハイ"] as const) {
+      const laps = scenarioFrame(field, 1, pace, seed).runners.map(runner => runner.lap);
+      expect(new Set(laps).size).toBe(field.length);
+    }
+    expect(formationAt(field, "FINISH", "ハイ").some(entry => entry.group === "前団")).toBe(true);
+  });
+
+  it("the order of crossing depends on style and pace only, never on the race_key seed", () => {
     const other = scenarioSeed("NAR|2026-09-30|大井|04");
-    expect(other).not.toBe(seed);
-    const finishA = scenarioFrame(field, 1, "平均", seed).runners.map(r => [r.no, r.lap, r.lengthsBehind]);
-    const finishB = scenarioFrame(field, 1, "平均", other).runners.map(r => [r.no, r.lap, r.lengthsBehind]);
-    expect(finishA).toEqual(finishB);
+    for (const pace of ["スロー", "平均", "ハイ"] as const) {
+      const order = (key: number) => [...crossingTimes(field, pace, key).entries()].sort((x, y) => x[1] - y[1]).map(([no]) => no);
+      expect(order(seed)).toEqual(order(other));
+    }
+  });
+
+  it("is deterministic per race_key and replay", () => {
+    expect(scenarioFrame(field, 0.37, "ハイ", seed)).toEqual(scenarioFrame(field, 0.37, "ハイ", seed));
+    expect(scenarioFrame(field, 1, "平均", seed)).toEqual(scenarioFrame(field, 1, "平均", seed));
+    expect(crossingTimes(field, "平均", seed)).toEqual(crossingTimes(field, "平均", seed));
+    expect(scenarioSeed("JRA|2026-09-30|中山|11")).toBe(seed);
+    expect(scenarioSeed("NAR|2026-09-30|大井|04")).not.toBe(seed);
   });
 
   it("frames carry only number, name, style and drawing coordinates -- no probability or ability fields", () => {

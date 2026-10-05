@@ -195,7 +195,7 @@ export default function SimulatorShell() {
   useEffect(() => {
     if (!complete || !confirmed || autoSwitched.current) return;
     autoSwitched.current = true;
-    const timer = window.setTimeout(() => setMode("RESULT"), 1500);
+    const timer = window.setTimeout(() => setMode("RESULT"), 2000);
     return () => window.clearTimeout(timer);
   }, [complete, confirmed]);
 
@@ -258,7 +258,7 @@ export default function SimulatorShell() {
           <span className="kt-research-badge" role="note">RESEARCH_ONLY<small>SIMULATION / SCENARIO</small></span>
         </header>
         <p className="kt-sim-notice">
-          隊列は<strong>脚質と仮定ペースだけ</strong>から描いたシナリオです。実際のレース映像・通過順位・計測値ではなく、着順や走行中の勝率も算出しません。実AI予測は「本日の予想」ページをご覧ください。
+          隊列は<strong>脚質と仮定ペースだけ</strong>から描いたシナリオです。実際のレース映像・通過順位・計測値ではなく、着順の予測や走行中の勝率は算出しません（ゴール通過順はシナリオ上の仮想順です）。実AI予測は「本日の予想」ページをご覧ください。
         </p>
 
         <section className="kt-sim-controls" aria-label="シナリオ条件">
@@ -327,10 +327,14 @@ export default function SimulatorShell() {
               </footer>
               {complete ? <div className="kt-complete" role="status">
                 <strong>SCENARIO COMPLETE</strong>
-                {race ? confirmed
-                  ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>OFFICIAL RESULT AVAILABLE · 公式結果を見る</button>
-                  : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
-                  : <span>デモ隊列には公式結果はありません。</span>}
+                <span>この通過順は着順予測ではありません</span>
+                <div className="kt-complete-actions">
+                  <button type="button" className="kt-cta" onClick={restart}><RotateCcw size={14} aria-hidden="true" /> REPLAY · もう一度見る</button>
+                  {race ? confirmed
+                    ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>RESULT · 公式結果を見る</button>
+                    : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
+                    : <span>デモ隊列には公式結果はありません。</span>}
+                </div>
               </div> : null}
             </section>
 
@@ -339,7 +343,7 @@ export default function SimulatorShell() {
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
-              <PositionStrip formation={formationAt(runners, phase, pace)} honmeiNo={honmeiNo} finish={phase === "FINISH"} />
+              <PositionStrip formation={formationAt(runners, phase, pace)} honmeiNo={honmeiNo} />
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
               <ElevationPanel course={course} />
             </section>
@@ -427,10 +431,9 @@ export function OfficialResultPanel({ view, loading, race, onRefresh }: { view: 
   </section>;
 }
 
-function PositionStrip({ formation, honmeiNo, finish }: { formation: ScenarioPosition[]; honmeiNo: number | null; finish: boolean }) {
-  const groups = (["前団", "中団", "後方", "脚質不明", "ゴール前（順位なし）"] as const).map(group => [group, formation.filter(runner => runner.group === group)] as const).filter(([, list]) => list.length);
+function PositionStrip({ formation, honmeiNo }: { formation: ScenarioPosition[]; honmeiNo: number | null }) {
+  const groups = (["前団", "中団", "後方", "脚質不明"] as const).map(group => [group, formation.filter(runner => runner.group === group)] as const).filter(([, list]) => list.length);
   return <div className="kt-strip">
-    {finish ? <p className="kt-strip-note">ゴール前は隊列が収束します。シナリオは着順を描きません（馬番順に表示）。</p> : null}
     {groups.map(([group, list]) => <div key={group} className="kt-strip-group">
       <small>{group}</small>
       <ol>{list.map(runner => <li key={runner.no} className={runner.no === honmeiNo ? "is-honmei" : ""}>

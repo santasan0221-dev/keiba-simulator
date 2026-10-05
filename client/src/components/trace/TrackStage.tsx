@@ -1,10 +1,10 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { fitPath, pointOnPath, type CourseLayout } from "@/lib/courseAtlas";
-import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, FINAL_PHASE_FROM, keepInView, wholeTrack, type CameraMode, type CameraState } from "@/lib/camera";
+import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_VIEW_FROM, keepInView, wholeTrack, type CameraMode, type CameraState } from "@/lib/camera";
 import { courseShare, remainingMarkers, sectionAt, slopeSpans, straightness, turnness } from "@/lib/courseSections";
 import type { ProgressStore } from "@/lib/progressStore";
 import { cosmeticLane } from "@/lib/scenarioMotion";
-import { scenarioFrame, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
+import { FRONT_END, scenarioFrame, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
 
 export const GEOMETRY = {
   wide: { w: 640, h: 300, laneX: 11, r: 12 },
@@ -48,7 +48,17 @@ export function TrackStage(props: Props) {
   const startShare = course.startLapShare === "UNKNOWN" ? 0 : course.startLapShare;
   const startKnown = course.startLapShare !== "UNKNOWN";
   const pxPath = useMemo(() => fitPath(course.path, g.w, g.h, margin), [course, g.w, g.h, margin]);
-  const at = (share: number, lane: number) => pointOnPath(pxPath, share, lane * g.laneX, closed);
+  const pathLength = useMemo(() => pxPath.reduce((sum, point, i) => (i ? sum + Math.hypot(point.x - pxPath[i - 1].x, point.y - pxPath[i - 1].y) : 0), 0), [pxPath]);
+  // A closed course simply carries on round past the line. A straight course ends at the line, so
+  // beyond it the runners are drawn on along the last segment: they run on, they never pile up.
+  const at = (share: number, lane: number) => {
+    if (closed || share <= 1) return pointOnPath(pxPath, share, lane * g.laneX, closed);
+    const end = pointOnPath(pxPath, 1, lane * g.laneX, false);
+    const a = pxPath[pxPath.length - 2], b = pxPath[pxPath.length - 1];
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const run = (share - 1) * pathLength;
+    return { x: end.x + ((b.x - a.x) / len) * run, y: end.y + ((b.y - a.y) / len) * run };
+  };
 
   // ---- static geometry (re-rendered only when the course / viewport changes)
   const edge = (lane: number, from = 0, to = 1, steps = 96) => Array.from({ length: steps }, (_, i) => at(closed ? from + ((to - from) * i) / steps : i / (steps - 1), lane));
@@ -59,9 +69,10 @@ export function TrackStage(props: Props) {
   const markers = useMemo(() => remainingMarkers(course), [course]);
   const slopes = useMemo(() => slopeSpans(course), [course]);
   const homeFrom = course.sectionShares === "UNKNOWN" ? null : course.sectionShares[6];
-  const capped = (list: { x: number; y: number }[], pad: number) => {
+  // A straight course is drawn past the goal line far enough to hold the runners that run on after it.
+  const capped = (list: { x: number; y: number }[], pad: number, padEnd = pad) => {
     const xs = list.map(p => p.x), lo = Math.min(...xs), hi = Math.max(...xs);
-    return list.map(p => ({ x: p.x <= lo + 0.5 ? p.x - pad : p.x >= hi - 0.5 ? p.x + pad : p.x, y: p.y }));
+    return list.map(p => ({ x: p.x <= lo + 0.5 ? p.x - pad : p.x >= hi - 0.5 ? p.x + padEnd : p.x, y: p.y }));
   };
   const runnersDraw = useMemo(() => [...runners].sort((a, b) => Number(a.no === honmeiNo) - Number(b.no === honmeiNo) || a.no - b.no), [runners, honmeiNo]);
 
@@ -70,7 +81,6 @@ export function TrackStage(props: Props) {
   const worldRef = useRef<SVGGElement | null>(null);
   const parallaxRef = useRef<SVGGElement | null>(null);
   const runnersRef = useRef<SVGGElement | null>(null);
-  const endRef = useRef<SVGTextElement | null>(null);
   const dotRefs = useRef(new Map<number, SVGGElement>());
   const camera = useRef<CameraState>(wholeTrack(box));
   const target = useRef<CameraState>(wholeTrack(box));
@@ -79,8 +89,9 @@ export function TrackStage(props: Props) {
   const modeChangedAt = useRef(0);
   const progressNow = useRef(fixedProgress ?? 0);
   const lastPoints = useRef<{ x: number; y: number }[]>([]);
-  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed });
-  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed };
+  const goalPoints = useMemo(() => [goalIn, goalOut], [goalIn.x, goalIn.y, goalOut.x, goalOut.y]);
+  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints });
+  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints };
 
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
@@ -92,14 +103,17 @@ export function TrackStage(props: Props) {
     svgRef.current?.setAttribute("data-zoom", cam.zoom.toFixed(2));
   };
 
+  // From the home straight the goal line is part of what the camera must keep in view.
+  const framed = (progress: number, points: { x: number; y: number }[]) => (progress >= HOME_VIEW_FROM && live.current.mode !== "TRACK" ? [...points, ...live.current.goalPoints] : points);
+
   const loop = (ts: number) => {
     frameId.current = 0;
     const dt = lastTs.current ? Math.min(100, ts - lastTs.current) : 16;
     lastTs.current = ts;
     const progress = progressNow.current;
-    const tau = ts - modeChangedAt.current < 1200 ? EASE_MS.modeChange : progress >= FINAL_PHASE_FROM ? EASE_MS.finalPhase : EASE_MS.normal;
+    const tau = ts - modeChangedAt.current < 1200 ? EASE_MS.modeChange : progress >= HOME_VIEW_FROM ? EASE_MS.finalPhase : EASE_MS.normal;
     camera.current = easeCamera(camera.current, target.current, dt, tau);
-    if (!live.current.reduced) camera.current = keepInView(camera.current, lastPoints.current, live.current.box, CONTAIN_MARGIN);
+    if (!live.current.reduced) camera.current = keepInView(camera.current, framed(progress, lastPoints.current), live.current.box, CONTAIN_MARGIN);
     apply(camera.current);
     if (!converged(camera.current, target.current)) frameId.current = requestAnimationFrame(loop);
     else lastTs.current = 0;
@@ -120,20 +134,15 @@ export function TrackStage(props: Props) {
       points.push(p);
       dotRefs.current.get(runner.no)?.setAttribute("transform", `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);
     }
-    // FINISH window: the level field fades short of the line; nobody is drawn crossing first.
-    const fade = progress <= FINAL_PHASE_FROM ? 1 : Math.max(0.25, 1 - ((progress - FINAL_PHASE_FROM) / 0.05) * 0.75);
-    runnersRef.current?.setAttribute("opacity", fade.toFixed(2));
-    endRef.current?.setAttribute("display", progress > FINAL_PHASE_FROM ? "inline" : "none");
-
     lastPoints.current = points;
-    // Camera: frozen once the scenario is complete; AUTO is a whole-track view under reduced motion.
-    if (progress >= 1 && fixedProgress === undefined) return;
+    // Camera: the pack is static once every runner has crossed, so the camera settles and stays;
+    // AUTO is a whole-track view under reduced motion.
     const section = sectionAt(s.course, courseShare(s.course, frame.runners.length ? lapSum / frame.runners.length : 0), progress);
     const mode: CameraMode = s.reduced && s.mode === "AUTO" ? "TRACK" : s.mode;
-    target.current = cameraTarget({ points, mode, section, box: s.box, progress });
+    target.current = cameraTarget({ points, mode, section, box: s.box, progress, anchors: s.goalPoints });
     if (s.reduced) { camera.current = target.current; apply(camera.current); return; }
     // The easing may lag the pack; this keeps every runner in view while it catches up.
-    camera.current = keepInView(camera.current, points, s.box, CONTAIN_MARGIN);
+    camera.current = keepInView(camera.current, framed(progress, points), s.box, CONTAIN_MARGIN);
     apply(camera.current);
     ensureLoop();
   };
@@ -167,7 +176,7 @@ export function TrackStage(props: Props) {
         <polygon points={toPoints(edge(4.2))} className="kt-track-outer" />
         <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
         {homeFrom !== null && homeFrom < 1 ? <polygon points={band(homeFrom, 1)} className="kt-straight-hl" data-home-straight="true" /> : null}
-      </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2))} className="kt-track-outer" />}
+      </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2, g.r + 2 + (FRONT_END - 1) * pathLength))} className="kt-track-outer" />}
       {slopes.map(span => {
         const steps = 12;
         const line = Array.from({ length: steps + 1 }, (_, i) => at(span.fromShare + ((span.toShare - span.fromShare) * i) / steps, 5.2));
@@ -197,6 +206,5 @@ export function TrackStage(props: Props) {
         </g>)}
       </g>
     </g>
-    <text ref={endRef} x={g.w / 2} y={g.h / 2 + 4} className="kt-track-end" display="none">ゴール前でシナリオ終了 · 着順は描きません</text>
   </svg>;
 }

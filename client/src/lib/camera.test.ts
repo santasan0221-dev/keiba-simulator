@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { AUTO_ZOOM, cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, FINAL_ZOOM_CAP, keepInView, MAX_ZOOM, rectContains, viewRect, wholeTrack, type Box, type CameraMode } from "./camera";
+import { AUTO_ZOOM, cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_ZOOM_CAP, HOME_VIEW_FROM, keepInView, MAX_ZOOM, rectContains, viewRect, wholeTrack, type Box, type CameraMode } from "./camera";
 import { SECTION_LABEL, type SectionId } from "./courseSections";
 
 const BOXES: Box[] = [{ w: 640, h: 300 }, { w: 360, h: 320 }];
@@ -47,13 +47,42 @@ describe("broadcast camera target", () => {
     expect(AUTO_ZOOM.BACKSTRETCH).toBeLessThan(AUTO_ZOOM.FINAL_TURN); // wider view on the long back stretch
   });
 
-  it("from the FINAL freeze (95%) the camera never zooms in tighter than the cap", () => {
+  it("through the home straight the camera pulls back: it never zooms in tighter than the cap", () => {
     const box = BOXES[1];
     const tight = [{ x: 150, y: 150 }, { x: 160, y: 155 }];
     for (const mode of ["BROADCAST", "AUTO"] as CameraMode[]) {
-      expect(cameraTarget({ points: tight, mode, section: "HOME_STRAIGHT", box, progress: 0.96 }).zoom).toBeLessThanOrEqual(FINAL_ZOOM_CAP + 1e-9);
-      expect(cameraTarget({ points: tight, mode, section: "HOME_STRAIGHT", box, progress: 0.5 }).zoom).toBeGreaterThan(FINAL_ZOOM_CAP);
+      expect(cameraTarget({ points: tight, mode, section: "HOME_STRAIGHT", box, progress: 0.96 }).zoom).toBeLessThanOrEqual(HOME_ZOOM_CAP + 1e-9);
+      expect(cameraTarget({ points: tight, mode, section: "HOME_STRAIGHT", box, progress: HOME_VIEW_FROM }).zoom).toBeLessThanOrEqual(HOME_ZOOM_CAP + 1e-9);
+      expect(cameraTarget({ points: tight, mode, section: "HOME_STRAIGHT", box, progress: 0.5 }).zoom).toBeGreaterThan(HOME_ZOOM_CAP);
     }
+  });
+
+  it("through the home straight the goal line stays in view together with every runner", () => {
+    const box = BOXES[0];
+    const goal = [{ x: 560, y: 80 }, { x: 560, y: 220 }];
+    for (const mode of ["BROADCAST", "AUTO"] as CameraMode[]) {
+      for (let seed = 0; seed < 30; seed++) {
+        const points = field(box, seed, 0.1 + (seed % 8) * 0.1).map(p => ({ x: Math.min(p.x, 540), y: p.y }));
+        const camera = cameraTarget({ points, mode, section: "HOME_STRAIGHT", box, progress: 0.9, anchors: goal });
+        const rect = viewRect(camera, box);
+        for (const p of [...points, ...goal]) expect(rectContains(rect, p), `${mode} seed ${seed}`).toBe(true);
+      }
+    }
+    // before the home straight the goal is not forced into the frame
+    const near = [{ x: 100, y: 150 }, { x: 110, y: 152 }];
+    const before = cameraTarget({ points: near, mode: "BROADCAST", section: "BACKSTRETCH", box, progress: 0.4, anchors: goal });
+    expect(rectContains(viewRect(before, box), goal[0])).toBe(false);
+  });
+});
+
+describe("keepInView at the world edge", () => {
+  it("a point closer to the edge than the margin still ends up inside the view (no snap to the centre)", () => {
+    const box = BOXES[0];
+    const points = [{ x: 244, y: 251 }, { x: 272, y: 269 }, { x: 251.7, y: 219.6 }, { x: 254.8, y: 283.3 }];
+    const camera = keepInView({ cx: 366, cy: 150, zoom: 1.58 }, points, box, 18);
+    const rect = viewRect(camera, box);
+    for (const p of points) expect(rectContains(rect, p)).toBe(true);
+    expect(camera.cy).toBeGreaterThan(190); // follows the bottom edge instead of resetting to box.h / 2
   });
 });
 

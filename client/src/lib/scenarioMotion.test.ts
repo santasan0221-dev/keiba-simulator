@@ -58,12 +58,23 @@ describe("cosmetic runner motion", () => {
     expect(lane("追込", 0, 1, 3)).toBeGreaterThan(lane("追込", 0, 0, 3));
   });
 
-  it("calms down towards FINAL so the converged field is steady", () => {
+  it("stays continuous and inside the track through the home straight to the line", () => {
     for (let no = 1; no <= 14; no++) {
-      const a = cosmeticLane(input({ no, progress: 0.96, baseLane: 2, style: "差し" }));
-      const b = cosmeticLane(input({ no, progress: 1, baseLane: 2, style: "差し" }));
-      expect(Math.abs(a - b)).toBeLessThan(0.04);
+      let previous = cosmeticLane(input({ no, progress: 0.7, baseLane: 2, style: "差し", straight: 1 }));
+      for (let step = 1; step <= 300; step++) {
+        const lane = cosmeticLane(input({ no, progress: 0.7 + (step / 300) * 0.3, baseLane: 2, style: "差し", straight: 1 }));
+        expect(Math.abs(lane - previous)).toBeLessThan(0.02);
+        expect(lane).toBeGreaterThanOrEqual(LANE_MIN);
+        expect(lane).toBeLessThanOrEqual(LANE_MAX);
+        previous = lane;
+      }
     }
+  });
+
+  it("widens a little on the home straight towards the line", () => {
+    // mean lane offset of a mid-field style (unclamped), so cosmetic drift averages out
+    const spread = (progress: number) => Array.from({ length: 14 }, (_, i) => cosmeticLane(input({ no: i + 1, progress, baseLane: 1.5, style: "差し", straight: 1 }))).reduce((sum, lane) => sum + lane, 0) / 14;
+    expect(spread(0.97)).toBeGreaterThan(spread(0.7));
   });
 
   it("never changes who is ahead: the order is read from the scenario frame, not from the lanes", () => {

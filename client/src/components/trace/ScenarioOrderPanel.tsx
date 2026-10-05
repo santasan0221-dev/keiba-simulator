@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from "react";
 import type { Pace, ScenarioRunner } from "@/lib/scenarioReplay";
-import { CHECKPOINTS, compactRows, deltaLabel, ORDER_NOTE, orderView, rankDelta, rankHistory, reachedCheckpoints, type CheckpointId, type RankRecord } from "@/lib/scenarioOrder";
+import { CHECKPOINTS, compactRows, CROSSING_NOTE, CROSSING_TITLE, CROSSING_TITLE_JA, deltaLabel, ORDER_NOTE, orderView, rankDelta, rankHistory, reachedCheckpoints, type CheckpointId, type RankRecord } from "@/lib/scenarioOrder";
 import type { CourseLayout } from "@/lib/courseAtlas";
 
 type Props = { runners: ScenarioRunner[]; pace: Pace; seed: number; progress: number; compact: boolean };
@@ -14,8 +14,9 @@ const deltaSpoken = (delta: number | null) => delta === null ? "" : delta > 0 ? 
 /**
  * SCENARIO ORDER V3. `progress` arrives already throttled (<= ~8 Hz) by the shell and the component
  * is memoized, so the animation frame loop never re-renders it. Each row shows the virtual rank,
- * the change against the last checkpoint passed, the horse and its published run style. The order is
- * held at 95% and dropped at 100% (SCENARIO COMPLETE); it is never kept as a result.
+ * the change against the last checkpoint passed, the horse and its published run style. The order
+ * keeps updating to 100%; once a runner crosses the line it also carries its place in the virtual
+ * CROSSING ORDER. That order is scenario-only: never a predicted finish and never an official result.
  */
 export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pace, seed, progress, compact }: Props) {
   const [pinned, setPinned] = useState<number | null>(null);
@@ -32,12 +33,13 @@ export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pa
     <header>
       <span className="kt-eyebrow">{view.title}</span>
       <p className="kt-order-note" role="note">{ORDER_NOTE}</p>
-      {view.kind !== "COMPLETE" && lastPassed ? <small className="kt-order-checkpoint">直近チェックポイント · {lastPassed.label}</small> : null}
+      {lastPassed ? <small className="kt-order-checkpoint">直近チェックポイント · {lastPassed.label}</small> : null}
     </header>
     {view.kind === "COMPLETE" ? <div className="kt-order-complete" role="status">
       <strong>{view.title}</strong>
       <span>{view.message}</span>
-    </div> : <>
+    </div> : null}
+    <>
       <ol className="kt-order-list">
         {shown.map(row => {
           const { delta } = rankDelta(history.get(row.no), reached, row.rank);
@@ -49,6 +51,7 @@ export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pa
               <span className="kt-horse-no">{row.no}</span>
               <span className="kt-order-name">{row.name ?? `${row.no}番`}</span>
               <em>{row.style}</em>
+              {row.crossing !== null ? <small className="kt-order-crossed kt-num">{row.crossing}番目に通過</small> : null}
               {selected ? <span className="kt-order-selected" aria-hidden="true">●</span> : null}
             </button>
           </li>;
@@ -59,7 +62,12 @@ export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pa
         : null}
       {pinnedHistory ? <p className="kt-order-trail kt-num" aria-label={`馬番${pinned}の順位推移`}>#{pinned} 選択中 · {pinnedHistory}</p> : <p className="kt-order-trail">馬をタップすると選択して順位推移を表示します。</p>}
       {!compact ? <RankHistoryChart history={history} reached={reached} count={rows.length} pinned={pinned} /> : null}
-    </>}
+      <div className="kt-crossing" aria-label={`${CROSSING_TITLE}（${CROSSING_TITLE_JA}）`}>
+        <span className="kt-eyebrow">{CROSSING_TITLE}<small> {CROSSING_TITLE_JA}</small></span>
+        <p className="kt-crossing-seq kt-num" aria-live="polite">{view.crossingNos.length ? view.crossingNos.map(no => `#${no}`).join(" → ") : "まだ誰もゴール線を通過していません"}</p>
+        <p className="kt-order-note" role="note">{CROSSING_NOTE}</p>
+      </div>
+    </>
   </section>;
 });
 

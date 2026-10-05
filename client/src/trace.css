@@ -700,6 +700,10 @@ body { background: var(--kt-bg); }
 .kt-order-list em { margin-left: auto; color: var(--kt-faint); font-style: normal; font-size: 11px; flex: none; }
 .kt-order-toggle { min-height: 44px; border: 1px solid var(--kt-border); border-radius: 8px; background: transparent; color: inherit; font-size: 13px; cursor: pointer; }
 .kt-order-trail { margin: 0; color: var(--kt-muted); font-size: 12px; overflow-wrap: anywhere; }
+.kt-complete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kt-order-crossed { margin-left: auto; color: var(--kt-research); font-size: 11px; white-space: nowrap; }
+.kt-crossing { display: grid; gap: 4px; margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--kt-research); border-radius: 10px; }
+.kt-crossing-seq { margin: 0; overflow-wrap: anywhere; font-size: 13px; }
 .kt-order-complete { display: grid; gap: 4px; padding: 12px; border: 1px dashed var(--kt-research); border-radius: 10px; }
 .kt-rank-chart { width: 100%; height: auto; display: block; max-width: 100%; }
 .kt-rank-grid { stroke: #ffffff1a; }

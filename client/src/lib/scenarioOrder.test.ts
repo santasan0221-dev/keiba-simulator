@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CHECKPOINTS, compactRows, createThrottledEmitter, deltaLabel, FINAL_PHASE_FROM, orderFrame, orderView, rankDelta, rankHistory, reachedCheckpoints } from "./scenarioOrder";
+import { CHECKPOINTS, COMPLETE_MESSAGE, compactRows, createThrottledEmitter, CROSSING_NOTE, crossingSequence, deltaLabel, orderFrame, orderView, rankDelta, rankHistory, reachedCheckpoints } from "./scenarioOrder";
 import { demoField, PHASE_KEYFRAME, scenarioFrame, scenarioSeed } from "./scenarioReplay";
 
 const field = demoField();
@@ -57,33 +57,74 @@ describe("SCENARIO ORDER follows continuous course progress", () => {
   });
 });
 
-describe("FINISH handling", () => {
-  it("labels FINAL PHASE above 95% and holds no rows at 100%", () => {
-    expect(orderView(field, 0.5, "平均", seed).kind).toBe("LIVE");
-    expect(orderView(field, FINAL_PHASE_FROM, "平均", seed).kind).toBe("LIVE");
-    const final = orderView(field, 0.97, "平均", seed);
-    expect(final.kind).toBe("FINAL_PHASE");
-    expect(final.title).toBe("SCENARIO ORDER — FINAL PHASE");
-    expect(final.rows).toEqual(orderView(field, FINAL_PHASE_FROM, "平均", seed).rows);
+describe("full finish: the order updates to 100% and the crossing order is scenario-only", () => {
+  it("stays LIVE until 100%, then COMPLETE with every runner placed in the crossing sequence", () => {
+    for (const p of [0.5, 0.9, 0.95, 0.99]) expect(orderView(field, p, "平均", seed).kind).toBe("LIVE");
     const done = orderView(field, 1, "平均", seed);
-    expect(done).toEqual({ kind: "COMPLETE", title: "SCENARIO COMPLETE", message: "着順は予測していません", rows: [] });
+    expect(done.kind).toBe("COMPLETE");
+    expect(done.title).toBe("SCENARIO COMPLETE");
+    expect(done.message).toBe(COMPLETE_MESSAGE);
+    expect(done.rows).toHaveLength(field.length);
+    expect(done.rows.map(row => row.crossing)).toEqual(done.rows.map((_, i) => i + 1));
+    expect(done.crossingNos).toEqual(done.rows.map(row => row.no));
+  });
+
+  it("the crossing sequence only grows, and never reorders", () => {
+    let seen: number[] = [];
+    for (let step = 0; step <= 1000; step++) {
+      const view = orderView(field, step / 1000, "ハイ", seed);
+      expect(view.crossingNos.slice(0, seen.length)).toEqual(seen);
+      expect(view.crossingNos.length).toBeGreaterThanOrEqual(seen.length);
+      seen = view.crossingNos;
+      view.rows.forEach(row => expect(row.crossing === null).toBe(!view.crossingNos.includes(row.no)));
+    }
+    expect(seen).toHaveLength(field.length);
+    expect(seen).toEqual(crossingSequence(field, "ハイ", seed).map(entry => entry.no));
+  });
+
+  it("is the same crossing order for the same race_key on every replay, and equals the order of the final frame", () => {
+    for (const pace of ["スロー", "平均", "ハイ"] as const) {
+      const a = crossingSequence(field, pace, seed).map(entry => entry.no);
+      expect(crossingSequence(field, pace, seed).map(entry => entry.no)).toEqual(a);
+      expect(orderFrame(scenarioFrame(field, 1, pace, seed).runners, seed).map(row => row.no)).toEqual(a);
+    }
+  });
+
+  it("the order keeps changing through the home straight and settles only just before the line", () => {
+    const rows = (p: number, pace: "スロー" | "平均" | "ハイ") => orderView(field, p, pace, seed).rows.map(row => row.no);
+    expect(["スロー", "ハイ"].some(pace => rows(0.85, pace as "スロー") .join() !== rows(0.93, pace as "スロー").join())).toBe(true);
+    for (const pace of ["スロー", "平均", "ハイ"] as const) for (let step = 0; step <= 20; step++) expect(rows(0.93 + (step / 20) * 0.07, pace)).toEqual(rows(1, pace));
+  });
+
+  it("no scenario text names a winner or numbers a finishing place", () => {
+    for (const file of ["scenarioOrder.ts", "../components/trace/ScenarioOrderPanel.tsx", "../components/trace/TrackStage.tsx"]) {
+      const code = strip(file); // user-visible strings and code; comments are not shown
+      for (const banned of [/[123１２３]着/, /winner/i, /predicted/i, /forecast/i]) expect(code, `${file} ${banned}`).not.toMatch(banned);
+    }
+    expect(CROSSING_NOTE).toBe("この順番はシナリオ上の仮想通過順です。実際の着順予測ではありません。");
   });
 });
 
 describe("SCENARIO ORDER V3: checkpoints and rank delta", () => {
-  it("has the six checkpoints in order: START, EARLY, BACKSTRETCH, THIRD TURN, FINAL TURN, FINAL", () => {
-    expect(CHECKPOINTS.map(c => c.label)).toEqual(["START", "EARLY", "BACKSTRETCH", "THIRD TURN", "FINAL TURN", "FINAL"]);
+  it("has the seven checkpoints in order: START, EARLY, BACKSTRETCH, THIRD TURN, FINAL TURN, HOME STRAIGHT, GOAL", () => {
+    expect(CHECKPOINTS.map(c => c.label)).toEqual(["START", "EARLY", "BACKSTRETCH", "THIRD TURN", "FINAL TURN", "HOME STRAIGHT", "GOAL"]);
     const ts = CHECKPOINTS.map(c => c.t);
     expect([...ts].sort((a, b) => a - b)).toEqual(ts);
-    expect(ts[ts.length - 1]).toBeLessThan(FINAL_PHASE_FROM);
+    expect(ts[ts.length - 1]).toBe(1);
   });
 
-  it("reached checkpoints grow with progress and stop at the 95% hold", () => {
+  it("reached checkpoints grow with progress up to GOAL at 100%", () => {
     expect(reachedCheckpoints(0)).toEqual(["START"]);
     expect(reachedCheckpoints(0.3)).toEqual(["START", "EARLY"]);
     expect(reachedCheckpoints(0.73)).toHaveLength(5);
-    expect(reachedCheckpoints(0.95)).toHaveLength(6);
-    expect(reachedCheckpoints(1)).toHaveLength(6);
+    expect(reachedCheckpoints(0.85)).toHaveLength(6);
+    expect(reachedCheckpoints(0.99)).toHaveLength(6);
+    expect(reachedCheckpoints(1)).toHaveLength(7);
+  });
+
+  it("the GOAL rank of every runner is its place in the crossing order", () => {
+    const history = rankHistory(field, "平均", seed);
+    crossingSequence(field, "平均", seed).forEach((entry, index) => expect(history.get(entry.no)!.GOAL).toBe(index + 1));
   });
 
   it("rank delta is measured against the last checkpoint passed (positive = moved up); START is not a reference", () => {
@@ -106,24 +147,6 @@ describe("SCENARIO ORDER V3: checkpoints and rank delta", () => {
         const { previous, delta } = rankDelta(history.get(row.no), reached, row.rank);
         expect(previous).toBe(history.get(row.no)![last]);
         expect(delta).toBe(previous! - row.rank);
-      }
-    }
-  });
-});
-
-describe("final-order freeze (95% to 100%)", () => {
-  it("the rows never change between 95% and 100%, for every pace and race_key", () => {
-    for (const pace of ["スロー", "平均", "ハイ"] as const) {
-      for (const key of ["a", "JRA|2026-09-30|中山|11", "NAR|2026-09-30|大井|04"]) {
-        const s = scenarioSeed(key);
-        const held = orderView(field, FINAL_PHASE_FROM, pace, s).rows;
-        for (let step = 1; step < 50; step++) {
-          const p = FINAL_PHASE_FROM + (step / 50) * (1 - FINAL_PHASE_FROM) - 1e-9;
-          const view = orderView(field, p, pace, s);
-          expect(view.kind).toBe("FINAL_PHASE");
-          expect(view.rows).toEqual(held);
-        }
-        expect(orderView(field, 1, pace, s).rows).toEqual([]);
       }
     }
   });

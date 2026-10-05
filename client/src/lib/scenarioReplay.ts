@@ -3,9 +3,10 @@
  *
  * Built only from each runner's published run style (逃げ/先行/差し/追込)
  * and an assumed pace chosen by the viewer. It reads no speed, stamina,
- * ability score or probability, produces no finish order, and computes no
- * win probability. It is an illustration of how a field of these styles
- * typically lines up -- RESEARCH_ONLY, never telemetry.
+ * ability score or probability and computes no win probability. The scenario
+ * runs through the finish line, so it has a virtual CROSSING ORDER; that order
+ * is an artefact of the drawn style formation, never a predicted finishing
+ * order. It is an illustration -- RESEARCH_ONLY, never telemetry.
  */
 export const PHASES = ["START", "EARLY", "BACKSTRETCH", "TURN", "FINAL", "FINISH"] as const;
 export type Phase = (typeof PHASES)[number];
@@ -19,24 +20,30 @@ export const PHASE_LABEL: Record<Phase, string> = {
 /** Share of the lap completed by the leading group at each phase (0 = start, 1 = finish line). */
 export const PHASE_PROGRESS: Record<Phase, number> = { START: 0.02, EARLY: 0.2, BACKSTRETCH: 0.45, TURN: 0.68, FINAL: 0.88, FINISH: 1 };
 
-/**
- * FINISH is a converged field: every runner is drawn at the same distance
- * from the line, short of it, so the scenario never shows anyone crossing
- * first. Finishing order comes only from the canonical official result.
- */
-const FINISH_GAP = 1;
-
 /** Typical lengths behind the front of the field per style and phase (average pace). */
-const GAP: Record<Exclude<ScenarioStyle, "不明">, Record<Phase, number>> = {
-  逃げ: { START: 0.5, EARLY: 0, BACKSTRETCH: 0, TURN: 0, FINAL: 0.8, FINISH: FINISH_GAP },
-  先行: { START: 1, EARLY: 2, BACKSTRETCH: 2.5, TURN: 1.5, FINAL: 0.8, FINISH: FINISH_GAP },
-  差し: { START: 1.5, EARLY: 5, BACKSTRETCH: 6, TURN: 4, FINAL: 1.6, FINISH: FINISH_GAP },
-  追込: { START: 2, EARLY: 8, BACKSTRETCH: 9.5, TURN: 7, FINAL: 2.8, FINISH: FINISH_GAP },
+const GAP: Record<Exclude<ScenarioStyle, "不明">, Record<Exclude<Phase, "FINISH">, number>> = {
+  逃げ: { START: 0.5, EARLY: 0, BACKSTRETCH: 0, TURN: 0, FINAL: 0.8 },
+  先行: { START: 1, EARLY: 2, BACKSTRETCH: 2.5, TURN: 1.5, FINAL: 0.8 },
+  差し: { START: 1.5, EARLY: 5, BACKSTRETCH: 6, TURN: 4, FINAL: 1.6 },
+  追込: { START: 2, EARLY: 8, BACKSTRETCH: 9.5, TURN: 7, FINAL: 2.8 },
 };
 const PACE_SPREAD: Record<Pace, number> = { スロー: 0.7, 平均: 1, ハイ: 1.35 };
 
+/**
+ * How much of its FINAL gap each style keeps at the line, by assumed pace. Style and pace only:
+ * a slow pace keeps the front group together, a high pace lets the closers gain and the front
+ * runners fade. No ability, odds or result enters; this is the whole of the home-straight "kick".
+ */
+const FINISH_KEEP: Record<Pace, Record<ScenarioStyle, number>> = {
+  スロー: { 逃げ: 0.5, 先行: 0.55, 差し: 0.85, 追込: 1, 不明: 0.85 },
+  平均: { 逃げ: 0.75, 先行: 0.7, 差し: 0.62, 追込: 0.62, 不明: 0.7 },
+  ハイ: { 逃げ: 1, 先行: 0.85, 差し: 0.5, 追込: 0.42, 不明: 0.85 },
+};
+/** Soft cap (lengths) on the gap at the line, so the last runner always crosses before 100%. */
+const GAP_CAP = 5;
+
 export type ScenarioRunner = { no: number; name: string | null; style: ScenarioStyle };
-export type ScenarioGroup = "前団" | "中団" | "後方" | "脚質不明" | "ゴール前（順位なし）";
+export type ScenarioGroup = "前団" | "中団" | "後方" | "脚質不明";
 export type ScenarioPosition = ScenarioRunner & { lengthsBehind: number; group: ScenarioGroup };
 
 export function normalizeStyle(value: string | null | undefined): ScenarioStyle {
@@ -53,7 +60,13 @@ export function normalizeStyle(value: string | null | undefined): ScenarioStyle 
  */
 export function formationAt(runners: ScenarioRunner[], phase: Phase, pace: Pace): ScenarioPosition[] {
   if (phase === "FINISH") {
-    return [...runners].sort((a, b) => a.no - b.no).map(runner => ({ ...runner, lengthsBehind: FINISH_GAP, group: "ゴール前（順位なし）" as const }));
+    // The gaps at the line: the FINAL gaps scaled by style and pace, then softly capped (tanh is
+    // strictly increasing, so the order of the gaps is never changed by the cap).
+    return formationAt(runners, "FINAL", pace).map(entry => {
+      const lengthsBehind = Math.round(GAP_CAP * Math.tanh((entry.lengthsBehind * FINISH_KEEP[pace][entry.style]) / GAP_CAP) * 1000) / 1000;
+      const group: ScenarioGroup = entry.style === "不明" ? "脚質不明" : lengthsBehind < 2.5 ? "前団" : lengthsBehind < 6 ? "中団" : "後方";
+      return { ...entry, lengthsBehind, group };
+    }).sort((a, b) => a.lengthsBehind - b.lengthsBehind || a.no - b.no);
   }
   const spread = PACE_SPREAD[pace];
   const seen: Record<string, number> = {};
@@ -74,7 +87,7 @@ export function formationAt(runners: ScenarioRunner[], phase: Phase, pace: Pace)
 // time). Phase labels cover fixed windows; each phase's formation is a
 // keyframe and runners glide between neighbouring keyframes. The only inputs
 // are run style, the assumed pace and a race_key seed used for cosmetic
-// spacing -- the seed never changes who is ahead at FINISH (nobody is).
+// spacing -- the seed never changes the order in which runners cross the line.
 
 /** Label windows on the scenario progress axis. */
 export const PHASE_WINDOWS: Record<Phase, readonly [number, number]> = {
@@ -82,8 +95,26 @@ export const PHASE_WINDOWS: Record<Phase, readonly [number, number]> = {
 };
 /** Where each phase's formation is exact (keyframe) on the progress axis. */
 export const PHASE_KEYFRAME: Record<Phase, number> = { START: 0, EARLY: 0.2, BACKSTRETCH: 0.425, TURN: 0.65, FINAL: 0.85, FINISH: 1 };
-/** Share of the lap the front of the field has covered at FINISH -- stops short of the line. */
-export const FINISH_LAP = 0.985;
+/** Where the formation of the line (FINISH) is exact. It is settled just before the first runner crosses. */
+export const FORMATION_KEYFRAME: Record<Phase, number> = { ...PHASE_KEYFRAME, FINISH: 0.93 };
+/** Progress rate of the pack front over the early part of the scenario (share of the race per unit progress). */
+export const FRONT_RATE = 0.985;
+/** From here the front accelerates through the home straight and runs on past the line. */
+const RUN_IN_FROM = 0.75;
+/** Share of the race the front has covered at 100%: past the line, so every runner crosses. */
+export const FRONT_END = 1.08;
+/** Speed of the front at 100% as a share of its early speed: the field runs on, it does not stop dead. */
+const END_SPEED = 0.5;
+
+/** Course progress of the pack front at scenario progress t. Smooth (Hermite) and strictly increasing. */
+export function frontAt(t: number): number {
+  const value = clamp01(t);
+  if (value <= RUN_IN_FROM) return value * FRONT_RATE;
+  const span = 1 - RUN_IN_FROM;
+  const u = (value - RUN_IN_FROM) / span;
+  const p0 = RUN_IN_FROM * FRONT_RATE, m0 = FRONT_RATE * span, m1 = END_SPEED * FRONT_RATE * span;
+  return (2 * u ** 3 - 3 * u ** 2 + 1) * p0 + (u ** 3 - 2 * u ** 2 + u) * m0 + (-2 * u ** 3 + 3 * u ** 2) * FRONT_END + (u ** 3 - u ** 2) * m1;
+}
 
 export function phaseAt(t: number): Phase {
   const value = clamp01(t);
@@ -108,7 +139,7 @@ const clamp01 = (value: number) => Math.max(0, Math.min(1, Number.isFinite(value
 const smooth = (value: number) => value * value * (3 - 2 * value);
 
 export type FrameRunner = ScenarioRunner & {
-  /** Share of the lap covered, 0..FINISH_LAP. Illustrative, not a measured position. */
+  /** Share of the race covered; past 1 the runner is beyond the line. Illustrative, not a measured position. */
   lap: number;
   /** Lane offset from the rail (0 = rail). Cosmetic; carries no ranking. */
   lane: number;
@@ -127,16 +158,17 @@ export const LENGTH_SHARE = 0.013;
  */
 export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, seed: number): ScenarioFrame {
   const progress = clamp01(t);
-  const next = PHASES.findIndex(phase => progress <= PHASE_KEYFRAME[phase]);
-  const to = PHASES[Math.max(0, next)];
-  const from = PHASES[Math.max(0, next - 1)];
-  const span = PHASE_KEYFRAME[to] - PHASE_KEYFRAME[from];
-  const mix = span > 0 ? smooth((progress - PHASE_KEYFRAME[from]) / span) : 1;
+  const next = PHASES.findIndex(phase => progress <= FORMATION_KEYFRAME[phase]);
+  const last = PHASES.length - 1;
+  const to = PHASES[next < 0 ? last : next];
+  const from = PHASES[next < 0 ? last : Math.max(0, next - 1)];
+  const span = FORMATION_KEYFRAME[to] - FORMATION_KEYFRAME[from];
+  const mix = span > 0 && next >= 0 ? smooth((progress - FORMATION_KEYFRAME[from]) / span) : 1;
   const a = new Map(formationAt(runners, from, pace).map(entry => [entry.no, entry.lengthsBehind]));
   const b = new Map(formationAt(runners, to, pace).map(entry => [entry.no, entry.lengthsBehind]));
-  const front = progress * FINISH_LAP;
-  // Cosmetic spacing fades out approaching FINISH so the converged field is exact.
-  const settle = 1 - smooth(clamp01((progress - PHASE_KEYFRAME.FINAL) / (1 - PHASE_KEYFRAME.FINAL)));
+  const front = frontAt(progress);
+  // Cosmetic spacing is gone before the home straight, so the order into the line is style and pace only.
+  const settle = 1 - smooth(clamp01((progress - 0.65) / (PHASE_KEYFRAME.FINAL - 0.65)));
   const ordered = [...runners].sort((x, y) => x.no - y.no).map(runner => {
     const base = (a.get(runner.no) ?? 0) + ((b.get(runner.no) ?? 0) - (a.get(runner.no) ?? 0)) * mix;
     const stagger = seededUnit(seed, runner.no, 1) * 0.35 * settle;
@@ -145,6 +177,21 @@ export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, 
     return { ...runner, lengthsBehind, lane, lap: Math.max(0, front - lengthsBehind * LENGTH_SHARE) };
   });
   return { progress, phase: phaseAt(progress), runners: ordered };
+}
+
+/**
+ * Scenario progress at which each runner's drawn position reaches the line (lap = 1), by bisection.
+ * Every runner crosses before 100%. The times come from the drawn frame only.
+ */
+export function crossingTimes(runners: ScenarioRunner[], pace: Pace, seed: number): Map<number, number> {
+  const times = new Map<number, number>();
+  const lapOf = (no: number, t: number) => scenarioFrame(runners, t, pace, seed).runners.find(entry => entry.no === no)!.lap;
+  for (const runner of runners) {
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 28; i++) { const mid = (lo + hi) / 2; if (lapOf(runner.no, mid) >= 1) hi = mid; else lo = mid; }
+    times.set(runner.no, hi);
+  }
+  return times;
 }
 
 /** Generic numbered field for when no race is loaded. Clearly a demo, never real runners. */
