@@ -21,7 +21,9 @@ import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioO
 import { TrackStage } from "@/components/trace/TrackStage";
 import { CameraSelector } from "@/components/trace/CameraSelector";
 import { createThrottledEmitter } from "@/lib/scenarioOrder";
-import { buildTerrainProfile, gapFieldOf, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
+import { buildTerrainProfile, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
+import { buildHorseProfiles, horseHistoryOf, type HorseHistory } from "@/lib/horseScenarioProfile";
+import { buildScenarioField } from "@/lib/scenarioRunnerField";
 import { GEOMETRY_DISCLAIMER, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
 import { createProgressStore } from "@/lib/progressStore";
 import { type CameraMode } from "@/lib/camera";
@@ -34,7 +36,8 @@ import {
   PHASE_LABEL,
   PHASES,
   scenarioFrame,
-  scenarioSeed,
+  scenarioSeedFor,
+  STANDARD_VARIANT,
   type Pace,
   type ScenarioPosition,
   type ScenarioRunner,
@@ -232,8 +235,17 @@ export default function SimulatorShell() {
   const runners: ScenarioRunner[] = useMemo(() => race
     ? race.horses.filter(horse => typeof horse.no === "number" && !horse.withdrawn).map(horse => ({ no: horse.no as number, name: horse.name, style: normalizeStyle(horse.style) }))
     : demoField(), [race]);
-  const seed = scenarioSeed(race?.race.race_key ?? "demo");
-  const frame = scenarioFrame(runners, progress, pace, seed);
+  const seed = scenarioSeedFor(race?.race.race_key ?? "demo", STANDARD_VARIANT);
+  const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
+  const terrain = useMemo(() => buildTerrainProfile(course), [course]);
+  terrainRef.current = terrain;
+  // Pre-race horse profiles (history only) and the whole scenario field (course tempo + per-runner offsets),
+  // built once per race; jump races have no course model, so their profiles stay neutral.
+  const profiles = useMemo(() => race && course.surface !== "JUMP"
+    ? buildHorseProfiles(race.horses.map(horseHistoryOf).filter((history): history is HorseHistory => history !== null), { organization: race.race.organization, going: race.race.going })
+    : undefined, [race, course]);
+  const field = useMemo(() => buildScenarioField({ terrain, runners, profiles, seed }), [terrain, runners, profiles, seed]);
+  const frame = scenarioFrame(runners, progress, pace, seed, field);
   const phase = frame.phase;
   const packLap = frame.runners.length ? frame.runners.reduce((sum, runner) => sum + runner.lap, 0) / frame.runners.length : 0;
   const picks = race ? pickCards(race) : null;
@@ -242,10 +254,6 @@ export default function SimulatorShell() {
   const raceTitle = race ? `${race.race.venue ?? "—"} ${race.race.race_no ?? "—"}R` : "デモ隊列（10頭・番号のみ）";
   const backPath = race?.race.race_key ? raceKeyToPath(race.race.race_key) : null;
   const pct = Math.round(progress * 100);
-  const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
-  const terrain = useMemo(() => buildTerrainProfile(course), [course]);
-  terrainRef.current = terrain;
-  const gapField = useMemo(() => gapFieldOf(terrain), [terrain]);
   const terrainLabel = tempoAt(terrain, progress).label;
   const section = sectionAt(course, courseShare(course, packLap), progress);
   const facts = useMemo(() => courseFacts(course), [course]);
@@ -316,7 +324,7 @@ export default function SimulatorShell() {
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
-              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
               <CameraSelector mode={cameraMode} onChange={setCameraMode} reducedMotion={reducedMotion} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
@@ -349,7 +357,7 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
-              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={gapField} />
+              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={field} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
@@ -364,7 +372,7 @@ export default function SimulatorShell() {
             <section className="kt-result-scenario" aria-label="シナリオ（研究用）">
               <header><span className="kt-research-chip">SCENARIO</span><strong>研究用シナリオ（ゴール前）</strong></header>
               <p>脚質と仮定ペースから描いた隊列です。実際の展開を再現したものではなく、公式結果とは無関係です。</p>
-              <TrackStage fixedProgress={1} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} label="シナリオ終了時の隊列（順位なし）" />
+              <TrackStage fixedProgress={1} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label="シナリオ終了時の隊列（順位なし）" />
             </section>
           </div>
         )}

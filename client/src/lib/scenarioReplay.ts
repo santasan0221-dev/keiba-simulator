@@ -30,17 +30,24 @@ const GAP: Record<Exclude<ScenarioStyle, "不明">, Record<Exclude<Phase, "FINIS
 const PACE_SPREAD: Record<Pace, number> = { スロー: 0.7, 平均: 1, ハイ: 1.35 };
 
 /**
- * How much of its FINAL gap each style keeps at the line, by assumed pace. Style and pace only:
- * a slow pace keeps the front group together, a high pace lets the closers gain and the front
- * runners fade. No ability, odds or result enters; this is the whole of the home-straight "kick".
+ * How much of its FINAL gap each style keeps at the line, by assumed pace. Style and pace only: a slow
+ * pace keeps the front group together, a high pace lets the closers gain and the front runners fade.
+ * No ability, odds or result enters; this is the whole of the home-straight "kick".
+ *
+ * Calibrated against the 100-race audit (scripts/scenario_calibration_audit.ts): at the average pace
+ * every style group ends within 0.40..0.60 of the field on average, so run style alone no longer decides
+ * the order at the line. The earlier table (average: 0.75 / 0.70 / 0.62 / 0.62) left the closers last and
+ * the front-runners first in the average pace, which also leaned the scenario towards well-known horses
+ * (they more often have a known front style). The pace still tilts the order by design: front-runners
+ * gain in a slow pace, closers in a fast one.
  */
 const FINISH_KEEP: Record<Pace, Record<ScenarioStyle, number>> = {
-  スロー: { 逃げ: 0.5, 先行: 0.55, 差し: 0.85, 追込: 1, 不明: 0.85 },
-  平均: { 逃げ: 0.75, 先行: 0.7, 差し: 0.62, 追込: 0.62, 不明: 0.7 },
-  ハイ: { 逃げ: 1, 先行: 0.85, 差し: 0.5, 追込: 0.42, 不明: 0.85 },
+  スロー: { 逃げ: 0.9, 先行: 1, 差し: 0.8, 追込: 0.5, 不明: 0.5 },
+  平均: { 逃げ: 1.25, 先行: 1, 差し: 0.5, 追込: 0.3, 不明: 0.29 },
+  ハイ: { 逃げ: 0.5, 先行: 0.9, 差し: 0.37, 追込: 0.19, 不明: 0.26 },
 };
-/** Soft cap (lengths) on the gap at the line, so the last runner always crosses before 100%. */
-const GAP_CAP = 5;
+/** Soft cap (lengths) on the gap at the line. With OFFSET_MAX and the terrain spacing it keeps the last runner crossing before 100%. */
+const GAP_CAP = 3;
 
 /** Seed used when a caller supplies none: fixed, so a missing seed never changes the picture between runs. */
 const FALLBACK_SEED = 0x5eed5eed;
@@ -143,6 +150,9 @@ export function phaseAt(t: number): Phase {
 
 /** The default scenario variant. Its seed is exactly scenarioSeed(race_key), so existing pictures are unchanged. */
 export const STANDARD_VARIANT = "STANDARD";
+/** The scenario variants of one race: the same race_key with another variant is another (slightly different) run. */
+export const VARIANTS = ["STANDARD", "ALT_A", "ALT_B"] as const;
+export type ScenarioVariant = (typeof VARIANTS)[number];
 
 /**
  * Seed for one scenario variant of one race. STANDARD is scenarioSeed(race_key); any other variant mixes
@@ -171,11 +181,20 @@ const clamp01 = (value: number) => Math.max(0, Math.min(1, Number.isFinite(value
 const smooth = (value: number) => value * value * (3 - 2 * value);
 
 /**
- * An optional factor on every runner's gap to the front (e.g. the course tempo). It is one number per
- * progress value, the same for all runners, so it can change the spacing but never who is ahead.
- * The scenario modules know nothing about where it comes from; `id` only keys caches.
+ * Largest shift (share of the race) the per-runner offsets may add to or take from a runner's position.
+ * FRONT_END - 1 - (capped gap * terrain spacing) - OFFSET_MAX stays above 0, so every runner still crosses
+ * before 100%, and the leader never runs on past FRONT_END + OFFSET_MAX.
  */
-export type GapField = { id: string; scale: (progress: number) => number };
+export const OFFSET_MAX = 0.025;
+
+/**
+ * Optional fields the scenario modules accept without knowing where they come from (`id` only keys caches):
+ *  - `scale`  one factor on every runner's gap to the front (the course tempo). One number per progress
+ *             value, the same for all runners, so it changes the spacing but never who is ahead.
+ *  - `offset` a shift of one runner's position at a progress value (pre-race horse profile + seeded noise),
+ *             already clamped to +-OFFSET_MAX by its builder. This is the only per-runner input.
+ */
+export type GapField = { id: string; scale: (progress: number) => number; offset?: (no: number, progress: number) => number };
 
 export type FrameRunner = ScenarioRunner & {
   /** Share of the race covered; past 1 the runner is beyond the line. Illustrative, not a measured position. */
@@ -190,47 +209,95 @@ const LANE: Record<ScenarioStyle, number> = { 逃げ: 0, 先行: 1, 差し: 2, �
 /** Lap share per length, for drawing only. */
 export const LENGTH_SHARE = 0.013;
 
+type Prepared = {
+  nos: number[];
+  /** Lap of runner index i at progress t (not rounded), and the same for a whole frame. */
+  lapAt: (i: number, t: number) => number;
+  frame: (t: number) => ScenarioFrame;
+};
+
+const preparedCache = new WeakMap<ScenarioRunner[], Map<string, Prepared>>();
+
+/**
+ * Everything about a field that does not depend on the progress value, computed once: the six phase
+ * formations, the cosmetic spacing and the lanes. A frame is then a handful of lookups. Cached per
+ * (runners array, pace, seed, field); runner arrays are treated as immutable.
+ */
+function prepare(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): Prepared {
+  const key = `${pace}|${seed}|${gapField?.id ?? "-"}`;
+  let perRunners = preparedCache.get(runners);
+  if (!perRunners) { perRunners = new Map(); preparedCache.set(runners, perRunners); }
+  const hit = perRunners.get(key);
+  if (hit) return hit;
+
+  const sorted = [...runners].sort((x, y) => x.no - y.no);
+  const index = new Map(sorted.map((runner, i) => [runner.no, i]));
+  const formation = new Map(PHASES.map(phase => {
+    const values = new Float64Array(sorted.length);
+    for (const entry of formationAt(runners, phase, pace, seed)) values[index.get(entry.no)!] = entry.lengthsBehind;
+    return [phase, values] as const;
+  }));
+  const stagger = sorted.map(runner => seededUnit(seed, runner.no, 1) * 0.35);
+  const lanes = sorted.map(runner => LANE[runner.style] + (seededUnit(seed, runner.no, 2) - 0.5) * 0.7);
+  const offset = gapField?.offset;
+
+  const segment = (progress: number) => {
+    const next = PHASES.findIndex(phase => progress <= FORMATION_KEYFRAME[phase]);
+    const last = PHASES.length - 1;
+    const to = PHASES[next < 0 ? last : next];
+    const from = PHASES[next < 0 ? last : Math.max(0, next - 1)];
+    const span = FORMATION_KEYFRAME[to] - FORMATION_KEYFRAME[from];
+    const mix = span > 0 && next >= 0 ? smooth((progress - FORMATION_KEYFRAME[from]) / span) : 1;
+    return { a: formation.get(from)!, b: formation.get(to)!, mix };
+  };
+  const gapOf = (i: number, seg: { a: Float64Array; b: Float64Array; mix: number }, settle: number) =>
+    Math.round((seg.a[i] + (seg.b[i] - seg.a[i]) * seg.mix + stagger[i] * settle) * 1000) / 1000;
+  const settleAt = (progress: number) => 1 - smooth(clamp01((progress - 0.65) / (PHASE_KEYFRAME.FINAL - 0.65)));
+  const scaleAt = (progress: number) => (gapField ? Math.max(0.5, Math.min(1.5, gapField.scale(progress))) : 1);
+
+  const lapAt = (i: number, t: number) => {
+    const progress = clamp01(t);
+    const shift = offset ? offset(sorted[i].no, progress) : 0;
+    return Math.max(0, frontAt(progress) - gapOf(i, segment(progress), settleAt(progress)) * scaleAt(progress) * LENGTH_SHARE + shift);
+  };
+  const frame = (t: number): ScenarioFrame => {
+    const progress = clamp01(t);
+    const seg = segment(progress), settle = settleAt(progress), scale = scaleAt(progress), front = frontAt(progress);
+    const out = sorted.map((runner, i) => {
+      const lengthsBehind = gapOf(i, seg, settle);
+      const shift = offset ? offset(runner.no, progress) : 0;
+      return { ...runner, lengthsBehind, lane: lanes[i], lap: Math.max(0, front - lengthsBehind * scale * LENGTH_SHARE + shift) };
+    });
+    return { progress, phase: phaseAt(progress), runners: out };
+  };
+  const prepared = { nos: sorted.map(runner => runner.no), lapAt, frame };
+  perRunners.set(key, prepared);
+  return prepared;
+}
+
 /**
  * Scenario formation at progress t, interpolated between phase keyframes.
  * Runners come back in horse-number order (a stable draw order, never a
- * ranking). At t = 1 every runner has the same lap and lengthsBehind.
+ * ranking). The optional field adds the course spacing (common to all) and the
+ * per-runner offsets (profile + seeded noise); without it the order into the
+ * line is style and pace only.
  */
 export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, seed: number, gapField?: GapField): ScenarioFrame {
-  const progress = clamp01(t);
-  const gapScale = gapField ? Math.max(0.5, Math.min(1.5, gapField.scale(progress))) : 1;
-  const next = PHASES.findIndex(phase => progress <= FORMATION_KEYFRAME[phase]);
-  const last = PHASES.length - 1;
-  const to = PHASES[next < 0 ? last : next];
-  const from = PHASES[next < 0 ? last : Math.max(0, next - 1)];
-  const span = FORMATION_KEYFRAME[to] - FORMATION_KEYFRAME[from];
-  const mix = span > 0 && next >= 0 ? smooth((progress - FORMATION_KEYFRAME[from]) / span) : 1;
-  const a = new Map(formationAt(runners, from, pace, seed).map(entry => [entry.no, entry.lengthsBehind]));
-  const b = new Map(formationAt(runners, to, pace, seed).map(entry => [entry.no, entry.lengthsBehind]));
-  const front = frontAt(progress);
-  // Cosmetic spacing is gone before the home straight, so the order into the line is style and pace only.
-  const settle = 1 - smooth(clamp01((progress - 0.65) / (PHASE_KEYFRAME.FINAL - 0.65)));
-  const ordered = [...runners].sort((x, y) => x.no - y.no).map(runner => {
-    const base = (a.get(runner.no) ?? 0) + ((b.get(runner.no) ?? 0) - (a.get(runner.no) ?? 0)) * mix;
-    const stagger = seededUnit(seed, runner.no, 1) * 0.35 * settle;
-    const lengthsBehind = Math.round((base + stagger) * 1000) / 1000;
-    const lane = LANE[runner.style] + (seededUnit(seed, runner.no, 2) - 0.5) * 0.7;
-    return { ...runner, lengthsBehind, lane, lap: Math.max(0, front - lengthsBehind * gapScale * LENGTH_SHARE) };
-  });
-  return { progress, phase: phaseAt(progress), runners: ordered };
+  return prepare(runners, pace, seed, gapField).frame(t);
 }
 
 /**
  * Scenario progress at which each runner's drawn position reaches the line (lap = 1), by bisection.
- * Every runner crosses before 100%. The times come from the drawn frame only.
+ * Every runner crosses before 100%. The times come from the drawn lap only.
  */
 export function crossingTimes(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): Map<number, number> {
+  const prepared = prepare(runners, pace, seed, gapField);
   const times = new Map<number, number>();
-  const lapOf = (no: number, t: number) => scenarioFrame(runners, t, pace, seed, gapField).runners.find(entry => entry.no === no)!.lap;
-  for (const runner of runners) {
+  prepared.nos.forEach((no, i) => {
     let lo = 0, hi = 1;
-    for (let i = 0; i < 28; i++) { const mid = (lo + hi) / 2; if (lapOf(runner.no, mid) >= 1) hi = mid; else lo = mid; }
-    times.set(runner.no, hi);
-  }
+    for (let k = 0; k < 28; k++) { const mid = (lo + hi) / 2; if (prepared.lapAt(i, mid) >= 1) hi = mid; else lo = mid; }
+    times.set(no, hi);
+  });
   return times;
 }
 

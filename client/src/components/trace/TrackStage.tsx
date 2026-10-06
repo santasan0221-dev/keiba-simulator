@@ -5,7 +5,10 @@ import { courseShare, remainingMarkers, sectionAt, slopeSpans, straightness, tur
 import type { ProgressStore } from "@/lib/progressStore";
 import { cosmeticLane } from "@/lib/scenarioMotion";
 import { gapFieldOf, NEUTRAL_EFFECT, tempoAt, type TerrainProfile } from "@/lib/terrainTempo";
-import { FRONT_END, scenarioFrame, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
+import { FRONT_END, OFFSET_MAX, scenarioFrame, type GapField, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
+
+/** The furthest a runner can run on past the line (share of the race): the field front plus the largest offset. */
+const RUN_ON = FRONT_END - 1 + OFFSET_MAX;
 
 export const GEOMETRY = {
   wide: { w: 640, h: 300, laneX: 11, r: 12 },
@@ -30,6 +33,8 @@ type Props = {
   honmeiNo: number | null;
   /** Course tempo (common to every runner): lane spread, pack spacing and camera briskness. Absent = neutral. */
   terrain?: TerrainProfile;
+  /** Course spacing plus per-runner offsets (profile + seeded noise). Absent = the course tempo alone. */
+  field?: GapField;
   label: string;
 };
 
@@ -43,14 +48,15 @@ const fmt = (p: { x: number; y: number }) => `${p.x.toFixed(1)},${p.y.toFixed(1)
  * the official result.
  */
 export function TrackStage(props: Props) {
-  const { store, fixedProgress, runners, pace, seed, course, compact, cameraMode, reducedMotion, honmeiNo, terrain, label } = props;
+  const { store, fixedProgress, runners, pace, seed, course, compact, cameraMode, reducedMotion, honmeiNo, terrain, field, label } = props;
   const g = compact ? GEOMETRY.compact : GEOMETRY.wide;
   const box = useMemo(() => ({ w: g.w, h: g.h }), [g.w, g.h]);
   const margin = 4.2 * g.laneX + 14; // room for the widest lane plus the dot, its shadow and the zoomed-in framing
   const closed = course.pathClosed;
   const startShare = course.startLapShare === "UNKNOWN" ? 0 : course.startLapShare;
   const startKnown = course.startLapShare !== "UNKNOWN";
-  const pxPath = useMemo(() => fitPath(course.path, g.w, g.h, margin), [course, g.w, g.h, margin]);
+  // A straight course ends at the line; leave room to its right for the runners that run on past it.
+  const pxPath = useMemo(() => fitPath(course.path, course.pathClosed ? g.w : g.w - RUN_ON * (g.w - 2 * margin), g.h, margin), [course, g.w, g.h, margin]);
   const pathLength = useMemo(() => pxPath.reduce((sum, point, i) => (i ? sum + Math.hypot(point.x - pxPath[i - 1].x, point.y - pxPath[i - 1].y) : 0), 0), [pxPath]);
   // A closed course simply carries on round past the line. A straight course ends at the line, so
   // beyond it the runners are drawn on along the last segment: they run on, they never pile up.
@@ -93,7 +99,7 @@ export function TrackStage(props: Props) {
   const progressNow = useRef(fixedProgress ?? 0);
   const lastPoints = useRef<{ x: number; y: number }[]>([]);
   const goalPoints = useMemo(() => [goalIn, goalOut], [goalIn.x, goalIn.y, goalOut.x, goalOut.y]);
-  const gapField = useMemo(() => (terrain ? gapFieldOf(terrain) : undefined), [terrain]);
+  const gapField = useMemo(() => field ?? (terrain ? gapFieldOf(terrain) : undefined), [field, terrain]);
   const energy = useRef(1);
   const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField });
   live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField };
@@ -185,7 +191,7 @@ export function TrackStage(props: Props) {
         <polygon points={toPoints(edge(4.2))} className="kt-track-outer" />
         <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
         {homeFrom !== null && homeFrom < 1 ? <polygon points={band(homeFrom, 1)} className="kt-straight-hl" data-home-straight="true" /> : null}
-      </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2, g.r + 2 + (FRONT_END - 1) * pathLength))} className="kt-track-outer" />}
+      </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2, g.r + 2 + RUN_ON * pathLength))} className="kt-track-outer" />}
       {slopes.map(span => {
         const steps = 12;
         const line = Array.from({ length: steps + 1 }, (_, i) => at(span.fromShare + ((span.toShare - span.fromShare) * i) / steps, 5.2));

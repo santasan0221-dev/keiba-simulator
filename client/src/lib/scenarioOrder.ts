@@ -74,7 +74,10 @@ export function orderView(runners: ScenarioRunner[], progress: number, pace: Pac
   const sequence = crossingSequence(runners, pace, seed, gapField);
   const crossed = sequence.filter(entry => entry.t <= progress + 1e-9);
   const place = new Map(crossed.map((entry, index) => [entry.no, index + 1]));
-  const rows = orderFrame(scenarioFrame(runners, progress, pace, seed, gapField).runners, seed).map(row => ({ ...row, crossing: place.get(row.no) ?? null }));
+  const live = orderFrame(scenarioFrame(runners, progress, pace, seed, gapField).runners, seed).map(row => ({ ...row, crossing: place.get(row.no) ?? null }));
+  // Once everyone has crossed, the rows are the crossing sequence itself, so a row's rank and its "n-th to cross" always agree.
+  const byNo = new Map(live.map(row => [row.no, row]));
+  const rows = progress >= 1 ? sequence.map((entry, index) => ({ ...byNo.get(entry.no)!, rank: index + 1, crossing: index + 1 })) : live;
   const crossingNos = crossed.map(entry => entry.no);
   return progress >= 1
     ? { kind: "COMPLETE", title: "SCENARIO COMPLETE", message: COMPLETE_MESSAGE, rows, crossingNos }
@@ -85,9 +88,11 @@ export function orderView(runners: ScenarioRunner[], progress: number, pace: Pac
 export function rankHistory(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): Map<number, RankRecord> {
   const history = new Map<number, RankRecord>();
   for (const checkpoint of CHECKPOINTS) {
-    for (const row of orderFrame(scenarioFrame(runners, checkpoint.t, pace, seed, gapField).runners, seed)) {
-      history.set(row.no, { ...history.get(row.no), [checkpoint.id]: row.rank });
-    }
+    // GOAL is the place in the crossing sequence; the earlier checkpoints are the drawn order at that progress.
+    const ranked = checkpoint.id === "GOAL"
+      ? crossingSequence(runners, pace, seed, gapField).map((entry, index) => ({ no: entry.no, rank: index + 1 }))
+      : orderFrame(scenarioFrame(runners, checkpoint.t, pace, seed, gapField).runners, seed);
+    for (const row of ranked) history.set(row.no, { ...history.get(row.no), [checkpoint.id]: row.rank });
   }
   return history;
 }
