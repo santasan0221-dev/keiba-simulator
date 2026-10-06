@@ -1,3 +1,5 @@
+import { runnerPresentation } from "./runnerPresentation";
+import { layoutRunnerLabels, type LabelPoint } from "./runnerLabels";
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { fitPath, pointOnPath, type CourseLayout } from "@/lib/courseAtlas";
 import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_VIEW_FROM, keepInView, wholeTrack, type CameraMode, type CameraState } from "@/lib/camera";
@@ -36,9 +38,11 @@ type Props = {
   /** Course spacing plus per-runner offsets (profile + seeded noise). Absent = the course tempo alone. */
   field?: GapField;
   label: string;
+  selectedNo?: number | null;
 };
 
 const fmt = (p: { x: number; y: number }) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+const boundedLabel = (p: { x: number; y: number }, w: number, h: number) => ({ x: Math.max(26, Math.min(w - 26, p.x)), y: Math.max(14, Math.min(h - 14, p.y)) });
 
 /**
  * Track view with a broadcast camera. Runner positions, the camera and the parallax layer are
@@ -75,6 +79,16 @@ export function TrackStage(props: Props) {
   const band = (from: number, to: number) => { const steps = 24; const a = Array.from({ length: steps + 1 }, (_, i) => at(from + ((to - from) * i) / steps, 4.2)); const b = Array.from({ length: steps + 1 }, (_, i) => at(from + ((to - from) * i) / steps, -1.6)).reverse(); return toPoints([...a, ...b]); };
   const goalIn = at(closed ? 0 : 1, -1.6), goalOut = at(closed ? 0 : 1, 4.2);
   const startIn = at(closed ? startShare : 0, -1.6), startOut = at(closed ? startShare : 0, 4.2);
+  // Gate position comes from Atlas; the connecting stroke is explicitly stylized.
+  const chute = useMemo(() => {
+    if (course.startOnRing !== false || course.startPoint === "UNKNOWN" || !startKnown) return null;
+    const xs = course.path.map(p => p.x), ys = course.path.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const px = pxPath.map(p => p.x), py = pxPath.map(p => p.y);
+    const x = Math.min(...px) + (course.startPoint.x - minX) / (maxX - minX || 1) * (Math.max(...px) - Math.min(...px));
+    const y = Math.min(...py) + (course.startPoint.y - minY) / (maxY - minY || 1) * (Math.max(...py) - Math.min(...py));
+    return { x, y };
+  }, [course, pxPath, startKnown]);
   const markers = useMemo(() => remainingMarkers(course), [course]);
   const slopes = useMemo(() => slopeSpans(course), [course]);
   const homeFrom = course.sectionShares === "UNKNOWN" ? null : course.sectionShares[6];
@@ -83,7 +97,7 @@ export function TrackStage(props: Props) {
     const xs = list.map(p => p.x), lo = Math.min(...xs), hi = Math.max(...xs);
     return list.map(p => ({ x: p.x <= lo + 0.5 ? p.x - pad : p.x >= hi - 0.5 ? p.x + padEnd : p.x, y: p.y }));
   };
-  const runnersDraw = useMemo(() => [...runners].sort((a, b) => Number(a.no === honmeiNo) - Number(b.no === honmeiNo) || a.no - b.no), [runners, honmeiNo]);
+  const runnersDraw = useMemo(() => [...runners].sort((a, b) => Number(a.no === props.selectedNo) - Number(b.no === props.selectedNo) || Number(a.no === honmeiNo) - Number(b.no === honmeiNo) || a.no - b.no), [runners, honmeiNo, props.selectedNo]);
 
   // ---- imperative state
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -91,6 +105,9 @@ export function TrackStage(props: Props) {
   const parallaxRef = useRef<SVGGElement | null>(null);
   const runnersRef = useRef<SVGGElement | null>(null);
   const dotRefs = useRef(new Map<number, SVGGElement>());
+  const labelRefs = useRef(new Map<number, SVGGElement>());
+  const leaderRefs = useRef(new Map<number, SVGLineElement>());
+  const runnerPoints = useRef<LabelPoint[]>([]);
   const camera = useRef<CameraState>(wholeTrack(box));
   const target = useRef<CameraState>(wholeTrack(box));
   const frameId = useRef(0);
@@ -107,6 +124,15 @@ export function TrackStage(props: Props) {
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
     worldRef.current?.setAttribute("transform", cameraTransform(cam, b));
+    const screenPoints = runnerPoints.current.map(point => ({ no: point.no, x: (point.x - cam.cx) * cam.zoom + b.w / 2, y: (point.y - cam.cy) * cam.zoom + b.h / 2 }));
+    const labels = layoutRunnerLabels(screenPoints, b.w, b.h);
+    for (const label of labels) {
+      labelRefs.current.get(label.no)?.setAttribute("transform", `translate(${label.x.toFixed(2)} ${label.y.toFixed(2)})`);
+      const point = screenPoints.find(point => point.no === label.no)!;
+      const line = leaderRefs.current.get(label.no);
+      line?.setAttribute("x1", point.x.toFixed(2)); line?.setAttribute("y1", point.y.toFixed(2));
+      line?.setAttribute("x2", label.x.toFixed(2)); line?.setAttribute("y2", label.y.toFixed(2));
+    }
     if (parallaxRef.current && !live.current.reduced) {
       const ox = (-(cam.cx * cam.zoom * PARALLAX_FACTOR)) % PARALLAX_TILE, oy = (-(cam.cy * cam.zoom * PARALLAX_FACTOR)) % PARALLAX_TILE;
       parallaxRef.current.setAttribute("transform", `translate(${ox.toFixed(1)} ${oy.toFixed(1)})`);
@@ -140,6 +166,7 @@ export function TrackStage(props: Props) {
     energy.current = effect.cameraEnergy;
     const frame = scenarioFrame(s.runners, progress, s.pace, s.seed, s.gapField);
     const points: { x: number; y: number }[] = [];
+    runnerPoints.current = [];
     let lapSum = 0;
     for (const runner of frame.runners) {
       const share = courseShare(s.course, runner.lap);
@@ -147,6 +174,9 @@ export function TrackStage(props: Props) {
       const lane = cosmeticLane({ no: runner.no, style: runner.style, baseLane: runner.lane, progress, seed: s.seed, turn: turnness(s.course, share), straight: straightness(s.course, share), spread: effect.lateralSpreadMultiplier });
       const p = s.at(s.closed ? share : runner.lap, lane);
       points.push(p);
+      runnerPoints.current.push({ no: runner.no, ...p });
+      labelRefs.current.get(runner.no)?.setAttribute("data-crossed", String(runner.lap >= 1));
+      dotRefs.current.get(runner.no)?.setAttribute("data-crossed", String(runner.lap >= 1));
       dotRefs.current.get(runner.no)?.setAttribute("transform", `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);
     }
     lastPoints.current = points;
@@ -178,10 +208,45 @@ export function TrackStage(props: Props) {
 
   useEffect(() => () => { if (frameId.current) cancelAnimationFrame(frameId.current); }, []);
 
-  const cornerPos = (share: number) => at(share, 6.2);
+  const cornerPos = (share: number) => boundedLabel(at(share, 6.2), g.w, g.h);
   const parallaxLines = Array.from({ length: Math.ceil(g.w / PARALLAX_TILE) + 3 }, (_, i) => (i - 1) * PARALLAX_TILE);
 
-  return <svg ref={svgRef} className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-direction={course.direction} data-start-share={String(course.startLapShare)} data-camera={cameraMode} data-zoom="1.00">
+  // Presentation only: keep annotation labels from printing over each other. Course geometry and anchors are untouched;
+  // GOAL / corner labels stay put; START, slope and remaining-distance labels are nudged (or hidden) when they would collide.
+  useLayoutEffect(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    let cancelled = false;
+    const place = () => {
+      if (cancelled) return;
+      // Document order puts the remaining-distance labels first, so queue the fixed labels ahead of the movable ones.
+      const texts = ([".kt-track-label:not(.kt-track-label--start)", "[data-corner]", ".kt-track-label--start", "[data-slope] text", "[data-remaining] text"] as const).flatMap(selector => Array.from(world.querySelectorAll<SVGTextElement>(selector)));
+      texts.forEach(text => { text.removeAttribute("transform"); text.removeAttribute("visibility"); });
+      const pad = 3;
+      const hit = (a: DOMRect, b: DOMRect) => a.x < b.x + b.width + pad && b.x < a.x + a.width + pad && a.y < b.y + b.height + pad && b.y < a.y + a.height + pad;
+      const inside = (r: DOMRect) => r.x >= 0 && r.y >= 0 && r.x + r.width <= g.w && r.y + r.height <= g.h;
+      const placed: DOMRect[] = [];
+      const steps: [number, number][] = [[0, 0], [0, -11], [0, 11], [-18, 0], [18, 0], [0, -22], [0, 22], [-18, -11], [18, -11], [-18, 11], [18, 11]];
+      for (const text of texts) {
+        const box = text.getBBox();
+        const fixed = text.hasAttribute("data-corner") || (text.classList.contains("kt-track-label") && !text.classList.contains("kt-track-label--start"));
+        const spot = (fixed ? [steps[0]] : steps).find(([dx, dy]) => {
+          const next = new DOMRect(box.x + dx, box.y + dy, box.width, box.height);
+          return (fixed || inside(next)) && !placed.some(other => hit(next, other));
+        });
+        if (!spot && !fixed) { text.setAttribute("visibility", "hidden"); continue; }
+        const [dx, dy] = spot ?? steps[0];
+        if (dx || dy) text.setAttribute("transform", `translate(${dx} ${dy})`);
+        placed.push(new DOMRect(box.x + dx, box.y + dy, box.width, box.height));
+      }
+    };
+    place();
+    void document.fonts?.ready.then(place);
+    return () => { cancelled = true; };
+  }, [course, g.w, g.h, compact]);
+
+  return <svg ref={svgRef} className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-surface={course.surface} data-presentation="STYLIZED" data-direction={course.direction} data-start-share={String(course.startLapShare)} data-camera={cameraMode} data-zoom="1.00">
+    <title>{`${label} 色は識別用・枠色ではありません`}</title>
     <g ref={parallaxRef} className="kt-parallax" aria-hidden="true">
       {parallaxLines.map(x => <line key={x} x1={x} x2={x} y1={-PARALLAX_TILE} y2={g.h + PARALLAX_TILE} />)}
       {parallaxLines.map(y => <line key={`h${y}`} x1={-PARALLAX_TILE} x2={g.w + PARALLAX_TILE} y1={y} y2={y} className="kt-parallax-h" />)}
@@ -192,10 +257,14 @@ export function TrackStage(props: Props) {
         <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
         {homeFrom !== null && homeFrom < 1 ? <polygon points={band(homeFrom, 1)} className="kt-straight-hl" data-home-straight="true" /> : null}
       </> : <polygon points={toPoints(capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2, g.r + 2 + RUN_ON * pathLength))} className="kt-track-outer" />}
+      {chute ? <g data-chute="STYLIZED" aria-label="Atlasのゲート位置と概略接続線">
+        <line x1={chute.x} y1={chute.y} x2={startOut.x} y2={startOut.y} className="kt-chute" />
+        <rect x={chute.x - 5} y={chute.y - 5} width="10" height="10" className="kt-chute-gate" />
+      </g> : null}
       {slopes.map(span => {
         const steps = 12;
         const line = Array.from({ length: steps + 1 }, (_, i) => at(span.fromShare + ((span.toShare - span.fromShare) * i) / steps, 5.2));
-        const mid = at((span.fromShare + span.toShare) / 2, 8);
+        const mid = boundedLabel(at((span.fromShare + span.toShare) / 2, 8), g.w, g.h);
         return <g key={span.where} data-slope="true" className={`kt-slope kt-slope--${span.kind === "UP" ? "up" : "down"}`}>
           <polyline points={toPoints(line)} />
           <text x={mid.x} y={mid.y + 3} textAnchor="middle">{span.kind === "UP" ? "▲" : "▼"}{span.riseMeters === "UNKNOWN" ? "坂" : `坂 ${span.riseMeters}m`}</text>
@@ -208,18 +277,23 @@ export function TrackStage(props: Props) {
           <text x={t.x} y={t.y + 3} textAnchor="middle">{compact ? marker.meters : `残${marker.meters}`}</text>
         </g>;
       })}
-      {closed ? course.corners.map(corner => { const pos = cornerPos(corner.share); return <text key={corner.label} x={pos.x} y={pos.y + 4} className="kt-corner" data-corner={corner.label}>{corner.label}</text>; }) : null}
+      {closed ? course.corners.map(corner => { const pos = cornerPos(corner.share); return <text key={corner.label} x={pos.x} y={pos.y + 4} className="kt-corner" data-corner={corner.label}>{corner.label}C</text>; }) : null}
       {startKnown ? <line x1={startIn.x} y1={startIn.y} x2={startOut.x} y2={startOut.y} className="kt-track-start" data-start="true" /> : null}
       {startKnown ? <text x={startOut.x + (startOut.x > g.w * 0.75 ? -4 : 0)} y={Math.max(12, Math.min(g.h - 4, startOut.y + (startOut.y > g.h / 2 ? 14 : -6)))} textAnchor={startOut.x > g.w * 0.75 ? "end" : "start"} className="kt-track-label kt-track-label--start">START</text> : null}
       <line x1={goalIn.x} y1={goalIn.y} x2={goalOut.x} y2={goalOut.y} className="kt-track-post" data-goal="true" />
       <text x={goalOut.x + 6} y={Math.min(goalOut.y + 14, g.h - 4)} className="kt-track-label">GOAL</text>
       <g ref={runnersRef} className="kt-runners">
-        {runnersDraw.map(runner => <g key={runner.no} data-runner={runner.no} ref={el => { if (el) dotRefs.current.set(runner.no, el); else dotRefs.current.delete(runner.no); }} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`}>
+        {runnersDraw.map(runner => <g key={runner.no} data-runner={runner.no} ref={el => { if (el) dotRefs.current.set(runner.no, el); else dotRefs.current.delete(runner.no); }} style={runnerPresentation(runner.no).style} data-color-basis="VISUAL_ONLY" data-selected={runner.no === props.selectedNo} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`}>
           <ellipse className="kt-dot-shadow" cx="1.6" cy="3.6" rx={g.r} ry={g.r * 0.72} />
-          <circle r={g.r} />
-          <text dy="4">{runner.no}</text>
+          <circle r={g.r / 2} />
         </g>)}
       </g>
     </g>
+    <g className="kt-runner-leaders" aria-hidden="true">{runnersDraw.map(runner => <line key={runner.no} ref={el => { if (el) leaderRefs.current.set(runner.no, el); else leaderRefs.current.delete(runner.no); }} />)}</g>
+    <g className="kt-runner-labels">{runnersDraw.map(runner => <g key={runner.no} data-runner-label={runner.no} data-selected={runner.no === props.selectedNo} style={runnerPresentation(runner.no).style} ref={el => { if (el) labelRefs.current.set(runner.no, el); else labelRefs.current.delete(runner.no); }}>
+      <rect x="-12" y="-12" width="24" height="24" rx="5" />
+      <text dy="4">{runner.no}</text>
+      {runner.no === props.selectedNo ? <path className="kt-runner-selected" d="M -4 -16 L 0 -12 L 4 -16 Z" /> : null}
+    </g>)}</g>
   </svg>;
 }

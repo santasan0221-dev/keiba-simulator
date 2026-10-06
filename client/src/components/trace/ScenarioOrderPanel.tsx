@@ -1,9 +1,10 @@
+import { runnerPresentation } from "./runnerPresentation";
 import React, { memo, useMemo, useState } from "react";
 import type { GapField, Pace, ScenarioRunner } from "@/lib/scenarioReplay";
 import { CHECKPOINTS, compactRows, CROSSING_NOTE, CROSSING_TITLE, CROSSING_TITLE_JA, deltaLabel, ORDER_NOTE, orderView, rankDelta, rankHistory, reachedCheckpoints, type CheckpointId, type RankRecord } from "@/lib/scenarioOrder";
 import type { CourseLayout } from "@/lib/courseAtlas";
 
-type Props = { runners: ScenarioRunner[]; pace: Pace; seed: number; progress: number; compact: boolean; /** Course tempo spacing (common to every runner). */ gapField?: GapField };
+type Props = { runners: ScenarioRunner[]; pace: Pace; seed: number; progress: number; compact: boolean; /** Course tempo spacing (common to every runner). */ gapField?: GapField; selectedNo?: number | null; onSelect?: (no: number | null) => void };
 
 const trail = (history: RankRecord | undefined, reached: CheckpointId[]) =>
   CHECKPOINTS.filter(checkpoint => reached.includes(checkpoint.id) && history?.[checkpoint.id] !== undefined).map(checkpoint => `${checkpoint.short}: ${history![checkpoint.id]}`).join(" → ");
@@ -18,8 +19,10 @@ const deltaSpoken = (delta: number | null) => delta === null ? "" : delta > 0 ? 
  * keeps updating to 100%; once a runner crosses the line it also carries its place in the virtual
  * CROSSING ORDER. That order is scenario-only: never a predicted finish and never an official result.
  */
-export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pace, seed, progress, compact, gapField }: Props) {
-  const [pinned, setPinned] = useState<number | null>(null);
+export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pace, seed, progress, compact, gapField, selectedNo, onSelect }: Props) {
+  const [localPinned, setLocalPinned] = useState<number | null>(null);
+  const pinned = selectedNo === undefined ? localPinned : selectedNo;
+  const select = (no: number) => { const next = pinned === no ? null : no; if (onSelect) onSelect(next); else setLocalPinned(next); };
   const [expanded, setExpanded] = useState(false);
   const view = useMemo(() => orderView(runners, progress, pace, seed, gapField), [runners, progress, pace, seed, gapField]);
   const history = useMemo(() => rankHistory(runners, pace, seed, gapField), [runners, pace, seed, gapField]);
@@ -44,11 +47,11 @@ export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pa
         {shown.map(row => {
           const { delta } = rankDelta(history.get(row.no), reached, row.rank);
           const selected = row.no === pinned;
-          return <li key={row.no} className={selected ? "is-pinned" : ""} data-rank={row.rank} data-no={row.no}>
-            <button type="button" aria-pressed={selected} aria-label={`${row.rank}位 ${row.no}番 ${row.name ?? ""} ${row.style} ${deltaSpoken(delta)}${selected ? " 選択中" : ""}`} onClick={() => setPinned(value => value === row.no ? null : row.no)}>
+          return <li key={row.no} style={runnerPresentation(row.no).style} className={selected ? "is-pinned" : ""} data-rank={row.rank} data-no={row.no}>
+            <button type="button" aria-pressed={selected} aria-label={`${row.rank}位 ${row.no}番 ${row.name ?? ""} ${row.style} ${deltaSpoken(delta)}${selected ? " 選択中" : ""}`} onClick={() => select(row.no)}>
               <b className="kt-num">{row.rank}</b>
               <i className={`kt-delta ${deltaClass(delta)}`} aria-hidden="true">{deltaLabel(delta)}</i>
-              <span className="kt-horse-no">{row.no}</span>
+              <span className="kt-horse-no kt-runner-chip" data-color-basis="VISUAL_ONLY">{row.no}</span>
               <span className="kt-order-name">{row.name ?? `${row.no}番`}</span>
               <em>{row.style}</em>
               {row.crossing !== null ? <small className="kt-order-crossed kt-num">{row.crossing}番目に通過</small> : null}
@@ -64,7 +67,7 @@ export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pa
       {!compact ? <RankHistoryChart history={history} reached={reached} count={rows.length} pinned={pinned} /> : null}
       <div className="kt-crossing" aria-label={`${CROSSING_TITLE}（${CROSSING_TITLE_JA}）`}>
         <span className="kt-eyebrow">{CROSSING_TITLE}<small> {CROSSING_TITLE_JA}</small></span>
-        <p className="kt-crossing-seq kt-num" aria-live="polite">{view.crossingNos.length ? view.crossingNos.map(no => `#${no}`).join(" → ") : "まだ誰もゴール線を通過していません"}</p>
+        <p className="kt-crossing-seq kt-num" aria-live="polite">{view.crossingNos.length ? view.crossingNos.map((no, index) => <React.Fragment key={no}>{index > 0 ? <span aria-hidden="true"> → </span> : null}<span className="kt-runner-chip" style={runnerPresentation(no).style}>#{no}</span></React.Fragment>) : "まだ誰もゴール線を通過していません"}</p>
         <p className="kt-order-note" role="note">{CROSSING_NOTE}</p>
       </div>
     </>

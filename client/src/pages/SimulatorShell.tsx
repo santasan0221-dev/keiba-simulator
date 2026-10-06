@@ -70,6 +70,8 @@ type ResultLoad = { status: "idle" | "loading" | "ready" | "failed"; row: LabRes
 type Mode = "SCENARIO" | "RESULT";
 
 export default function SimulatorShell() {
+  const [selectedNo, setSelectedNo] = useState<number | null>(null);
+  const [shareView, setShareView] = useState(false);
   const [pace, setPace] = useState<Pace>("平均");
   const store = useMemo(() => createProgressStore(0), []);
   const [progress, setProgressState] = useState(0);
@@ -128,6 +130,7 @@ export default function SimulatorShell() {
   }, []);
 
   const loadRace = useCallback((key: string) => {
+    setSelectedNo(null);
     setPlaying(false);
     seek(0);
     tracker.onScenarioChange();
@@ -281,7 +284,7 @@ export default function SimulatorShell() {
   const togglePlay = () => { if (complete) { restart(); return; } setMode("SCENARIO"); setPlaying(value => !value); };
 
   return (
-    <main className="broadcast simulator-shell kt-page">
+    <main className={`broadcast simulator-shell kt-page${shareView ? " is-share-view" : ""}`}>
       <LabServiceNavigation active="simulator" />
       <div className="kt-container">
         <JourneyRail step="simulator" raceKey={race?.race.race_key} />
@@ -327,6 +330,9 @@ export default function SimulatorShell() {
         </section>
 
         <PreRacePanel race={race} />
+        <div className="kt-share-controls">
+          <button type="button" aria-pressed={shareView} onClick={() => setShareView(value => !value)}>{shareView ? "SHARE VIEW を終了" : "SHARE VIEW"}</button>
+        </div>
 
         <div className="kt-mode-tabs" role="tablist" aria-label="表示モード">
           <button type="button" role="tab" aria-selected={mode === "SCENARIO"} className={mode === "SCENARIO" ? "is-current" : ""} onClick={() => setMode("SCENARIO")}>SCENARIO · 研究用</button>
@@ -335,6 +341,7 @@ export default function SimulatorShell() {
 
         {mode === "SCENARIO" ? (
           <div className="simulator-stage kt-sim-stage">
+            <header className="kt-capture-title"><strong>KEIBA TRACE</strong><span>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "距離未確認" : `${course.distance}m`}</span><span>Scenario · {pace} / {STANDARD_VARIANT}</span><b>SCENARIO SIMULATION · 実際の着順予測ではありません</b><span>{selectedNo === null ? "馬をタップして選択" : `選択中 #${selectedNo} ${runners.find(runner => runner.no === selectedNo)?.name ?? ""}`}</span></header>
             <section className="track-shell kt-track" aria-label="研究用コース表示（シナリオ）">
               <header className="kt-track-head">
                 <strong>{raceTitle}</strong>
@@ -343,7 +350,9 @@ export default function SimulatorShell() {
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
-              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              <TrackStage selectedNo={selectedNo} store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              {cameraMode !== "TRACK" ? <div className="kt-broadcast-overlay"><b>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "" : `${course.distance}m`}</b><span>{SECTION_LABEL[section]} · {pace} / {STANDARD_VARIANT}{selectedNo !== null ? ` · 選択 #${selectedNo}` : ""}</span></div> : null}
+              <p className="kt-palette-note">馬番の色は識別用です（枠色ではありません）。線の先が走行位置、▼と枠線は選択中、薄い表示は仮想ゴール通過済み。</p>
               <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
@@ -376,10 +385,10 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
-              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={field} />
+              <ScenarioOrderPanel selectedNo={selectedNo} onSelect={setSelectedNo} runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={field} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
-              <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
+              <p>公式通過順位ではありません。脚質グループ内の並びはレースごとに再現可能なシナリオ順です。</p>
               <PositionStrip formation={formationAt(runners, phase, pace, seed)} honmeiNo={honmeiNo} />
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
               <ElevationPanel course={course} />
