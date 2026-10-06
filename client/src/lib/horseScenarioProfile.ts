@@ -6,7 +6,7 @@
  * probabilities, the model score and `abilities.speed` (the public API carries the model score
  * there), `abilities.form`. Missing data is neutral (edge 0, confidence UNKNOWN). Every
  * compatibility is shrunk towards neutral by its confidence, and the combined effect on the pace of
- * a runner stays inside COMPAT_MIN..COMPAT_MAX.
+ * a runner stays inside COMPAT_MIN..COMPAT_MAX (0.985..1.015).
  */
 import type { CourseLayout } from "@/lib/courseAtlas";
 import { slopeSpans } from "@/lib/courseSections";
@@ -19,9 +19,17 @@ export const UNKNOWN_COMPAT: Compat = { edge: 0, confidence: "UNKNOWN", n: 0 };
 
 /** One compatibility moves a runner's pace by at most this much (1.5%); typical combined effects stay within ±2%. */
 export const MAX_COMPAT_EFFECT = 0.015;
-/** All compatibilities together never leave this band. */
-export const COMPAT_MIN = 0.97;
-export const COMPAT_MAX = 1.03;
+/** All compatibilities together never leave this band (tightened from 0.97-1.03 after the calibration audit). */
+export const COMPAT_MIN = 0.985;
+export const COMPAT_MAX = 1.015;
+/**
+ * Going term: a top-3 rate difference of GOING_EDGE_SPAN percentage points is a full edge (±1), and only
+ * GOING_SAMPLE_SHARE of the starts are assumed to be on the going of the day (the per-going sample size is
+ * not published). Both were made more conservative after the calibration audit: a saturated going term alone
+ * made single horses cross first in 65-70% of runs.
+ */
+export const GOING_EDGE_SPAN = 50;
+export const GOING_SAMPLE_SHARE = 0.5;
 export const CONFIDENCE_WEIGHT: Record<Confidence, number> = { HIGH: 1, MEDIUM: 0.6, LOW: 0.3, UNKNOWN: 0 };
 
 /** Effective sample size → confidence. One start never earns more than UNKNOWN. */
@@ -96,7 +104,7 @@ function goingCompat(horse: LabHorse, going: string | null, starts: number | nul
   if (today === null || others.length === 0) return UNKNOWN_COMPAT;
   const mean = others.reduce((a, b) => a + b, 0) / others.length;
   // The per-going sample size is not published: assume half the starts at most for the going of the day.
-  return compat((today - mean) / 30, Math.min(starts, 10) * (going === "良" ? 1 : 0.5));
+  return compat((today - mean) / GOING_EDGE_SPAN, Math.min(starts, 10) * (going === "良" ? 1 : 0.5) * GOING_SAMPLE_SHARE);
 }
 
 export function buildHorseProfiles(horses: LabHorse[], context: RaceContext, evidence?: Map<number, HorseEvidence>): Map<number, HorseProfile> {

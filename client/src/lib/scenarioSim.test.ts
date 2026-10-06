@@ -170,8 +170,20 @@ describe("the scenario is not an outcome machine", () => {
     const strong = run(extreme), mild = run(moderate);
     expect(strong.mean).toBeLessThan(mild.mean);
     expect(mild.mean).toBeLessThan(6.5 - 1.5); // better than the neutral average of 6.5
-    expect(strong.wins).toBeLessThan(0.9);
+    expect(strong.wins).toBeLessThan(0.8);
     expect(mild.wins).toBeLessThan(0.55);
+  });
+
+  it("jump races ignore compatibility (no course model; the audit showed 50% of them over-concentrated)", () => {
+    const jump = resolveCourse("中山", "障害", 3200);
+    expect(jump.surface).toBe("JUMP");
+    const runners = Array.from({ length: 10 }, (_, i) => ({ no: i + 1, name: null, style: "先行" as const }));
+    const strong: HorseProfile = { ...NEUTRAL_PROFILE(1), straightSustain: compat(1, 12), distanceCompatibility: compat(1, 12), surfaceCompatibility: compat(1, 12) };
+    for (let i = 0; i < 10; i++) {
+      const a = buildSim({ raceKey: `jump-${i}`, variant: "STANDARD", runners, profiles: new Map([[1, strong]]), course: jump, pace: "平均" });
+      const b = buildSim({ raceKey: `jump-${i}`, variant: "STANDARD", runners, course: jump, pace: "平均" });
+      expect(a.crossOrder).toEqual(b.crossOrder);
+    }
   });
 
   it("missing profiles and an unknown Atlas are neutral and still produce a scenario", () => {

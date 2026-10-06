@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveCourse } from "./courseAtlas";
 import {
-  buildHorseProfiles, compat, compatEffect, compatMultiplier, COMPAT_MAX, COMPAT_MIN, confidenceOf, fitMark, MAX_COMPAT_EFFECT, NEUTRAL_PROFILE, UNKNOWN_COMPAT,
+  buildHorseProfiles, GOING_EDGE_SPAN, GOING_SAMPLE_SHARE, compat, compatEffect, compatMultiplier, COMPAT_MAX, COMPAT_MIN, confidenceOf, fitMark, MAX_COMPAT_EFFECT, NEUTRAL_PROFILE, UNKNOWN_COMPAT,
   type CompatContext, type HorseEvidence,
 } from "./horseScenarioProfile";
 import type { LabHorse } from "./singlePickAi";
@@ -95,6 +95,23 @@ describe("buildHorseProfiles", () => {
   });
 });
 
+describe("going term (tuned after the calibration audit)", () => {
+  const going = (today: number, others: number, starts: number) => horse(1, { starts, going: { 良: today, 稍重: others, 重: others } });
+  const surface = (h: ReturnType<typeof horse>) => buildHorseProfiles([h, ...[2, 3, 4, 5].map(no => horse(no))], ctx).get(1)!.surfaceCompatibility;
+
+  it("a 25-point top-3 rate gap is half an edge, not three quarters", () => {
+    expect(GOING_EDGE_SPAN).toBe(50);
+    expect(surface(going(55, 30, 10)).edge).toBeCloseTo(25 / GOING_EDGE_SPAN, 6);
+  });
+
+  it("only part of the starts are assumed to be on the going of the day, so ten starts are MEDIUM, not HIGH", () => {
+    expect(GOING_SAMPLE_SHARE).toBe(0.5);
+    expect(surface(going(100, 20, 10)).confidence).toBe("MEDIUM");
+    expect(surface(going(100, 20, 10)).edge).toBe(1);
+    expect(surface(going(100, 20, 3)).confidence).toBe("UNKNOWN");
+  });
+});
+
 describe("interaction with the course", () => {
   const all = (edge: number) => ({ ...NEUTRAL_PROFILE(1), distanceCompatibility: compat(edge, 12), surfaceCompatibility: compat(edge, 12), straightSustain: compat(edge, 12), cornerStability: compat(edge, 12), turnDirectionCompatibility: compat(edge, 12), courseShapeCompatibility: compat(edge, 12), elevationCompatibility: compat(edge, 12) });
 
@@ -102,6 +119,7 @@ describe("interaction with the course", () => {
     expect(compatMultiplier(NEUTRAL_PROFILE(3), at)).toBe(1);
     expect(compatMultiplier(all(1), at)).toBe(COMPAT_MAX);
     expect(compatMultiplier(all(-1), at)).toBe(COMPAT_MIN);
+    expect([COMPAT_MIN, COMPAT_MAX]).toEqual([0.985, 1.015]);
   });
 
   it("each term only applies where its terrain is: straight on the home straight, corner in turns, slope on slopes", () => {

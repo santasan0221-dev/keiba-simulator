@@ -95,7 +95,9 @@ export function buildSim(input: SimInput): Sim {
   const seed = scenarioSeed(raceKey, variant);
   const terrain = terrainProfile(course);
   const knots = runners.map(runner => noiseKnots(seed, runner.no));
-  const profiles = runners.map(runner => input.profiles?.get(runner.no) ?? NEUTRAL_PROFILE(runner.no));
+  // Jump races: there is no course model and the going / stamina terms over-concentrated them, so compatibility stays neutral.
+  const jump = course.surface === "JUMP";
+  const profiles = runners.map(runner => (jump ? undefined : input.profiles?.get(runner.no)) ?? NEUTRAL_PROFILE(runner.no));
   const laneBase = runners.map(runner => LANE[runner.style] + (seededUnit(seed, runner.no, 2) - 0.5) * 0.7);
 
   const laps: number[][] = runners.map(() => [0]);
