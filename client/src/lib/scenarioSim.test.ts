@@ -211,7 +211,7 @@ describe("safety: the simulation reads no result, odds, marks or probabilities",
   it("never references post-race, market or prediction fields and never uses Math.random", () => {
     for (const forbidden of ["odds", "probab", "honmei", "popularity", "result", "official", "ai_rank", "v23k", "win_", "market", "Math.random", "singlePickAi", "abilit", "publication", "ai_top"]) expect(code.toLowerCase(), forbidden).not.toContain(forbidden.toLowerCase());
     expect(code.match(/from "[^"]+"/g)!.sort()).toEqual([
-      'from "@/lib/courseAtlas"', 'from "@/lib/courseSections"', 'from "@/lib/horseScenarioProfile"', 'from "@/lib/scenarioNoise"', 'from "@/lib/scenarioReplay"', 'from "@/lib/terrainTempo"',
+      'from "@/lib/courseAtlas"', 'from "@/lib/courseSections"', 'from "@/lib/horseScenarioProfile"', 'from "@/lib/scenarioNoise"', 'from "@/lib/scenarioReplay"', 'from "@/lib/styleModelV2"', 'from "@/lib/terrainTempo"',
     ]);
   });
   it("labels the order a virtual scenario outcome and avoids finish-position wording", () => {

@@ -1,7 +1,11 @@
 /**
  * SCENARIO simulation: a precomputed run of the whole field, goal line included.
  *
- *   pace of runner = style/pace base × terrain tempo × horse–course compatibility × seeded noise
+ *   pace of runner = style formation (Style Model V2) × terrain tempo × horse–course compatibility × seeded noise
+ *
+ * The style formation is anchored to the PHYSICAL position of a reference runner that only feels the terrain
+ * (lib/styleModelV2): terrain therefore cannot reorder the styles at the line, and every style converges
+ * smoothly to level at the goal.
  *
  * Built once when a race is loaded (or the variant / pace changes); the animation only looks the
  * result up. Inputs: published run style, assumed pace, the Course Atlas, small pre-race horse
@@ -17,6 +21,7 @@ import {
   scenarioSeed, seededUnit, PHASES,
   type FrameRunner, type Pace, type Phase, type ScenarioFrame, type ScenarioRunner, type ScenarioStyle, type ScenarioVariant,
 } from "@/lib/scenarioReplay";
+import { approachOf, styleCurve } from "@/lib/styleModelV2";
 import { terrainProfile, type TerrainProfile } from "@/lib/terrainTempo";
 
 /** Scenario seconds the front of the field needs for the race (not race time; never shown). */
@@ -27,10 +32,6 @@ export const RUNOUT_LAP = 0.06;
 const RUNOUT_SECONDS = 3;
 const SAMPLES = 1000;
 const MAX_STEPS = 4000;
-/** How strongly corners pull the pack together / a long straight stretches it (lap share closed per lap run). */
-const COMPRESS_PULL = 0.3;
-const SPREAD_PUSH = 0.3;
-
 export const PHASE_LAP_WINDOWS: Record<Phase, readonly [number, number]> = {
   START: [0, 0.1], EARLY: [0.1, 0.3], BACKSTRETCH: [0.3, 0.55], TURN: [0.55, 0.75], FINAL: [0.75, 0.95], FINISH: [0.95, Infinity],
 };
@@ -40,21 +41,7 @@ export const PHASE_KEY_LAP: Record<Phase, number> = { START: 0, EARLY: 0.2, BACK
 const clamp = (value: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, value));
 const smooth = (x: number) => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
 
-/** Where the style puts the runner against the field, in lap units (positive = ahead), at scenario time share u. */
-const STYLE_PEAK: Record<ScenarioStyle, number> = { 逃げ: 0.04, 先行: 0.02, 差し: -0.03, 追込: -0.055, 不明: 0 };
-const PACE_SPREAD: Record<Pace, number> = { スロー: 0.7, 平均: 1, ハイ: 1.3 };
-/** What is left of the style gap at the line: a slow pace keeps the front ahead, a fast one favours the closers. */
-const PACE_RESIDUAL: Record<Pace, Record<ScenarioStyle, number>> = {
-  スロー: { 逃げ: 0.004, 先行: 0.0025, 差し: -0.002, 追込: -0.004, 不明: 0 },
-  平均: { 逃げ: 0.002, 先行: 0.001, 差し: 0, 追込: -0.0005, 不明: 0 },
-  ハイ: { 逃げ: -0.004, 先行: -0.0015, 差し: 0.0015, 追込: 0.003, 不明: 0 },
-};
 const LANE: Record<ScenarioStyle, number> = { 逃げ: 0, 先行: 1, 差し: 2, 追込: 3, 不明: 3 };
-
-function styleOffset(style: ScenarioStyle, pace: Pace, u: number): number {
-  const bump = smooth(u / 0.3) * (1 - smooth((u - 0.6) / 0.4));
-  return STYLE_PEAK[style] * PACE_SPREAD[pace] * bump + PACE_RESIDUAL[pace][style] * smooth((u - 0.7) / 0.3);
-}
 
 export type SimInput = {
   raceKey: string | null | undefined;
@@ -104,25 +91,37 @@ export function buildSim(input: SimInput): Sim {
   const lap = new Array<number>(n).fill(0);
   const du = STEP_SECONDS / BASE_SECONDS;
   const crossStep = new Array<number>(n).fill(-1);
+  const approach = approachOf(course);
+  const curves = runners.map(runner => styleCurve({ style: runner.style, pace, approach }));
+  // Corner compression / straight spreading scale the style gap by the reference runner's physical position (a
+  // reversible effect: it cannot leave an offset at the line). The scale follows the reference through a short lag
+  // (0.05 lap) so it never changes faster than the field moves.
+  const gapScale = (lapRef: number) => {
+    const sh = courseShare(course, Math.min(lapRef, 1 + RUNOUT_LAP));
+    return clamp(1 - 0.5 * Math.min(1, terrain.compressAt(sh) + terrain.earlyCompressAt(Math.min(1, lapRef))) + 0.3 * terrain.spreadAt(sh), 0.4, 1.3);
+  };
+  const prevGap = new Array<number>(n).fill(0);
+  let scale = gapScale(0);
+  let ref = 0;
   let step = 0;
   let lastCross = -1;
   while (step < MAX_STEPS && n > 0) {
-    const u = step * du;
-    const mean = lap.reduce((a, b) => a + b, 0) / n;
+    const dRef = du * terrain.tempoAt(courseShare(course, Math.min(ref, 1 + RUNOUT_LAP)));
+    scale += (gapScale(ref + dRef) - scale) * Math.min(1, dRef / 0.05);
     for (let i = 0; i < n; i++) {
       const share = courseShare(course, lap[i]);
-      const turn = terrain.compressAt(share);
-      const compress = Math.min(1, turn + terrain.earlyCompressAt(lap[i]));
       const spread = terrain.spreadAt(share);
       const compatMul = compatMultiplier(profiles[i], { turn: terrain.cornerSeverity ? terrain.compressAt(share) / terrain.cornerSeverity : 0, straight: spread, slope: terrain.slopeAt(share), longStraight: 1, severity: terrain.cornerSeverity, late: smooth((lap[i] - 0.4) / 0.4) });
       const start = profiles[i].earlyPositionStrength * 0.01 * (1 - smooth(lap[i] / 0.15));
-      const mods = terrain.tempoAt(share) * compatMul * (1 + noiseAt(knots[i], lap[i])) * (1 + start);
-      const styleDelta = styleOffset(runners[i].style, pace, u + du) - styleOffset(runners[i].style, pace, u);
-      let delta = (du + styleDelta) * mods + (COMPRESS_PULL * compress - SPREAD_PUSH * spread) * (mean - lap[i]) * du;
+      const own = compatMul * (1 + noiseAt(knots[i], lap[i])) * (1 + start);
+      const gap = curves[i](ref + dRef) * scale;
+      let delta = (dRef + gap - prevGap[i]) * own;
+      prevGap[i] = gap;
       // Run-out: ease down towards the end of the run-out zone (zero slope there), so nobody stops dead.
       if (lap[i] >= 1) delta *= Math.max(0.04, 1 - 0.96 * smooth((lap[i] - 1) / RUNOUT_LAP));
       lap[i] = Math.min(1 + RUNOUT_LAP, lap[i] + Math.max(0, delta));
     }
+    ref += dRef;
     step += 1;
     for (let i = 0; i < n; i++) {
       laps[i].push(lap[i]);
