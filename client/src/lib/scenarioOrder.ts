@@ -9,7 +9,7 @@
  * ORDER; that is the order the drawn runners passed the line, never a
  * predicted finishing order and never presented as a result.
  */
-import { crossingTimes, scenarioFrame, type FrameRunner, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
+import { crossingTimes, scenarioFrame, type FrameRunner, type GapField, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
 
 export const ORDER_NOTE = "シナリオ上の仮想順位です。実測・着順予測ではありません。";
 export const CROSSING_TITLE = "SCENARIO CROSSING ORDER";
@@ -55,26 +55,26 @@ export function orderFrame(runners: FrameRunner[], seed: number): OrderRow[] {
 
 let crossingMemo: { key: string; times: Map<number, number> } | null = null;
 /** Crossing times are a pure function of (field, pace, seed); keep the last one so the 8 Hz view does not recompute. */
-function crossingFor(runners: ScenarioRunner[], pace: Pace, seed: number) {
-  const key = `${seed}|${pace}|${runners.map(runner => `${runner.no}:${runner.style}`).join(",")}`;
-  if (crossingMemo?.key !== key) crossingMemo = { key, times: crossingTimes(runners, pace, seed) };
+function crossingFor(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField) {
+  const key = `${seed}|${pace}|${gapField?.id ?? "-"}|${runners.map(runner => `${runner.no}:${runner.style}`).join(",")}`;
+  if (crossingMemo?.key !== key) crossingMemo = { key, times: crossingTimes(runners, pace, seed, gapField) };
   return crossingMemo.times;
 }
 
 /** Runner numbers in the order they cross the line (ties, which need exactly equal gaps, use the cosmetic key). */
-export function crossingSequence(runners: ScenarioRunner[], pace: Pace, seed: number): { no: number; t: number }[] {
-  const times = crossingFor(runners, pace, seed);
-  const byNo = new Map(scenarioFrame(runners, 1, pace, seed).runners.map(runner => [runner.no, runner]));
+export function crossingSequence(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): { no: number; t: number }[] {
+  const times = crossingFor(runners, pace, seed, gapField);
+  const byNo = new Map(scenarioFrame(runners, 1, pace, seed, gapField).runners.map(runner => [runner.no, runner]));
   return [...runners]
     .sort((a, b) => times.get(a.no)! - times.get(b.no)! || tieKey(seed, byNo.get(a.no)!) - tieKey(seed, byNo.get(b.no)!) || a.no - b.no)
     .map(runner => ({ no: runner.no, t: times.get(runner.no)! }));
 }
 
-export function orderView(runners: ScenarioRunner[], progress: number, pace: Pace, seed: number): OrderView {
-  const sequence = crossingSequence(runners, pace, seed);
+export function orderView(runners: ScenarioRunner[], progress: number, pace: Pace, seed: number, gapField?: GapField): OrderView {
+  const sequence = crossingSequence(runners, pace, seed, gapField);
   const crossed = sequence.filter(entry => entry.t <= progress + 1e-9);
   const place = new Map(crossed.map((entry, index) => [entry.no, index + 1]));
-  const rows = orderFrame(scenarioFrame(runners, progress, pace, seed).runners, seed).map(row => ({ ...row, crossing: place.get(row.no) ?? null }));
+  const rows = orderFrame(scenarioFrame(runners, progress, pace, seed, gapField).runners, seed).map(row => ({ ...row, crossing: place.get(row.no) ?? null }));
   const crossingNos = crossed.map(entry => entry.no);
   return progress >= 1
     ? { kind: "COMPLETE", title: "SCENARIO COMPLETE", message: COMPLETE_MESSAGE, rows, crossingNos }
@@ -82,10 +82,10 @@ export function orderView(runners: ScenarioRunner[], progress: number, pace: Pac
 }
 
 /** Virtual rank of every runner at each checkpoint (GOAL is the crossing order). */
-export function rankHistory(runners: ScenarioRunner[], pace: Pace, seed: number): Map<number, RankRecord> {
+export function rankHistory(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): Map<number, RankRecord> {
   const history = new Map<number, RankRecord>();
   for (const checkpoint of CHECKPOINTS) {
-    for (const row of orderFrame(scenarioFrame(runners, checkpoint.t, pace, seed).runners, seed)) {
+    for (const row of orderFrame(scenarioFrame(runners, checkpoint.t, pace, seed, gapField).runners, seed)) {
       history.set(row.no, { ...history.get(row.no), [checkpoint.id]: row.rank });
     }
   }

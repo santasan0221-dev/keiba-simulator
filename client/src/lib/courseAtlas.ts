@@ -14,7 +14,9 @@
  * - STYLIZED: drawn for looks only. Not a survey map.
  * - UNKNOWN: not established. Nothing is guessed.
  *
- * Elevation is display-only. No module that moves runners imports this file.
+ * The moving-runner modules (scenarioReplay, scenarioOrder) never import this file. The course
+ * tempo (terrainTempo) is the single reader that turns it into factors that are the same for every
+ * runner: pace, pack spacing, lane spread, camera briskness. Nothing here is per runner.
  */
 import { CHUKYO_DIAGRAM, FUKUSHIMA_DIAGRAM, HAKODATE_DIAGRAM, HANSHIN_DIAGRAM, KOKURA_DIAGRAM, KYOTO_DIAGRAM, NAKAYAMA_DIAGRAM, NIIGATA_DIAGRAM, SAPPORO_DIAGRAM, TOKYO_DIAGRAM } from "@/lib/courseDiagramData";
 

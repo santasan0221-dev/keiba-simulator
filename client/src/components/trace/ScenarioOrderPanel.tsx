@@ -1,9 +1,9 @@
 import React, { memo, useMemo, useState } from "react";
-import type { Pace, ScenarioRunner } from "@/lib/scenarioReplay";
+import type { GapField, Pace, ScenarioRunner } from "@/lib/scenarioReplay";
 import { CHECKPOINTS, compactRows, CROSSING_NOTE, CROSSING_TITLE, CROSSING_TITLE_JA, deltaLabel, ORDER_NOTE, orderView, rankDelta, rankHistory, reachedCheckpoints, type CheckpointId, type RankRecord } from "@/lib/scenarioOrder";
 import type { CourseLayout } from "@/lib/courseAtlas";
 
-type Props = { runners: ScenarioRunner[]; pace: Pace; seed: number; progress: number; compact: boolean };
+type Props = { runners: ScenarioRunner[]; pace: Pace; seed: number; progress: number; compact: boolean; /** Course tempo spacing (common to every runner). */ gapField?: GapField };
 
 const trail = (history: RankRecord | undefined, reached: CheckpointId[]) =>
   CHECKPOINTS.filter(checkpoint => reached.includes(checkpoint.id) && history?.[checkpoint.id] !== undefined).map(checkpoint => `${checkpoint.short}: ${history![checkpoint.id]}`).join(" → ");
@@ -18,11 +18,11 @@ const deltaSpoken = (delta: number | null) => delta === null ? "" : delta > 0 ? 
  * keeps updating to 100%; once a runner crosses the line it also carries its place in the virtual
  * CROSSING ORDER. That order is scenario-only: never a predicted finish and never an official result.
  */
-export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pace, seed, progress, compact }: Props) {
+export const ScenarioOrderPanel = memo(function ScenarioOrderPanel({ runners, pace, seed, progress, compact, gapField }: Props) {
   const [pinned, setPinned] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const view = useMemo(() => orderView(runners, progress, pace, seed), [runners, progress, pace, seed]);
-  const history = useMemo(() => rankHistory(runners, pace, seed), [runners, pace, seed]);
+  const view = useMemo(() => orderView(runners, progress, pace, seed, gapField), [runners, progress, pace, seed, gapField]);
+  const history = useMemo(() => rankHistory(runners, pace, seed, gapField), [runners, pace, seed, gapField]);
   const reached = reachedCheckpoints(progress);
   const rows = view.rows;
   const shown = compact && !expanded ? compactRows(rows, pinned) : rows;
@@ -89,7 +89,7 @@ function RankHistoryChart({ history, reached, count, pinned }: { history: Return
   </svg>;
 }
 
-/** ELEVATION: display-only profile. Draws the section view only when one was read off an official diagram; otherwise lists slopes in words. */
+/** ELEVATION: profile (it feeds only the runner-independent course tempo). Draws the section view only when one was read off an official diagram; otherwise lists slopes in words. */
 export function ElevationPanel({ course }: { course: CourseLayout }) {
   const profile = course.elevationProfile;
   const gain = course.elevationGainMeters === "UNKNOWN" ? "UNKNOWN" : `${course.elevationGainMeters}m`;
@@ -97,7 +97,7 @@ export function ElevationPanel({ course }: { course: CourseLayout }) {
   const lo = Math.min(0, ...ys), hi = Math.max(0.5, ...ys), span = hi - lo || 1;
   const y = (meters: number) => 4 + (1 - (meters - lo) / span) * 40;
   return <section className="kt-elevation" aria-label="ELEVATION（表示のみ）">
-    <header><span className="kt-eyebrow">ELEVATION</span><small>高低差 {gain} · 表示専用（展開・順位には影響しません）</small></header>
+    <header><span className="kt-eyebrow">ELEVATION</span><small>高低差 {gain} · 高低差は全馬共通のテンポにだけ反映します（馬ごとの評価・順位には影響しません）</small></header>
     {profile && profile.length > 1 ? <>
       <svg viewBox="0 0 240 48" role="img" aria-label="コース断面図（公式断面図からの近似）" className="kt-elevation-svg" data-profile-points={profile.length}>
         <line x1="0" x2="240" y1={y(0)} y2={y(0)} className="kt-rank-grid" />

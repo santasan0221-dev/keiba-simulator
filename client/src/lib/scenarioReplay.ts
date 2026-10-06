@@ -170,6 +170,13 @@ export function seededUnit(seed: number, no: number, salt: number): number {
 const clamp01 = (value: number) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 const smooth = (value: number) => value * value * (3 - 2 * value);
 
+/**
+ * An optional factor on every runner's gap to the front (e.g. the course tempo). It is one number per
+ * progress value, the same for all runners, so it can change the spacing but never who is ahead.
+ * The scenario modules know nothing about where it comes from; `id` only keys caches.
+ */
+export type GapField = { id: string; scale: (progress: number) => number };
+
 export type FrameRunner = ScenarioRunner & {
   /** Share of the race covered; past 1 the runner is beyond the line. Illustrative, not a measured position. */
   lap: number;
@@ -188,8 +195,9 @@ export const LENGTH_SHARE = 0.013;
  * Runners come back in horse-number order (a stable draw order, never a
  * ranking). At t = 1 every runner has the same lap and lengthsBehind.
  */
-export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, seed: number): ScenarioFrame {
+export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, seed: number, gapField?: GapField): ScenarioFrame {
   const progress = clamp01(t);
+  const gapScale = gapField ? Math.max(0.5, Math.min(1.5, gapField.scale(progress))) : 1;
   const next = PHASES.findIndex(phase => progress <= FORMATION_KEYFRAME[phase]);
   const last = PHASES.length - 1;
   const to = PHASES[next < 0 ? last : next];
@@ -206,7 +214,7 @@ export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, 
     const stagger = seededUnit(seed, runner.no, 1) * 0.35 * settle;
     const lengthsBehind = Math.round((base + stagger) * 1000) / 1000;
     const lane = LANE[runner.style] + (seededUnit(seed, runner.no, 2) - 0.5) * 0.7;
-    return { ...runner, lengthsBehind, lane, lap: Math.max(0, front - lengthsBehind * LENGTH_SHARE) };
+    return { ...runner, lengthsBehind, lane, lap: Math.max(0, front - lengthsBehind * gapScale * LENGTH_SHARE) };
   });
   return { progress, phase: phaseAt(progress), runners: ordered };
 }
@@ -215,9 +223,9 @@ export function scenarioFrame(runners: ScenarioRunner[], t: number, pace: Pace, 
  * Scenario progress at which each runner's drawn position reaches the line (lap = 1), by bisection.
  * Every runner crosses before 100%. The times come from the drawn frame only.
  */
-export function crossingTimes(runners: ScenarioRunner[], pace: Pace, seed: number): Map<number, number> {
+export function crossingTimes(runners: ScenarioRunner[], pace: Pace, seed: number, gapField?: GapField): Map<number, number> {
   const times = new Map<number, number>();
-  const lapOf = (no: number, t: number) => scenarioFrame(runners, t, pace, seed).runners.find(entry => entry.no === no)!.lap;
+  const lapOf = (no: number, t: number) => scenarioFrame(runners, t, pace, seed, gapField).runners.find(entry => entry.no === no)!.lap;
   for (const runner of runners) {
     let lo = 0, hi = 1;
     for (let i = 0; i < 28; i++) { const mid = (lo + hi) / 2; if (lapOf(runner.no, mid) >= 1) hi = mid; else lo = mid; }

@@ -4,6 +4,7 @@ import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_VIE
 import { courseShare, remainingMarkers, sectionAt, slopeSpans, straightness, turnness } from "@/lib/courseSections";
 import type { ProgressStore } from "@/lib/progressStore";
 import { cosmeticLane } from "@/lib/scenarioMotion";
+import { gapFieldOf, NEUTRAL_EFFECT, tempoAt, type TerrainProfile } from "@/lib/terrainTempo";
 import { FRONT_END, scenarioFrame, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
 
 export const GEOMETRY = {
@@ -27,6 +28,8 @@ type Props = {
   cameraMode: CameraMode;
   reducedMotion: boolean;
   honmeiNo: number | null;
+  /** Course tempo (common to every runner): lane spread, pack spacing and camera briskness. Absent = neutral. */
+  terrain?: TerrainProfile;
   label: string;
 };
 
@@ -40,7 +43,7 @@ const fmt = (p: { x: number; y: number }) => `${p.x.toFixed(1)},${p.y.toFixed(1)
  * the official result.
  */
 export function TrackStage(props: Props) {
-  const { store, fixedProgress, runners, pace, seed, course, compact, cameraMode, reducedMotion, honmeiNo, label } = props;
+  const { store, fixedProgress, runners, pace, seed, course, compact, cameraMode, reducedMotion, honmeiNo, terrain, label } = props;
   const g = compact ? GEOMETRY.compact : GEOMETRY.wide;
   const box = useMemo(() => ({ w: g.w, h: g.h }), [g.w, g.h]);
   const margin = 4.2 * g.laneX + 14; // room for the widest lane plus the dot, its shadow and the zoomed-in framing
@@ -90,8 +93,10 @@ export function TrackStage(props: Props) {
   const progressNow = useRef(fixedProgress ?? 0);
   const lastPoints = useRef<{ x: number; y: number }[]>([]);
   const goalPoints = useMemo(() => [goalIn, goalOut], [goalIn.x, goalIn.y, goalOut.x, goalOut.y]);
-  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints });
-  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints };
+  const gapField = useMemo(() => (terrain ? gapFieldOf(terrain) : undefined), [terrain]);
+  const energy = useRef(1);
+  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField });
+  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField };
 
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
@@ -111,7 +116,9 @@ export function TrackStage(props: Props) {
     const dt = lastTs.current ? Math.min(100, ts - lastTs.current) : 16;
     lastTs.current = ts;
     const progress = progressNow.current;
-    const tau = ts - modeChangedAt.current < 1200 ? EASE_MS.modeChange : progress >= HOME_VIEW_FROM ? EASE_MS.finalPhase : EASE_MS.normal;
+    // Course tempo scales how briskly the camera follows (cosmetic, the same for every runner).
+    const base = ts - modeChangedAt.current < 1200 ? EASE_MS.modeChange : progress >= HOME_VIEW_FROM ? EASE_MS.finalPhase : EASE_MS.normal;
+    const tau = base / energy.current;
     camera.current = easeCamera(camera.current, target.current, dt, tau);
     if (!live.current.reduced) camera.current = keepInView(camera.current, framed(progress, lastPoints.current), live.current.box, CONTAIN_MARGIN);
     apply(camera.current);
@@ -123,13 +130,15 @@ export function TrackStage(props: Props) {
   const update = (progress: number) => {
     progressNow.current = progress;
     const s = live.current;
-    const frame = scenarioFrame(s.runners, progress, s.pace, s.seed);
+    const effect = s.terrain ? tempoAt(s.terrain, progress) : NEUTRAL_EFFECT;
+    energy.current = effect.cameraEnergy;
+    const frame = scenarioFrame(s.runners, progress, s.pace, s.seed, s.gapField);
     const points: { x: number; y: number }[] = [];
     let lapSum = 0;
     for (const runner of frame.runners) {
       const share = courseShare(s.course, runner.lap);
       lapSum += runner.lap;
-      const lane = cosmeticLane({ no: runner.no, style: runner.style, baseLane: runner.lane, progress, seed: s.seed, turn: turnness(s.course, share), straight: straightness(s.course, share) });
+      const lane = cosmeticLane({ no: runner.no, style: runner.style, baseLane: runner.lane, progress, seed: s.seed, turn: turnness(s.course, share), straight: straightness(s.course, share), spread: effect.lateralSpreadMultiplier });
       const p = s.at(s.closed ? share : runner.lap, lane);
       points.push(p);
       dotRefs.current.get(runner.no)?.setAttribute("transform", `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);

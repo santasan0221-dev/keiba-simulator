@@ -56,7 +56,7 @@ describe("simulator v3: SCENARIO ORDER wiring", () => {
     expect(html).toContain("シナリオ上の仮想順位です。実測・着順予測ではありません。");
   });
   it("feeds the order panel only runners / pace / seed and the throttled progress -- no race, picks, result or odds", () => {
-    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{progress\} compact=\{compact\} \/>/);
+    expect(source).toMatch(/<ScenarioOrderPanel runners=\{runners\} pace=\{pace\} seed=\{seed\} progress=\{progress\} compact=\{compact\} gapField=\{gapField\} \/>/);
     expect(source).toContain("createThrottledEmitter");
     expect(source).not.toMatch(/ScenarioOrderPanel[^>]*(race=|honmei|official|result)/);
   });

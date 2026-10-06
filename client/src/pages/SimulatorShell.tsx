@@ -21,6 +21,7 @@ import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioO
 import { TrackStage } from "@/components/trace/TrackStage";
 import { CameraSelector } from "@/components/trace/CameraSelector";
 import { createThrottledEmitter } from "@/lib/scenarioOrder";
+import { buildTerrainProfile, gapFieldOf, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
 import { GEOMETRY_DISCLAIMER, resolveCourse, type CourseLayout } from "@/lib/courseAtlas";
 import { createProgressStore } from "@/lib/progressStore";
 import { type CameraMode } from "@/lib/camera";
@@ -80,6 +81,8 @@ export default function SimulatorShell() {
   const compact = useMediaQuery("(max-width: 760px)");
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const autoSwitched = useRef(false);
+  // Course tempo (common to every runner); the playback loop reads it through a ref.
+  const terrainRef = useRef<TerrainProfile | null>(null);
 
   // Throttled React view of the progress: pushed at most every ORDER_TABLE_MS while playing; any
   // user action (scrub, pause, restart) shows at once.
@@ -164,7 +167,9 @@ export default function SimulatorShell() {
     const tick = (now: number) => {
       const delta = Math.min(100, now - last);
       last = now;
-      const next = Math.min(1, store.get() + (delta / SCENARIO_MS) * speed);
+      // The course tempo scales how fast the whole scenario advances (0.94..1.06), never one runner.
+      const rate = terrainRef.current ? tempoAt(terrainRef.current, store.get()).paceMultiplier : 1;
+      const next = Math.min(1, store.get() + (delta / SCENARIO_MS) * speed * rate);
       store.set(next);
       if (next >= 1) emitterRef.current?.now(1); else emitterRef.current?.push(next);
       frame = requestAnimationFrame(tick);
@@ -238,6 +243,10 @@ export default function SimulatorShell() {
   const backPath = race?.race.race_key ? raceKeyToPath(race.race.race_key) : null;
   const pct = Math.round(progress * 100);
   const course = useMemo(() => resolveCourse(race?.race.venue ?? null, race?.race.surface ?? null, race?.race.distance ?? null), [race]);
+  const terrain = useMemo(() => buildTerrainProfile(course), [course]);
+  terrainRef.current = terrain;
+  const gapField = useMemo(() => gapFieldOf(terrain), [terrain]);
+  const terrainLabel = tempoAt(terrain, progress).label;
   const section = sectionAt(course, courseShare(course, packLap), progress);
   const facts = useMemo(() => courseFacts(course), [course]);
 
@@ -306,7 +315,8 @@ export default function SimulatorShell() {
                 <span className="kt-phase-badge" aria-live="polite">{complete ? "SCENARIO COMPLETE" : `${phase} · ${PHASE_LABEL[phase]}`}</span>
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
-              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
+              <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
               <CameraSelector mode={cameraMode} onChange={setCameraMode} reducedMotion={reducedMotion} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
@@ -339,7 +349,7 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
-              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} />
+              <ScenarioOrderPanel runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={gapField} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びは馬番順です。</p>
@@ -354,7 +364,7 @@ export default function SimulatorShell() {
             <section className="kt-result-scenario" aria-label="シナリオ（研究用）">
               <header><span className="kt-research-chip">SCENARIO</span><strong>研究用シナリオ（ゴール前）</strong></header>
               <p>脚質と仮定ペースから描いた隊列です。実際の展開を再現したものではなく、公式結果とは無関係です。</p>
-              <TrackStage fixedProgress={1} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} label="シナリオ終了時の隊列（順位なし）" />
+              <TrackStage fixedProgress={1} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode="TRACK" reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} label="シナリオ終了時の隊列（順位なし）" />
             </section>
           </div>
         )}

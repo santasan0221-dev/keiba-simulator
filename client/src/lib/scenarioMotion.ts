@@ -22,13 +22,15 @@ export type MotionInput = {
   turn: number;
   /** 1 on the home straight (courseSections.straightness). */
   straight: number;
+  /** Course-tempo factor on the lane offsets, the same for every runner (terrainTempo). Default 1. */
+  spread?: number;
 };
 
 /** Front runners hug the rail through a turn, closers swing a little wider. */
 const TURN_SHIFT: Record<ScenarioStyle, number> = { 逃げ: -0.3, 先行: -0.15, 差し: 0.1, 追込: 0.22, 不明: 0 };
 
 export function cosmeticLane(input: MotionInput): number {
-  const { no, style, baseLane, progress, seed, turn, straight } = input;
+  const { no, style, baseLane, progress, seed, turn, straight, spread = 1 } = input;
   // The drift eases (but never stops) through the home straight, while the field widens a little
   // towards the line; both are lane-only and never touch course progress or the order.
   const calm = 1 - smooth((progress - 0.8) / 0.2);
@@ -41,5 +43,5 @@ export function cosmeticLane(input: MotionInput): number {
   const squeezed = baseLane * (1 - 0.2 * turn);
   const widened = squeezed * (1 + 0.22 * straight * calm + 0.3 * straight * homeSpread);
   const lane = widened + TURN_SHIFT[style] * turn + drift + spacing;
-  return Math.min(LANE_MAX, Math.max(LANE_MIN, lane));
+  return Math.min(LANE_MAX, Math.max(LANE_MIN, lane * spread));
 }
