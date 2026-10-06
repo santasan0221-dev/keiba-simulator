@@ -15,6 +15,14 @@ export type CtaId = (typeof CTA_IDS)[number];
 export const OUTBOUND_PLACEMENTS = ["member_gate", "member_page", "weekend_pass", "access_code"] as const;
 export type OutboundPlacement = (typeof OUTBOUND_PLACEMENTS)[number];
 
+/** Simulator playback milestones (share of the scenario played), reported once per playback. */
+export const SIM_MILESTONES = ["25", "50", "75"] as const;
+export type SimMilestone = (typeof SIM_MILESTONES)[number];
+export const SIM_CAMERA_MODES = ["TRACK", "BROADCAST", "AUTO"] as const;
+export const SIM_VARIANTS = ["STANDARD", "ALT_A", "ALT_B"] as const;
+/** How the official-result tab was reached: the automatic switch after the scenario, or the user's own click. */
+export const SIM_RESULT_SOURCES = ["auto", "tab"] as const;
+
 export type BetaEventName =
   | "beta_page_view"
   | "beta_race_select"
@@ -29,7 +37,15 @@ export type BetaEventName =
   | "beta_campaign_visit"
   | "beta_race_detail_view"
   | "beta_simulator_open"
-  | "beta_history_view";
+  | "beta_history_view"
+  | "beta_sim_playback_start"
+  | "beta_sim_progress"
+  | "beta_sim_last_runner_crossed"
+  | "beta_sim_complete"
+  | "beta_sim_replay"
+  | "beta_sim_official_result_view"
+  | "beta_sim_camera_change"
+  | "beta_sim_variant_change";
 
 export type BetaEvent = {
   name: BetaEventName;
@@ -91,6 +107,15 @@ const EVENT_PROPERTIES: Record<BetaEventName, Record<string, readonly string[]>>
   },
   beta_simulator_open: { entry: ["race_link", "direct"] },
   beta_history_view: {},
+  // Simulator playback. Fixed enumerations / no properties only: no race key, horse, number, date or URL.
+  beta_sim_playback_start: {},
+  beta_sim_progress: { milestone: SIM_MILESTONES },
+  beta_sim_last_runner_crossed: {},
+  beta_sim_complete: {},
+  beta_sim_replay: {},
+  beta_sim_official_result_view: { source: SIM_RESULT_SOURCES },
+  beta_sim_camera_change: { mode: SIM_CAMERA_MODES },
+  beta_sim_variant_change: { variant: SIM_VARIANTS },
 };
 
 const queuedEvents: BetaEvent[] = [];

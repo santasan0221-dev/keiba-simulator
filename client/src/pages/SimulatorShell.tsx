@@ -20,7 +20,8 @@ import { createResultPoller } from "@/lib/resultPoller";
 import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioOrderPanel";
 import { TrackStage } from "@/components/trace/TrackStage";
 import { CameraSelector } from "@/components/trace/CameraSelector";
-import { createThrottledEmitter } from "@/lib/scenarioOrder";
+import { createThrottledEmitter, crossingSequence } from "@/lib/scenarioOrder";
+import { createSimulatorTracker } from "@/lib/simulatorAnalytics";
 import { buildTerrainProfile, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
 import { buildHorseProfiles, horseHistoryOf, type HorseHistory } from "@/lib/horseScenarioProfile";
 import { buildScenarioField } from "@/lib/scenarioRunnerField";
@@ -84,6 +85,11 @@ export default function SimulatorShell() {
   const compact = useMediaQuery("(max-width: 760px)");
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const autoSwitched = useRef(false);
+  // Anonymous playback analytics (lib/simulatorAnalytics): fixed enumerations only, through the beta contract.
+  const tracker = useMemo(() => createSimulatorTracker(trackBetaEvent), []);
+  const playingRef = useRef(false);
+  const resultSource = useRef<"auto" | "tab">("tab");
+  const previousMode = useRef<Mode>("SCENARIO");
   // Course tempo (common to every runner); the playback loop reads it through a ref.
   const terrainRef = useRef<TerrainProfile | null>(null);
 
@@ -124,6 +130,7 @@ export default function SimulatorShell() {
   const loadRace = useCallback((key: string) => {
     setPlaying(false);
     seek(0);
+    tracker.onScenarioChange();
     setMode("SCENARIO");
     autoSwitched.current = false;
     setResult({ status: "idle", row: null });
@@ -203,7 +210,7 @@ export default function SimulatorShell() {
   useEffect(() => {
     if (!complete || !confirmed || autoSwitched.current) return;
     autoSwitched.current = true;
-    const timer = window.setTimeout(() => setMode("RESULT"), 2000);
+    const timer = window.setTimeout(() => { resultSource.current = "auto"; setMode("RESULT"); }, 2000);
     return () => window.clearTimeout(timer);
   }, [complete, confirmed]);
 
@@ -245,6 +252,18 @@ export default function SimulatorShell() {
     ? buildHorseProfiles(race.horses.map(horseHistoryOf).filter((history): history is HorseHistory => history !== null), { organization: race.race.organization, going: race.race.going })
     : undefined, [race, course]);
   const field = useMemo(() => buildScenarioField({ terrain, runners, profiles, seed }), [terrain, runners, profiles, seed]);
+  // Progress at which the LAST runner crosses the goal line: the canonical "complete" for analytics.
+  const lastCrossT = useMemo(() => { const sequence = crossingSequence(runners, pace, seed, field); return sequence.length ? sequence[sequence.length - 1].t : null; }, [runners, pace, seed, field]);
+  playingRef.current = playing;
+  useEffect(() => { if (playing) tracker.onPlay(store.get()); }, [playing, tracker, store]);
+  useEffect(() => { tracker.onProgress(progress, lastCrossT); }, [progress, lastCrossT, tracker]);
+  // A different race or pace is a different scenario; playback that continues across a pace change counts as a new playback.
+  useEffect(() => { tracker.onScenarioChange(); if (playingRef.current) tracker.onPlay(store.get()); }, [raceKey, pace, tracker, store]);
+  useEffect(() => {
+    if (mode === "RESULT" && previousMode.current !== "RESULT") { tracker.onOfficialResultView(resultSource.current); resultSource.current = "tab"; }
+    previousMode.current = mode;
+  }, [mode, tracker]);
+  const changeCamera = useCallback((next: CameraMode) => { if (next !== cameraMode) tracker.onCameraChange(next); setCameraMode(next); }, [cameraMode, tracker]);
   const frame = scenarioFrame(runners, progress, pace, seed, field);
   const phase = frame.phase;
   const packLap = frame.runners.length ? frame.runners.reduce((sum, runner) => sum + runner.lap, 0) / frame.runners.length : 0;
@@ -258,7 +277,7 @@ export default function SimulatorShell() {
   const section = sectionAt(course, courseShare(course, packLap), progress);
   const facts = useMemo(() => courseFacts(course), [course]);
 
-  const restart = () => { seek(0); autoSwitched.current = false; setMode("SCENARIO"); setPlaying(true); };
+  const restart = () => { tracker.onRestart(); seek(0); autoSwitched.current = false; setMode("SCENARIO"); setPlaying(true); };
   const togglePlay = () => { if (complete) { restart(); return; } setMode("SCENARIO"); setPlaying(value => !value); };
 
   return (
@@ -325,18 +344,18 @@ export default function SimulatorShell() {
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
               <TrackStage store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
-              <CameraSelector mode={cameraMode} onChange={setCameraMode} reducedMotion={reducedMotion} />
+              <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
               <div className="kt-phase-rail" role="group" aria-label="レース区間">
-                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
+                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); tracker.onSeek(PHASE_KEYFRAME[item]); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
               </div>
               <footer className="kt-playback">
                 <button type="button" className="kt-play" onClick={togglePlay} aria-label={playing ? "一時停止" : complete ? "もう一度再生" : "再生"}>{playing ? <Pause size={18} /> : <Play size={18} />}</button>
-                <button type="button" onClick={() => { setPlaying(false); seek(0); setMode("SCENARIO"); autoSwitched.current = false; }} aria-label="最初から"><RotateCcw size={16} /></button>
+                <button type="button" onClick={() => { setPlaying(false); tracker.onRestart(); seek(0); setMode("SCENARIO"); autoSwitched.current = false; }} aria-label="最初から"><RotateCcw size={16} /></button>
                 <label className="kt-scrubber">
                   <span className="kt-visually-hidden">Scenario progress</span>
-                  <input type="range" min={0} max={1000} step={1} style={{ "--kt-fill": `${progress * 100}%` } as React.CSSProperties} value={Math.round(progress * 1000)} aria-valuetext={`Scenario progress ${pct}% · ${PHASE_LABEL[phase]}`} onChange={event => { setPlaying(false); seek(Number(event.target.value) / 1000); }} />
+                  <input type="range" min={0} max={1000} step={1} style={{ "--kt-fill": `${progress * 100}%` } as React.CSSProperties} value={Math.round(progress * 1000)} aria-valuetext={`Scenario progress ${pct}% · ${PHASE_LABEL[phase]}`} onChange={event => { setPlaying(false); tracker.onSeek(Number(event.target.value) / 1000); seek(Number(event.target.value) / 1000); }} />
                 </label>
                 <div className="kt-speed" role="group" aria-label="再生倍率">
                   {SPEEDS.map(value => <button type="button" key={value} aria-pressed={speed === value} className={speed === value ? "is-current" : ""} onClick={() => setSpeed(value)}>{value}x</button>)}

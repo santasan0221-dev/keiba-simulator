@@ -156,3 +156,42 @@ describe("official result panel", () => {
     expect(html).not.toMatch(/\d着/);
   });
 });
+
+describe("simulator analytics wiring (anonymous playback events)", () => {
+  it("uses the existing contract's trackBetaEvent through the tracker and sends nothing identifying directly", () => {
+    expect(source).toContain("createSimulatorTracker(trackBetaEvent)");
+    // the page's only direct trackBetaEvent call is the existing view event, which carries just how it was opened
+    expect((source.match(/trackBetaEvent\(/g) ?? []).length).toBe(1);
+    expect(source).toMatch(/name: "beta_simulator_open", properties: \{ entry: fromRace \? "race_link" : "direct" \}/);
+    for (const forbidden of ["tracker.onProgress(progress, lastCrossT)"]) expect(source).toContain(forbidden);
+  });
+
+  it("completion is the last runner's crossing, taken from the scenario's own crossing sequence", () => {
+    expect(source).toContain("crossingSequence(runners, pace, seed, field)");
+    expect(source).toContain("sequence[sequence.length - 1].t");
+  });
+
+  it("playback start and resume come from the playing state; scrubs, rail jumps and restarts are told apart", () => {
+    expect(source).toMatch(/if \(playing\) tracker\.onPlay\(store\.get\(\)\)/);
+    expect(source).toContain("tracker.onSeek(PHASE_KEYFRAME[item])");
+    expect(source).toContain("tracker.onSeek(Number(event.target.value) / 1000)");
+    expect((source.match(/tracker\.onRestart\(\)/g) ?? []).length).toBe(2); // REPLAY / play at the end, and the "from the start" button
+    expect(source).toContain("tracker.onScenarioChange()");
+    // the reduced-motion stepping is playback: it must not be reported as a scrub
+    expect(source).toMatch(/window\.setTimeout\(\(\) => seek\(next\), 1800 \/ speed\)/);
+  });
+
+  it("camera changes to the same mode are not reported; the official-result view says how it was reached", () => {
+    expect(source).toContain("if (next !== cameraMode) tracker.onCameraChange(next)");
+    expect(source).toContain("onChange={changeCamera}");
+    expect(source).toContain('resultSource.current = "auto"');
+    expect(source).toContain("tracker.onOfficialResultView(resultSource.current)");
+  });
+
+  it("the simulation modules were not touched by the analytics change", () => {
+    for (const file of ["scenarioReplay.ts", "scenarioOrder.ts", "scenarioNoise.ts", "scenarioRunnerField.ts", "terrainTempo.ts", "horseScenarioProfile.ts", "camera.ts"]) {
+      const text = readFileSync(resolve(import.meta.dirname, "../lib", file), "utf8");
+      expect(text, `${file} must not know about analytics`).not.toMatch(/betaAnalytics|simulatorAnalytics|trackBetaEvent|umami/);
+    }
+  });
+});
