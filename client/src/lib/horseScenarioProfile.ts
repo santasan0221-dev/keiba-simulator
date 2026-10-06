@@ -116,10 +116,22 @@ export type RaceContext = { organization: string | null; going: string | null };
 
 const mean = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
 
+/**
+ * The horse's OWN overall top-3 rate in percent, (wins + seconds + thirds) / starts, from its as-of-history record.
+ * Data-source contract: this is the only place `wins` / `seconds` / `thirds` are read, and the value is used only as
+ * the horse's own baseline that its distance-band rate is compared with. It is never an ability correction on its
+ * own, and nothing about the race being simulated (result, odds, marks) can enter it. Null when anything is missing.
+ */
+export function overallTop3Rate(history: Pick<HorseHistory, "starts" | "wins" | "seconds" | "thirds">): number | null {
+  const { starts, wins, seconds, thirds } = history;
+  if (starts === null || starts < 1 || wins === null || seconds === null || thirds === null) return null;
+  return ((wins + seconds + thirds) / starts) * 100;
+}
+
 function distanceCompat(history: HorseHistory): Compat {
-  const { starts, wins, seconds, thirds, distanceBandTop3 } = history;
-  if (starts === null || starts < 1 || wins === null || seconds === null || thirds === null || distanceBandTop3 === null) return UNKNOWN_COMPAT;
-  const overall = ((wins + seconds + thirds) / starts) * 100;
+  const { starts, distanceBandTop3 } = history;
+  const overall = overallTop3Rate(history);
+  if (starts === null || overall === null || distanceBandTop3 === null) return UNKNOWN_COMPAT;
   return compat((distanceBandTop3 - overall) / DISTANCE_EDGE_SPAN, Math.min(starts, SAMPLE_CAP) * DISTANCE_SAMPLE_SHARE);
 }
 

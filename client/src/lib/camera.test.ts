@@ -140,6 +140,27 @@ describe("the pack is never lost, even while the easing lags", () => {
     }
   });
 
+  it("a pack hugging the world's edge together with the goal line is contained from a zoomed-in start (ported from the V3.1 line)", () => {
+    const box = BOXES[0];
+    const points = [{ x: 260, y: 285 }, { x: 270, y: 278 }, { x: 300, y: 281 }, { x: 330, y: 150 }, { x: 330, y: 285 }];
+    const fixed = keepInView({ cx: 320, cy: 150, zoom: 1.6 }, points, box, 16);
+    const rect = viewRect(fixed, box);
+    for (const p of points) expect(rectContains(rect, p, 0)).toBe(true);
+    expect(fixed.zoom).toBeGreaterThanOrEqual(1);
+  });
+
+  it("random packs anywhere in the world (4 px from the edge) are always contained, whatever the starting camera", () => {
+    for (const box of BOXES) {
+      for (let seed = 0; seed < 200; seed++) {
+        const n = 3 + Math.floor(unit(seed, 21) * 14), cx = 20 + unit(seed, 22) * (box.w - 40), cy = 20 + unit(seed, 23) * (box.h - 40), spread = 10 + unit(seed, 24) * 200;
+        const points = Array.from({ length: n }, (_, i) => ({ x: Math.min(box.w - 4, Math.max(4, cx + (unit(i, seed + 25) - 0.5) * spread)), y: Math.min(box.h - 4, Math.max(4, cy + (unit(i, seed + 26) - 0.5) * spread * 0.5)) }));
+        const fixed = keepInView({ cx: unit(seed, 27) * box.w, cy: unit(seed, 28) * box.h, zoom: 1 + unit(seed, 29) * 1.2 }, points, box, 16);
+        const rect = viewRect(fixed, box);
+        for (const p of points) expect(rectContains(rect, p, 0), `box ${box.w} seed ${seed}`).toBe(true);
+      }
+    }
+  });
+
   it("a fast-moving pack followed by a slow camera stays in view on every frame", () => {
     const box = BOXES[0];
     let camera = wholeTrack(box);
