@@ -818,3 +818,36 @@ body { background: var(--kt-bg); }
   .kt-camera-options { width: 100%; }
   .kt-marker text { font-size: 9px; }
 }
+
+/* ------------------------------------------- TOP_3D: pseudo-3D overhead view (presentation only) */
+.kt-view-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kt-view-options button { min-width: 44px; }
+.kt-view-options button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.kt-track-svg[data-view="TOP_3D"] {
+  --kt-tilt: 38deg; --kt-persp: 1100px; --kt-untilt: 1.1;
+  transform: perspective(var(--kt-persp)) rotateX(var(--kt-tilt)) scale(.94);
+  transform-origin: 50% 88%;
+  margin-top: -6%;
+  box-shadow: 0 18px 28px -10px #000a;
+  backface-visibility: hidden;
+}
+@media (max-width: 760px) {
+  /* 390px: weaker tilt keeps labels and annotations legible */
+  .kt-track-svg[data-view="TOP_3D"] { --kt-tilt: 26deg; --kt-persp: 1400px; --kt-untilt: 1.1; margin-top: -3%; }
+}
+.kt-track-svg[data-view="TOP_3D"] .kt-track-side { fill: #0a1a12; stroke: none; }
+/* markers stand up above their ground shadow; rim keeps the disc readable on any track colour */
+.kt-track-svg[data-view="TOP_3D"] .kt-dot-shadow { opacity: .5; }
+.kt-track-svg[data-depth="FULL"] .kt-dot circle:not(.kt-dot-rim) { transform: translateY(-3px); }
+.kt-track-svg[data-view="TOP_3D"] .kt-dot-rim { fill: #0b1118; stroke: none; opacity: .9; }
+.kt-track-svg[data-depth="FULL"] .kt-dot-rim { transform: translateY(-3px); }
+.kt-track-svg[data-depth="FULL"] .kt-dot-gloss { fill: #fff; opacity: .55; stroke: none; transform: translateY(-3px); }
+.kt-track-svg[data-view="TOP_3D"] .kt-dot.is-honmei .kt-dot-rim { fill: #fff; }
+.kt-track-svg[data-view="TOP_3D"] .kt-dot[data-selected="true"] .kt-dot-rim { fill: #fff; }
+/* labels are billboards: undo the tilt's vertical squash so the numbers stay upright and readable */
+.kt-track-svg[data-view="TOP_3D"] .kt-label-upright { transform-box: fill-box; transform-origin: center; transform: scaleY(var(--kt-untilt)); }
+.kt-track-svg[data-view="TOP_3D"] .kt-runner-labels text { paint-order: stroke; stroke: #fff8; stroke-width: 2px; }
+.kt-track-svg[data-view="TOP_3D"] .kt-marker text, .kt-track-svg[data-view="TOP_3D"] .kt-slope text, .kt-track-svg[data-view="TOP_3D"] .kt-corner { font-size: 11px; paint-order: stroke; stroke: #0b1118; stroke-width: 3px; }
+.kt-track-svg[data-view="TOP_3D"] .kt-track-label { font-size: 13px; paint-order: stroke; stroke: #0b1118; stroke-width: 3px; }
+@media (prefers-reduced-motion: reduce) { .kt-track-svg[data-view="TOP_3D"] { transition: none; } }
+.is-share-view .kt-view { display: none; }

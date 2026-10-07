@@ -7,6 +7,7 @@ import { courseShare, remainingMarkers, sectionAt, slopeSpans, straightness, tur
 import type { ProgressStore } from "@/lib/progressStore";
 import { cosmeticLane } from "@/lib/scenarioMotion";
 import { gapFieldOf, NEUTRAL_EFFECT, tempoAt, type TerrainProfile } from "@/lib/terrainTempo";
+import type { ViewDepth } from "@/lib/viewMode";
 import { FRONT_END, OFFSET_MAX, scenarioFrame, type GapField, type Pace, type ScenarioRunner } from "@/lib/scenarioReplay";
 
 /** The furthest a runner can run on past the line (share of the race): the field front plus the largest offset. */
@@ -39,6 +40,8 @@ type Props = {
   field?: GapField;
   label: string;
   selectedNo?: number | null;
+  /** Presentation only: FLAT (default) is the unchanged 2D drawing; LITE / FULL tilt it into a pseudo-3D overhead view. */
+  viewDepth?: ViewDepth;
 };
 
 const fmt = (p: { x: number; y: number }) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
@@ -53,6 +56,7 @@ const boundedLabel = (p: { x: number; y: number }, w: number, h: number) => ({ x
  */
 export function TrackStage(props: Props) {
   const { store, fixedProgress, runners, pace, seed, course, compact, cameraMode, reducedMotion, honmeiNo, terrain, field, label } = props;
+  const depth: ViewDepth = props.viewDepth ?? "FLAT";
   const g = compact ? GEOMETRY.compact : GEOMETRY.wide;
   const box = useMemo(() => ({ w: g.w, h: g.h }), [g.w, g.h]);
   const margin = 4.2 * g.laneX + 14; // room for the widest lane plus the dot, its shadow and the zoomed-in framing
@@ -245,13 +249,14 @@ export function TrackStage(props: Props) {
     return () => { cancelled = true; };
   }, [course, g.w, g.h, compact]);
 
-  return <svg ref={svgRef} className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-surface={course.surface} data-presentation="STYLIZED" data-direction={course.direction} data-start-share={String(course.startLapShare)} data-camera={cameraMode} data-zoom="1.00">
+  return <svg ref={svgRef} className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-surface={course.surface} data-presentation="STYLIZED" data-direction={course.direction} data-start-share={String(course.startLapShare)} data-camera={cameraMode} data-view={depth === "FLAT" ? "MAP" : "TOP_3D"} data-depth={depth} data-zoom="1.00">
     <title>{`${label} 色は識別用・枠色ではありません`}</title>
     <g ref={parallaxRef} className="kt-parallax" aria-hidden="true">
       {parallaxLines.map(x => <line key={x} x1={x} x2={x} y1={-PARALLAX_TILE} y2={g.h + PARALLAX_TILE} />)}
       {parallaxLines.map(y => <line key={`h${y}`} x1={-PARALLAX_TILE} x2={g.w + PARALLAX_TILE} y1={y} y2={y} className="kt-parallax-h" />)}
     </g>
     <g ref={worldRef} className="kt-world">
+      {depth === "FULL" ? <polygon aria-hidden="true" className="kt-track-side" transform="translate(0 7)" points={toPoints(closed ? edge(4.2) : capped([...edge(4.2), ...edge(-1.6).reverse()], g.r + 2, g.r + 2 + RUN_ON * pathLength))} /> : null}
       {closed ? <>
         <polygon points={toPoints(edge(4.2))} className="kt-track-outer" />
         <polygon points={toPoints(edge(-1.6))} className="kt-track-inner" />
@@ -285,15 +290,23 @@ export function TrackStage(props: Props) {
       <g ref={runnersRef} className="kt-runners">
         {runnersDraw.map(runner => <g key={runner.no} data-runner={runner.no} ref={el => { if (el) dotRefs.current.set(runner.no, el); else dotRefs.current.delete(runner.no); }} style={runnerPresentation(runner.no).style} data-color-basis="VISUAL_ONLY" data-selected={runner.no === props.selectedNo} className={`kt-dot${runner.no === honmeiNo ? " is-honmei" : ""}${runner.style === "不明" ? " is-unknown" : ""}`}>
           <ellipse className="kt-dot-shadow" cx="1.6" cy="3.6" rx={g.r} ry={g.r * 0.72} />
+          {depth !== "FLAT" ? <circle className="kt-dot-rim" r={g.r / 2 + 1.5} /> : null}
           <circle r={g.r / 2} />
+          {depth === "FULL" ? <ellipse className="kt-dot-gloss" cx="-1.6" cy="-2" rx="2.2" ry="1.4" /> : null}
         </g>)}
       </g>
     </g>
     <g className="kt-runner-leaders" aria-hidden="true">{runnersDraw.map(runner => <line key={runner.no} ref={el => { if (el) leaderRefs.current.set(runner.no, el); else leaderRefs.current.delete(runner.no); }} />)}</g>
     <g className="kt-runner-labels">{runnersDraw.map(runner => <g key={runner.no} data-runner-label={runner.no} data-selected={runner.no === props.selectedNo} style={runnerPresentation(runner.no).style} ref={el => { if (el) labelRefs.current.set(runner.no, el); else labelRefs.current.delete(runner.no); }}>
-      <rect x="-12" y="-12" width="24" height="24" rx="5" />
-      <text dy="4">{runner.no}</text>
-      {runner.no === props.selectedNo ? <path className="kt-runner-selected" d="M -4 -16 L 0 -12 L 4 -16 Z" /> : null}
+      {depth === "FLAT" ? <>
+        <rect x="-12" y="-12" width="24" height="24" rx="5" />
+        <text dy="4">{runner.no}</text>
+        {runner.no === props.selectedNo ? <path className="kt-runner-selected" d="M -4 -16 L 0 -12 L 4 -16 Z" /> : null}
+      </> : <g className="kt-label-upright">
+        <rect x="-12" y="-12" width="24" height="24" rx="5" />
+        <text dy="4">{runner.no}</text>
+        {runner.no === props.selectedNo ? <path className="kt-runner-selected" d="M -4 -16 L 0 -12 L 4 -16 Z" /> : null}
+      </g>}
     </g>)}</g>
   </svg>;
 }

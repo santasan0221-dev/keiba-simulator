@@ -20,6 +20,8 @@ import { createResultPoller } from "@/lib/resultPoller";
 import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioOrderPanel";
 import { TrackStage } from "@/components/trace/TrackStage";
 import { CameraSelector } from "@/components/trace/CameraSelector";
+import { ViewSelector } from "@/components/trace/ViewSelector";
+import { viewDepth, type ViewMode } from "@/lib/viewMode";
 import { createThrottledEmitter, crossingSequence } from "@/lib/scenarioOrder";
 import { createSimulatorTracker } from "@/lib/simulatorAnalytics";
 import { buildTerrainProfile, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
@@ -76,6 +78,7 @@ export default function SimulatorShell() {
   const store = useMemo(() => createProgressStore(0), []);
   const [progress, setProgressState] = useState(0);
   const [cameraMode, setCameraMode] = useState<CameraMode>("AUTO");
+  const [viewMode, setViewMode] = useState<ViewMode>("MAP");
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
   const [mode, setMode] = useState<Mode>("SCENARIO");
@@ -350,10 +353,11 @@ export default function SimulatorShell() {
               </header>
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
-              <TrackStage selectedNo={selectedNo} store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              <TrackStage selectedNo={selectedNo} store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} viewDepth={viewDepth(viewMode, reducedMotion)} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
               {cameraMode !== "TRACK" ? <div className="kt-broadcast-overlay"><b>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "" : `${course.distance}m`}</b><span>{SECTION_LABEL[section]} · {pace} / {STANDARD_VARIANT}{selectedNo !== null ? ` · 選択 #${selectedNo}` : ""}</span></div> : null}
               <p className="kt-palette-note">馬番の色は識別用です（枠色ではありません）。線の先が走行位置、▼と枠線は選択中、薄い表示は仮想ゴール通過済み。</p>
               <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
+              <ViewSelector mode={viewMode} onChange={setViewMode} depth={viewDepth(viewMode, reducedMotion)} />
               <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
               <p className="kt-course-note">{courseNote(course)}</p>
               <div className="kt-phase-rail" role="group" aria-label="レース区間">
