@@ -43,10 +43,11 @@ describe("TOP_3D leaves the simulation untouched", () => {
   });
 });
 
-describe("label pitch is LITE-only", () => {
-  it("only the reduced-motion wide TOP_3D path widens the label gap", () => {
-    expect(stage).toMatch(/const lite = live\.current\.depth === "LITE" && !live\.current\.compact;/);
-    expect(stage).toMatch(/lite \? LITE_LABEL_PITCH : LABEL_PITCH, lite \? LITE_LABEL_PITCH : LABEL_GRID/);
+describe("label pitch only widens for wide TOP_3D", () => {
+  it("2D and compact keep the default gap; FULL uses 30, LITE 33", () => {
+    expect(stage).toMatch(/const wide3d = !live\.current\.compact \? live\.current\.depth : "FLAT";/);
+    expect(stage).toMatch(/wide3d === "LITE" \? LITE_LABEL_PITCH : wide3d === "FULL" \? FULL_LABEL_PITCH : LABEL_PITCH/);
+    expect(stage).toMatch(/const LITE_LABEL_PITCH = 33;/); expect(stage).toMatch(/const FULL_LABEL_PITCH = 30;/);
   });
 });
 

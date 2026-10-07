@@ -19,6 +19,8 @@ export const GEOMETRY = {
 };
 /** Reduced-motion TOP_3D keeps the whole track in view, so the tilt magnifies the near edge: labels there need a wider gap. */
 const LITE_LABEL_PITCH = 33;
+/** Normal-motion TOP_3D on the wide layout: the same magnification leaves sub-pixel touches at 28, so a slightly wider gap. */
+const FULL_LABEL_PITCH = 30;
 const PARALLAX_TILE = 56;
 const PARALLAX_FACTOR = 0.35;
 const CONTAIN_MARGIN = 18;
@@ -131,8 +133,9 @@ export function TrackStage(props: Props) {
     const { box: b } = live.current;
     worldRef.current?.setAttribute("transform", cameraTransform(cam, b));
     const screenPoints = runnerPoints.current.map(point => ({ no: point.no, x: (point.x - cam.cx) * cam.zoom + b.w / 2, y: (point.y - cam.cy) * cam.zoom + b.h / 2 }));
-    const lite = live.current.depth === "LITE" && !live.current.compact;
-    const labels = layoutRunnerLabels(screenPoints, b.w, b.h, lite ? LITE_LABEL_PITCH : LABEL_PITCH, lite ? LITE_LABEL_PITCH : LABEL_GRID);
+    const wide3d = !live.current.compact ? live.current.depth : "FLAT";
+    const pitch = wide3d === "LITE" ? LITE_LABEL_PITCH : wide3d === "FULL" ? FULL_LABEL_PITCH : LABEL_PITCH;
+    const labels = layoutRunnerLabels(screenPoints, b.w, b.h, pitch, wide3d === "LITE" ? LITE_LABEL_PITCH : LABEL_GRID);
     for (const label of labels) {
       labelRefs.current.get(label.no)?.setAttribute("transform", `translate(${label.x.toFixed(2)} ${label.y.toFixed(2)})`);
       const point = screenPoints.find(point => point.no === label.no)!;
