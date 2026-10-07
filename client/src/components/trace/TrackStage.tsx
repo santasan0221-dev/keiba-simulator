@@ -1,5 +1,5 @@
 import { runnerPresentation } from "./runnerPresentation";
-import { layoutRunnerLabels, type LabelPoint } from "./runnerLabels";
+import { layoutRunnerLabels, LABEL_GRID, LABEL_PITCH, type LabelPoint } from "./runnerLabels";
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { fitPath, pointOnPath, type CourseLayout } from "@/lib/courseAtlas";
 import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_VIEW_FROM, keepInView, wholeTrack, type CameraMode, type CameraState } from "@/lib/camera";
@@ -17,6 +17,8 @@ export const GEOMETRY = {
   wide: { w: 640, h: 300, laneX: 11, r: 12 },
   compact: { w: 360, h: 320, laneX: 9, r: 12 },
 };
+/** Reduced-motion TOP_3D keeps the whole track in view, so the tilt magnifies the near edge: labels there need a wider gap. */
+const LITE_LABEL_PITCH = 33;
 const PARALLAX_TILE = 56;
 const PARALLAX_FACTOR = 0.35;
 const CONTAIN_MARGIN = 18;
@@ -122,14 +124,15 @@ export function TrackStage(props: Props) {
   const goalPoints = useMemo(() => [goalIn, goalOut], [goalIn.x, goalIn.y, goalOut.x, goalOut.y]);
   const gapField = useMemo(() => field ?? (terrain ? gapFieldOf(terrain) : undefined), [field, terrain]);
   const energy = useRef(1);
-  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField });
-  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField };
+  const live = useRef({ depth, compact, runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField });
+  live.current = { depth, compact, runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField };
 
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
     worldRef.current?.setAttribute("transform", cameraTransform(cam, b));
     const screenPoints = runnerPoints.current.map(point => ({ no: point.no, x: (point.x - cam.cx) * cam.zoom + b.w / 2, y: (point.y - cam.cy) * cam.zoom + b.h / 2 }));
-    const labels = layoutRunnerLabels(screenPoints, b.w, b.h);
+    const lite = live.current.depth === "LITE" && !live.current.compact;
+    const labels = layoutRunnerLabels(screenPoints, b.w, b.h, lite ? LITE_LABEL_PITCH : LABEL_PITCH, lite ? LITE_LABEL_PITCH : LABEL_GRID);
     for (const label of labels) {
       labelRefs.current.get(label.no)?.setAttribute("transform", `translate(${label.x.toFixed(2)} ${label.y.toFixed(2)})`);
       const point = screenPoints.find(point => point.no === label.no)!;

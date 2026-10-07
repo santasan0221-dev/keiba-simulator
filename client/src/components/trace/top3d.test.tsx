@@ -25,7 +25,10 @@ describe("viewMode (presentation only)", () => {
 describe("TOP_3D leaves the simulation untouched", () => {
   it("the per-frame pipeline never reads the view depth", () => {
     const pipeline = stage.slice(stage.indexOf("  const apply ="), stage.indexOf("  const cornerPos ="));
-    expect(pipeline).not.toMatch(/depth|viewMode|TOP_3D/);
+    // The screen-space label projection is presentation-only and may read the depth (label gap); nothing else may.
+    const start = pipeline.indexOf("    const screenPoints ="), end = pipeline.indexOf("    if (parallaxRef.current", start);
+    expect(start).toBeGreaterThan(0); expect(end).toBeGreaterThan(start);
+    expect(pipeline.slice(0, start) + pipeline.slice(end)).not.toMatch(/depth|viewMode|TOP_3D/);
   });
   it("no logic / analytics module knows about the view mode; the shell does not track it", () => {
     for (const f of ["scenarioReplay", "scenarioOrder", "scenarioMotion", "scenarioNoise", "scenarioRunnerField", "terrainTempo", "camera", "simulatorAnalytics", "betaAnalytics", "progressStore"]) {
@@ -37,6 +40,13 @@ describe("TOP_3D leaves the simulation untouched", () => {
   });
   it("the result thumbnail stays 2D", () => {
     expect(read("../../pages/SimulatorShell.tsx")).toMatch(/<TrackStage fixedProgress=\{1\}(?:(?!viewDepth).)*\/>/);
+  });
+});
+
+describe("label pitch is LITE-only", () => {
+  it("only the reduced-motion wide TOP_3D path widens the label gap", () => {
+    expect(stage).toMatch(/const lite = live\.current\.depth === "LITE" && !live\.current\.compact;/);
+    expect(stage).toMatch(/lite \? LITE_LABEL_PITCH : LABEL_PITCH, lite \? LITE_LABEL_PITCH : LABEL_GRID/);
   });
 });
 

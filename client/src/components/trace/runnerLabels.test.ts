@@ -17,3 +17,19 @@ describe("screen-space runner labels", () => {
     }
   });
 });
+
+describe("wider label pitch (reduced-motion TOP_3D)", () => {
+  it("keeps the default gap at 28 and honours a wider pitch/grid without moving inputs", () => {
+    const input = Array.from({ length: 18 }, (_, i) => ({ no: i + 1, x: 320, y: 150 }));
+    const before = JSON.stringify(input);
+    const wide = layoutRunnerLabels(input, 640, 300, 33, 33);
+    expect(JSON.stringify(input)).toBe(before);
+    for (const [i, a] of wide.entries()) for (const b of wide.slice(i + 1)) expect(Math.abs(a.x - b.x) >= 33 || Math.abs(a.y - b.y) >= 33).toBe(true);
+    expect(layoutRunnerLabels(input, 640, 300)).toEqual(layoutRunnerLabels(input, 640, 300, 28, 30));
+  });
+  it("is deterministic and keeps every label with its own runner number", () => {
+    const input = [3, 1, 2].map((no, i) => ({ no, x: 100 + i, y: 100 }));
+    const a = layoutRunnerLabels(input, 640, 300, 33, 33), b = layoutRunnerLabels(input, 640, 300, 33, 33);
+    expect(a).toEqual(b); expect(a.map(l => l.no).sort()).toEqual([1, 2, 3]);
+  });
+});
