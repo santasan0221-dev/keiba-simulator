@@ -43,14 +43,6 @@ describe("TOP_3D leaves the simulation untouched", () => {
   });
 });
 
-describe("label pitch only widens for wide TOP_3D", () => {
-  it("2D and compact keep the default gap; FULL uses 30, LITE 33", () => {
-    expect(stage).toMatch(/const wide3d = !live\.current\.compact \? live\.current\.depth : "FLAT";/);
-    expect(stage).toMatch(/wide3d === "LITE" \? LITE_LABEL_PITCH : wide3d === "FULL" \? FULL_LABEL_PITCH : LABEL_PITCH/);
-    expect(stage).toMatch(/const LITE_LABEL_PITCH = 33;/); expect(stage).toMatch(/const FULL_LABEL_PITCH = 30;/);
-  });
-});
-
 describe("TrackStage markup per depth", () => {
   const course = resolveCourse("東京", "芝", 2000);
   const render = (viewDepth?: "FLAT" | "LITE" | "FULL", compact = false) => renderToStaticMarkup(<TrackStage fixedProgress={0.6} runners={runners} pace="平均" seed={1} course={course} compact={compact} cameraMode="TRACK" reducedMotion={false} honmeiNo={1} label="t" viewDepth={viewDepth} />);

@@ -1,5 +1,6 @@
 import { runnerPresentation } from "./runnerPresentation";
-import { layoutRunnerLabels, LABEL_GRID, LABEL_PITCH, type LabelPoint } from "./runnerLabels";
+import { acceptsProjected, type DrawnSize } from "./top3dProjection";
+import { layoutRunnerLabels, type LabelPoint } from "./runnerLabels";
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { fitPath, pointOnPath, type CourseLayout } from "@/lib/courseAtlas";
 import { cameraTarget, cameraTransform, converged, easeCamera, EASE_MS, HOME_VIEW_FROM, keepInView, wholeTrack, type CameraMode, type CameraState } from "@/lib/camera";
@@ -17,10 +18,6 @@ export const GEOMETRY = {
   wide: { w: 640, h: 300, laneX: 11, r: 12 },
   compact: { w: 360, h: 320, laneX: 9, r: 12 },
 };
-/** Reduced-motion TOP_3D keeps the whole track in view, so the tilt magnifies the near edge: labels there need a wider gap. */
-const LITE_LABEL_PITCH = 33;
-/** Normal-motion TOP_3D on the wide layout: the same magnification leaves sub-pixel touches at 28, so a slightly wider gap. */
-const FULL_LABEL_PITCH = 30;
 const PARALLAX_TILE = 56;
 const PARALLAX_FACTOR = 0.35;
 const CONTAIN_MARGIN = 18;
@@ -126,16 +123,19 @@ export function TrackStage(props: Props) {
   const goalPoints = useMemo(() => [goalIn, goalOut], [goalIn.x, goalIn.y, goalOut.x, goalOut.y]);
   const gapField = useMemo(() => field ?? (terrain ? gapFieldOf(terrain) : undefined), [field, terrain]);
   const energy = useRef(1);
-  const live = useRef({ depth, compact, runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField });
-  live.current = { depth, compact, runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField };
+  // Wide TOP_3D (normal and reduced motion): the label placement search also requires each label's projected screen box to stay
+  // clear of the already placed ones (analytic projection of the CSS tilt, no layout read per frame; the drawn size is cached
+  // by a ResizeObserver). Absent for 2D and for the compact layout, which keep the plain 28-unit rule.
+  const drawn = useRef<DrawnSize | null>(null);
+  const acceptLabel = (depth === "FULL" || depth === "LITE") && !compact ? (w: number, h: number) => (drawn.current ? acceptsProjected(drawn.current, { w, h }) : undefined) : undefined;
+  const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField, acceptLabel });
+  live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField, acceptLabel };
 
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
     worldRef.current?.setAttribute("transform", cameraTransform(cam, b));
     const screenPoints = runnerPoints.current.map(point => ({ no: point.no, x: (point.x - cam.cx) * cam.zoom + b.w / 2, y: (point.y - cam.cy) * cam.zoom + b.h / 2 }));
-    const wide3d = !live.current.compact ? live.current.depth : "FLAT";
-    const pitch = wide3d === "LITE" ? LITE_LABEL_PITCH : wide3d === "FULL" ? FULL_LABEL_PITCH : LABEL_PITCH;
-    const labels = layoutRunnerLabels(screenPoints, b.w, b.h, pitch, wide3d === "LITE" ? LITE_LABEL_PITCH : LABEL_GRID);
+    const labels = layoutRunnerLabels(screenPoints, b.w, b.h, live.current.acceptLabel?.(b.w, b.h));
     for (const label of labels) {
       labelRefs.current.get(label.no)?.setAttribute("transform", `translate(${label.x.toFixed(2)} ${label.y.toFixed(2)})`);
       const point = screenPoints.find(point => point.no === label.no)!;
@@ -219,6 +219,21 @@ export function TrackStage(props: Props) {
   useEffect(() => () => { if (frameId.current) cancelAnimationFrame(frameId.current); }, []);
 
   const cornerPos = (share: number) => boundedLabel(at(share, 6.2), g.w, g.h);
+
+  // Wide TOP_3D: cache the drawn size and redraw the labels whenever it changes (view switch, Share View, resize).
+  // Presentation only: nothing here touches runner positions or the camera.
+  useLayoutEffect(() => {
+    const svg = svgRef.current;
+    if (depth === "FLAT" || compact || !svg || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(entries => {
+      const size = entries[0]?.contentRect;
+      if (size) drawn.current = { w: size.width, h: size.height };
+      apply(camera.current);
+    });
+    observer.observe(svg);
+    return () => { observer.disconnect(); drawn.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depth, compact]);
   const parallaxLines = Array.from({ length: Math.ceil(g.w / PARALLAX_TILE) + 3 }, (_, i) => (i - 1) * PARALLAX_TILE);
 
   // Presentation only: keep annotation labels from printing over each other. Course geometry and anchors are untouched;
