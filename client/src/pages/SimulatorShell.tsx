@@ -344,7 +344,7 @@ export default function SimulatorShell() {
 
         {mode === "SCENARIO" ? (
           <div className="simulator-stage kt-sim-stage">
-            <header className="kt-capture-title"><strong>KEIBA TRACE</strong><span>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "距離未確認" : `${course.distance}m`}</span><span>Scenario · {pace} / {STANDARD_VARIANT}</span><b>SCENARIO SIMULATION · 実際の着順予測ではありません</b><span>{selectedNo === null ? "馬をタップして選択" : `選択中 #${selectedNo} ${runners.find(runner => runner.no === selectedNo)?.name ?? ""}`}</span></header>
+            <header className="kt-capture-title"><strong>KEIBA TRACE</strong><span>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "距離未確認" : `${course.distance}m`}</span><span>Scenario · {pace} / {STANDARD_VARIANT}</span><b>SCENARIO SIMULATION · 実際の着順予測ではありません</b><span className="kt-capture-selection" data-selected={selectedNo !== null}>{selectedNo === null ? "馬をタップして選択" : `選択中 #${selectedNo} ${runners.find(runner => runner.no === selectedNo)?.name ?? ""}`}</span></header>
             <section className="track-shell kt-track" aria-label="研究用コース表示（シナリオ）">
               <header className="kt-track-head">
                 <strong>{raceTitle}</strong>
@@ -389,7 +389,7 @@ export default function SimulatorShell() {
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
-              <ScenarioOrderPanel selectedNo={selectedNo} onSelect={setSelectedNo} runners={runners} pace={pace} seed={seed} progress={progress} compact={compact} gapField={field} />
+              <ScenarioOrderPanel selectedNo={selectedNo} onSelect={setSelectedNo} runners={runners} pace={pace} seed={seed} progress={progress} compact={shareView ? false : compact} gapField={field} />
               <span className="kt-eyebrow">RUNNING ORDER · SCENARIO</span>
               <h2>隊列パネル</h2>
               <p>公式通過順位ではありません。脚質グループ内の並びはレースごとに再現可能なシナリオ順です。</p>
@@ -397,6 +397,7 @@ export default function SimulatorShell() {
               {unknownStyles ? <small>脚質が公開されていない{unknownStyles}頭は「脚質不明」として別枠表示しています。</small> : null}
               <ElevationPanel course={course} />
             </section>
+            {shareView ? <footer className="kt-share-summary" aria-label="Share status and attribution"><strong>Scenario progress {pct}% · {complete ? "COMPLETE" : SECTION_LABEL[section]}</strong><span>簡易コース図・仮想シナリオ。実測・着順予測ではありません。</span></footer> : null}
           </div>
         ) : (
           <div className="kt-result-mode">

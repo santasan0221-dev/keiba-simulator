@@ -1,3 +1,5 @@
+import { projectAnnotationRect } from "./annotationProjection";
+import { layoutAnnotations, type AnnotationBox, type Segment } from "./annotationLayout";
 import { runnerPresentation } from "./runnerPresentation";
 import { acceptsProjected, type DrawnSize } from "./top3dProjection";
 import { layoutRunnerLabels, type LabelPoint } from "./runnerLabels";
@@ -131,6 +133,41 @@ export function TrackStage(props: Props) {
   const live = useRef({ runners, pace, seed, course, mode: cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField, acceptLabel });
   live.current = { runners, pace, seed, course, mode: fixedProgress !== undefined ? "TRACK" : cameraMode, reduced: reducedMotion, box, at, closed, goalPoints, terrain, gapField, acceptLabel };
 
+  const annotationCache = useRef<(AnnotationBox & { node: SVGTextElement; originX: number; originY: number })[]>([]);
+  const annotationRails = useRef<Segment[]>([]);
+  const annotationView = useRef({ depth, compact });
+  annotationView.current = { depth, compact };
+  const placeAnnotations = (cam: CameraState, labels: LabelPoint[]) => {
+    const b = live.current.box;
+    const project = (point: { x: number; y: number }) => ({ x: (point.x - cam.cx) * cam.zoom + b.w / 2, y: (point.y - cam.cy) * cam.zoom + b.h / 2 });
+    const annotations = annotationCache.current.map(entry => ({ ...entry, ...project({ x: entry.originX, y: entry.originY }), offsetX: entry.offsetX * cam.zoom, offsetY: entry.offsetY * cam.zoom, width: entry.width * cam.zoom, height: entry.height * cam.zoom }));
+    const rails = annotationRails.current.map(rail => ({ a: project(rail.a), b: project(rail.b) }));
+    const blockers = labels.map(label => ({ x: label.x - 14, y: label.y - 18, width: 28, height: 32 }));
+    const projection = annotationView.current.depth !== "FLAT" && drawn.current ? (rect: { x: number; y: number; width: number; height: number }) => projectAnnotationRect(rect, drawn.current!, b, annotationView.current.compact) : undefined;
+    const projectedBlockers = projection ? blockers.map(projection) : [];
+    const projectedBoundary = projection?.({ x: 0, y: 0, width: b.w, height: b.h });
+    const projectedCache = new WeakMap<{ x: number; y: number; width: number; height: number }, { x: number; y: number; width: number; height: number }>();
+    const projectedBox = (rect: { x: number; y: number; width: number; height: number }) => {
+      let result = projectedCache.get(rect);
+      if (!result) { result = projection!(rect); projectedCache.set(rect, result); }
+      return result;
+    };
+    const accepts = projection && projectedBoundary ? (rect: { x: number; y: number; width: number; height: number }, prior: typeof blockers) => {
+      const a = projectedBox(rect), edge = projectedBoundary;
+      const hit = (other: typeof a) => a.x < other.x + other.width + 2 && other.x < a.x + a.width + 2 && a.y < other.y + other.height + 2 && other.y < a.y + a.height + 2;
+      return a.x >= edge.x + 2 && a.y >= edge.y + 2 && a.x + a.width <= edge.x + edge.width - 2 && a.y + a.height <= edge.y + edge.height - 2 && !projectedBlockers.some(hit) && !prior.some(other => hit(projectedBox(other)));
+    } : undefined;
+    const placed = layoutAnnotations(annotations, b.w, b.h, blockers, rails, undefined, accepts);
+    placed.forEach((placement, index) => {
+      const entry = annotationCache.current[index];
+      // Translate text only: preserve its existing font and camera scale.
+      const x = cam.cx + (placement.x - b.w / 2) / cam.zoom - entry.originX;
+      const y = cam.cy + (placement.y - b.h / 2) / cam.zoom - entry.originY;
+      entry.node.setAttribute("transform", `translate(${x.toFixed(4)} ${y.toFixed(4)})`);
+      entry.node.setAttribute("data-annotation-fit", String(placement.fits));
+    });
+  };
+
   const apply = (cam: CameraState) => {
     const { box: b } = live.current;
     worldRef.current?.setAttribute("transform", cameraTransform(cam, b));
@@ -143,6 +180,7 @@ export function TrackStage(props: Props) {
       line?.setAttribute("x1", point.x.toFixed(2)); line?.setAttribute("y1", point.y.toFixed(2));
       line?.setAttribute("x2", label.x.toFixed(2)); line?.setAttribute("y2", label.y.toFixed(2));
     }
+    placeAnnotations(cam, labels);
     if (parallaxRef.current && !live.current.reduced) {
       const ox = (-(cam.cx * cam.zoom * PARALLAX_FACTOR)) % PARALLAX_TILE, oy = (-(cam.cy * cam.zoom * PARALLAX_FACTOR)) % PARALLAX_TILE;
       parallaxRef.current.setAttribute("transform", `translate(${ox.toFixed(1)} ${oy.toFixed(1)})`);
@@ -224,7 +262,7 @@ export function TrackStage(props: Props) {
   // Presentation only: nothing here touches runner positions or the camera.
   useLayoutEffect(() => {
     const svg = svgRef.current;
-    if (depth === "FLAT" || compact || !svg || typeof ResizeObserver === "undefined") return;
+    if (!svg || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(entries => {
       const size = entries[0]?.contentRect;
       if (size) drawn.current = { w: size.width, h: size.height };
@@ -236,39 +274,32 @@ export function TrackStage(props: Props) {
   }, [depth, compact]);
   const parallaxLines = Array.from({ length: Math.ceil(g.w / PARALLAX_TILE) + 3 }, (_, i) => (i - 1) * PARALLAX_TILE);
 
-  // Presentation only: keep annotation labels from printing over each other. Course geometry and anchors are untouched;
-  // GOAL / corner labels stay put; START, slope and remaining-distance labels are nudged (or hidden) when they would collide.
+  // Measure text once per geometry/font change, never in the animation loop.
   useLayoutEffect(() => {
     const world = worldRef.current;
     if (!world) return;
     let cancelled = false;
-    const place = () => {
+    const measure = () => {
       if (cancelled) return;
-      // Document order puts the remaining-distance labels first, so queue the fixed labels ahead of the movable ones.
-      const texts = ([".kt-track-label:not(.kt-track-label--start)", "[data-corner]", ".kt-track-label--start", "[data-slope] text", "[data-remaining] text"] as const).flatMap(selector => Array.from(world.querySelectorAll<SVGTextElement>(selector)));
-      texts.forEach(text => { text.removeAttribute("transform"); text.removeAttribute("visibility"); });
-      const pad = 3;
-      const hit = (a: DOMRect, b: DOMRect) => a.x < b.x + b.width + pad && b.x < a.x + a.width + pad && a.y < b.y + b.height + pad && b.y < a.y + a.height + pad;
-      const inside = (r: DOMRect) => r.x >= 0 && r.y >= 0 && r.x + r.width <= g.w && r.y + r.height <= g.h;
-      const placed: DOMRect[] = [];
-      const steps: [number, number][] = [[0, 0], [0, -11], [0, 11], [-18, 0], [18, 0], [0, -22], [0, 22], [-18, -11], [18, -11], [-18, 11], [18, 11]];
-      for (const text of texts) {
-        const box = text.getBBox();
-        const fixed = text.hasAttribute("data-corner") || (text.classList.contains("kt-track-label") && !text.classList.contains("kt-track-label--start"));
-        const spot = (fixed ? [steps[0]] : steps).find(([dx, dy]) => {
-          const next = new DOMRect(box.x + dx, box.y + dy, box.width, box.height);
-          return (fixed || inside(next)) && !placed.some(other => hit(next, other));
-        });
-        if (!spot && !fixed) { text.setAttribute("visibility", "hidden"); continue; }
-        const [dx, dy] = spot ?? steps[0];
-        if (dx || dy) text.setAttribute("transform", `translate(${dx} ${dy})`);
-        placed.push(new DOMRect(box.x + dx, box.y + dy, box.width, box.height));
-      }
+      const texts = ([".kt-track-label:not(.kt-track-label--start)", "[data-corner]", ".kt-track-label--start", "[data-remaining] text", "[data-slope] text"] as const).flatMap(selector => Array.from(world.querySelectorAll<SVGTextElement>(selector)));
+      annotationCache.current = texts.map((node, index) => {
+        node.removeAttribute("transform"); node.removeAttribute("visibility");
+        const originX = node.x.baseVal.getItem(0).value, originY = node.y.baseVal.getItem(0).value;
+        const bbox = node.getBBox();
+        const id = node.hasAttribute("data-corner") ? `corner-${node.dataset.corner}` : node.parentElement?.hasAttribute("data-remaining") ? `remaining-${node.parentElement.dataset.remaining}` : node.textContent === "GOAL" ? "goal" : node.textContent === "START" ? "start" : `slope-${index}`;
+        node.setAttribute("data-annotation-id", id);
+        return { id, node, originX, originY, x: originX, y: originY, offsetX: bbox.x - originX, offsetY: bbox.y - originY, width: bbox.width, height: bbox.height };
+      });
+      annotationRails.current = Array.from(world.querySelectorAll<SVGPolygonElement>(".kt-track-outer, .kt-track-inner")).flatMap(polygon => {
+        const points = Array.from({ length: polygon.points.numberOfItems }, (_, i) => { const point = polygon.points.getItem(i); return { x: point.x, y: point.y }; });
+        return points.map((a, i) => ({ a, b: points[(i + 1) % points.length] }));
+      });
+      apply(camera.current);
     };
-    place();
-    void document.fonts?.ready.then(place);
+    measure();
+    void document.fonts?.ready.then(measure);
     return () => { cancelled = true; };
-  }, [course, g.w, g.h, compact]);
+  }, [course, g.w, g.h, compact, depth]);
 
   return <svg ref={svgRef} className="kt-track-svg" viewBox={`0 0 ${g.w} ${g.h}`} role="img" aria-label={label} data-course={`${course.venue}-${course.surface}-${course.distance}`} data-surface={course.surface} data-presentation="STYLIZED" data-direction={course.direction} data-start-share={String(course.startLapShare)} data-camera={cameraMode} data-view={depth === "FLAT" ? "MAP" : "TOP_3D"} data-depth={depth} data-zoom="1.00">
     <title>{`${label} 色は識別用・枠色ではありません`}</title>
