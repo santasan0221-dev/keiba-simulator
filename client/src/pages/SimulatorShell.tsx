@@ -297,6 +297,19 @@ export default function SimulatorShell() {
   const restart = () => { tracker.onRestart(); seek(0); autoSwitched.current = false; setMode("SCENARIO"); setPlaying(true); };
   const togglePlay = () => { if (complete) { restart(); return; } setMode("SCENARIO"); setPlaying(value => !value); };
 
+  // The COMPLETE notice. In layouts B/C (outside Share View) it sits below the playback controls so its appearance cannot push the status strip and controls down.
+  const completeBlock = complete ? <div className="kt-complete" role="status">
+                <strong>SCENARIO COMPLETE</strong>
+                <span>この通過順は着順予測ではありません</span>
+                <div className="kt-complete-actions">
+                  <button type="button" className="kt-cta" onClick={restart}><RotateCcw size={14} aria-hidden="true" /> REPLAY · もう一度見る</button>
+                  {race ? confirmed
+                    ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>RESULT · 公式結果を見る</button>
+                    : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
+                    : <span>デモ隊列には公式結果はありません。</span>}
+                </div>
+              </div> : null;
+
   return (
     <main className={`broadcast simulator-shell kt-page${shareView ? " is-share-view" : ""}`}>
       <LabServiceNavigation active="simulator" />
@@ -367,17 +380,7 @@ export default function SimulatorShell() {
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
               <TrackStage selectedNo={selectedNo} store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} viewDepth={viewDepth(viewMode, reducedMotion)} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
-              {complete ? <div className="kt-complete" role="status">
-                <strong>SCENARIO COMPLETE</strong>
-                <span>この通過順は着順予測ではありません</span>
-                <div className="kt-complete-actions">
-                  <button type="button" className="kt-cta" onClick={restart}><RotateCcw size={14} aria-hidden="true" /> REPLAY · もう一度見る</button>
-                  {race ? confirmed
-                    ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>RESULT · 公式結果を見る</button>
-                    : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
-                    : <span>デモ隊列には公式結果はありません。</span>}
-                </div>
-              </div> : null}
+              {shareView || layout === "A" ? completeBlock : null}
               {cameraMode !== "TRACK" ? <div className="kt-broadcast-overlay"><b>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "" : `${course.distance}m`}</b><span>{SECTION_LABEL[section]} · {pace} / {STANDARD_VARIANT}{selectedNo !== null ? ` · 選択 #${selectedNo}` : ""}</span></div> : null}
               <RaceStatusStrip variant={statusVariant} status={raceStatus(progress, playing)} section={sectionCallout(course, section, complete)} remaining={complete ? null : remainingLabel(course.distance, packLap)} leaders={leaders} selectedNo={selectedNo} selectedRank={selectedRank} onSelect={setSelectedNo} />
               <footer className="kt-playback">
@@ -392,6 +395,7 @@ export default function SimulatorShell() {
                 </div>
                 <small className="kt-num">Scenario progress {pct}%</small>
               </footer>
+              {shareView || layout === "A" ? null : completeBlock}
               {layout === "A" ? <>
               <div className="kt-phase-rail" role="group" aria-label="レース区間">
                 {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); tracker.onSeek(PHASE_KEYFRAME[item]); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}

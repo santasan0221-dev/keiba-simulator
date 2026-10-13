@@ -6,7 +6,8 @@
   "commits": [
     {"sha": "f9d4502", "role": "Visual Polish READY (cherry-pick of c6c4a80, patch-id 915a9a4a3a697e3fda4f7bb896e7dc8ce9f83c75)"},
     {"sha": "4a5b232", "role": "Visual UX READY (squash of aea0f690 + 14aa7f0a)"},
-    {"sha": "docs", "role": "audit document (this commit)"}
+    {"sha": "f3f135a5", "role": "audit document"},
+    {"sha": "CLS fix", "role": "status strip fixed two-row block + COMPLETE notice below controls (B/C)"}
   ],
   "visualPolish": {
     "claimedSourceCommit": "32bf5ebe2e995498091d25b5a518fbda87184098",
@@ -22,5 +23,6 @@
   "build": {"tsc": "clean", "viteBuildRoot": "ok", "viteBuildPagesBase": "ok (--base=/keiba-simulator/)"},
   "protectedFilesTouched": [],
   "humanThreeSecondTest": "NOT RUN (screens prepared in scratchpad/simulator/human_3sec_test)",
-  "finalLabel": "KEIBA_TRACE_SIMULATOR_V3_FINAL_PROMOTION_HUMAN_CHECK_PENDING"
+  "finalLabel": "KEIBA_TRACE_SIMULATOR_V3_FINAL_PROMOTION_READY_PENDING_HUMAN",
+  "clsStabilizationCommit": "fix: stabilize simulator status strip layout during playback"
 }

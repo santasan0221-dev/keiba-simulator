@@ -33,3 +33,22 @@ The earlier "CLS 0.03" was page-load only (candidate load CLS: 0.03, unchanged).
 
 ## Rollback (verified on throwaway branches)
 Revert Visual UX alone: clean, tree == Polish-only commit. Revert Polish alone while UX is present: CONFLICT (trace.css, SimulatorShell.tsx). Revert UX then Polish (LIFO): clean, tree == origin/main. Runbook: `scratchpad/simulator/SIMULATOR_V3_FINAL_PROMOTION_RUNBOOK.md`.
+
+---
+# CLS stabilization patch (follow-up to the CLS finding above)
+Label: **KEIBA_TRACE_SIMULATOR_V3_FINAL_PROMOTION_READY_PENDING_HUMAN** (all machine conditions met; human 3-second test still open).
+
+**Root cause.** At <=760px the status strip's first row (state chip + section + remaining distance) wrapped for long texts ("1〜2コーナー" / "3コーナー" + "残り 約1000m"): row height 28 <-> 56px, moving the top-5 strip and the playback controls by 28px each time the text changed (22-26 shifts per playback). A second, separate cause: when the scenario completes, the COMPLETE notice (inserted above the strip) pushed the strip and controls down ~250px (this notice also exists on origin/main 5e9bda1: a full playback to completion measures CLS 0.150 there, 0.158 on this package).
+
+**Fix (CSS + one JSX move).** (1) `.kt-status-main` becomes a fixed two-row grid at <=760px outside Share View (row 1 state chip, row 2 section + remaining, `nowrap`, rows 22px + 28px): no text change, no clipping (checked at 11 progress points x layouts A/B/C: truncated 0, overflow 0). (2) In layouts B/C outside Share View the COMPLETE notice renders below the playback controls instead of above the strip (Share View and layout A keep the old position, text unchanged).
+
+| 390px, 2x playback | CLS before | CLS after | leaders-strip Y swing | controls Y swing |
+|---|---|---|---|---|
+| normal 2D | 0.515 | 0.017 | 28 -> 0 px | 28 -> 0 px |
+| normal 3D | 0.595 | 0.092 | 28 -> 0 | 28 -> 0 |
+| reduced 2D | 0.406 | 0.072 | 246 -> 0 | 246 -> 0 |
+| reduced 3D | 0.458 | 0.091 | 246 -> 0 | 246 -> 0 |
+(perf harness, un-scrolled page: normal 390 2D/3D 0.038 / 0.07-0.08 (was 0.355 / 0.47); reduced 0.19 / 0.26 (was 0.59 / 0.75).)
+**Residual:** one shift when the scenario completes: the notice (~250px) pushes the VIEW toggle and the collapsed details down. Main behaves the same (0.150 for a full playback), so it is pre-existing, not part of this fix; strip and controls no longer move. Reduced motion completes ~3x faster, which is why its harness numbers are higher; whether the residual is below 0.10 depends on whether the completion happens inside the measurement window. A further reduction would need a different completion presentation (separate decision).
+
+**Budget / invariance.** 390px card +24px (829 -> 853 2D, 817 -> 841 3D; limit +40), track->play 104 -> 128px (limit 150), course size and 1440px numbers identical (724 / 679, 106 / 116px). Share 16:9 / 1:1 / 9:16 identical (stage = viewport, 5 chips, section, remaining). A/B/C all render (A: -4px). 116-case matrix + 52 cases at 12/16 runners: overflow 0, overlap 0, 5 chips, 0 errors; annotations 56 states and GOAL 80-100% (40 states): 0 problems. Performance p95 16.7-16.8ms (unchanged). Tests 641 pass / 4 fail (same 4 as before; candidate-only failures 0), +2 new contract tests; tsc clean; Pages build ok. Changed files: `client/src/trace.css`, `client/src/pages/SimulatorShell.tsx`, `client/src/pages/SimulatorLayout.contract.test.tsx`, this document. No simulation/ranking/camera/terrain/projection/analytics/server file touched. Human-test screens regenerated (answer key content identical).

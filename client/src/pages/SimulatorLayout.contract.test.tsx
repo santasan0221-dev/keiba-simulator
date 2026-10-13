@@ -29,3 +29,20 @@ describe("simulator track-focus layout (default)", () => {
     expect(html).toContain("実測位置ではありません");
   });
 });
+
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+describe("status strip layout stability (CLS)", () => {
+  const css = readFileSync(resolve(import.meta.dirname, "../trace.css"), "utf8");
+  const shell = readFileSync(resolve(import.meta.dirname, "SimulatorShell.tsx"), "utf8");
+  it("gives the status strip a fixed two-row block on mobile so long section / distance text cannot wrap and move the controls", () => {
+    expect(css).toMatch(/\.kt-page:not\(\.is-share-view\) \.kt-status-main \{[^}]*grid-template-rows: 22px 28px/);
+    expect(css).toMatch(/\.kt-status-phase, \.kt-page:not\(\.is-share-view\) \.kt-status-remaining \{ white-space: nowrap/);
+  });
+  it("places the COMPLETE notice below the playback controls in layouts B/C (Share View and layout A keep the old position)", () => {
+    expect(shell).toContain('{shareView || layout === "A" ? completeBlock : null}');
+    expect(shell).toContain('{shareView || layout === "A" ? null : completeBlock}');
+    expect(shell.indexOf('{shareView || layout === "A" ? null : completeBlock}')).toBeGreaterThan(shell.indexOf('<footer className="kt-playback">'));
+  });
+});

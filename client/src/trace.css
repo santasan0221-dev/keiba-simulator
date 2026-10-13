@@ -995,3 +995,10 @@ body { background: var(--kt-bg); }
   .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title span:nth-of-type(2) { display: none; }
 }
 @media (max-width: 760px) { .kt-track[data-layout="B"] .kt-track-head, .kt-track[data-layout="C"] .kt-track-head { min-height: 66px; align-content: flex-start; } }
+
+/* Status strip, <=760px: a fixed two-row block (state chip, then section + remaining distance) so a long section name or distance can no longer wrap and move the leaders / playback controls during playback. Share View keeps its own sizing. */
+@media (max-width: 760px) {
+  .kt-page:not(.is-share-view) .kt-status-main { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 22px 28px; align-items: center; column-gap: 12px; row-gap: 2px; }
+  .kt-page:not(.is-share-view) .kt-status-state { grid-column: 1 / -1; justify-self: start; }
+  .kt-page:not(.is-share-view) .kt-status-phase, .kt-page:not(.is-share-view) .kt-status-remaining { white-space: nowrap; min-width: 0; }
+}
