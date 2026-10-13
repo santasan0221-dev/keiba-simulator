@@ -127,7 +127,7 @@ function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string
     <PickTrio race={race} />
     <AgreementPanel race={race} />
     <RankingBoard race={race} />
-    <ProductionPredictionCard card={race.prediction_card} raceKey={key} />
+    <ProductionPredictionCard card={race.prediction_card} raceKey={raceKey} />
     <nav className="kt-cta-row" aria-label="次の操作">
       <Link href={`/simulator?race=${encodeURIComponent(key)}`} className="kt-cta kt-cta--primary"><FlaskConical size={16} aria-hidden="true" /> このレースの展開シナリオを見る</Link>
       <Link href="/ai-history#race-ledger" className="kt-cta"><History size={16} aria-hidden="true" /> 結果・履歴を見る</Link>
