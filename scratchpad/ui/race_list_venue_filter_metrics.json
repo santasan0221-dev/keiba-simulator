@@ -1,0 +1,240 @@
+{
+  "widths": [
+    {
+      "width": 320,
+      "allCount": 6,
+      "firstRaceY": 5815.046875,
+      "baselineWithoutBarY": 5755.046875,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 153
+    },
+    {
+      "width": 360,
+      "allCount": 6,
+      "firstRaceY": 5643.609375,
+      "baselineWithoutBarY": 5583.609375,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 113
+    },
+    {
+      "width": 390,
+      "allCount": 6,
+      "firstRaceY": 5564.8125,
+      "baselineWithoutBarY": 5504.8125,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 83
+    },
+    {
+      "width": 430,
+      "allCount": 6,
+      "firstRaceY": 5457.625,
+      "baselineWithoutBarY": 5397.625,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 43
+    },
+    {
+      "width": 768,
+      "allCount": 6,
+      "firstRaceY": 3612,
+      "baselineWithoutBarY": 3552,
+      "baselineOverflow": 32,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 32,
+      "stripOverflow": 0
+    },
+    {
+      "width": 1024,
+      "allCount": 6,
+      "firstRaceY": 3276.390625,
+      "baselineWithoutBarY": 3216.390625,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 0
+    },
+    {
+      "width": 1440,
+      "allCount": 6,
+      "firstRaceY": 2770.640625,
+      "baselineWithoutBarY": 2710.640625,
+      "baselineOverflow": 0,
+      "addedHeight": 60,
+      "clicksToSwitch": 1,
+      "height": 52,
+      "minTarget": 44,
+      "overflow": 0,
+      "stripOverflow": 0
+    }
+  ],
+  "fixtures": [
+    {
+      "width": 390,
+      "venues": [],
+      "count": 0,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [],
+      "count": 0,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "venues": [
+        "東京"
+      ],
+      "count": 2,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [
+        "東京"
+      ],
+      "count": 2,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "venues": [
+        "東京",
+        "京都"
+      ],
+      "count": 4,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [
+        "東京",
+        "京都"
+      ],
+      "count": 4,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "venues": [
+        "東京",
+        "京都",
+        "新潟"
+      ],
+      "count": 6,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [
+        "東京",
+        "京都",
+        "新潟"
+      ],
+      "count": 6,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "venues": [
+        "東京",
+        "京都",
+        "新潟",
+        "中山"
+      ],
+      "count": 8,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [
+        "東京",
+        "京都",
+        "新潟",
+        "中山"
+      ],
+      "count": 8,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "venues": [
+        "とても長い開催場名のテスト会場"
+      ],
+      "count": 2,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "venues": [
+        "とても長い開催場名のテスト会場"
+      ],
+      "count": 2,
+      "overflow": 0
+    },
+    {
+      "state": "loading",
+      "barVisible": false
+    },
+    {
+      "state": "error",
+      "barVisible": false
+    }
+  ],
+  "errors": [],
+  "requestChecks": [
+    {
+      "width": 320,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 360,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 390,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 430,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 768,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 1024,
+      "extraRequestsOnSwitch": 0
+    },
+    {
+      "width": 1440,
+      "extraRequestsOnSwitch": 0
+    }
+  ]
+}
