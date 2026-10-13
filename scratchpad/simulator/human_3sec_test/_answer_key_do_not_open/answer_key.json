@@ -1,0 +1,65 @@
+{
+ "case_01.png": {
+  "course": "東京",
+  "progress": 0.6,
+  "mode": "3D",
+  "runners": 18,
+  "leader": "7",
+  "remaining": "残り 約1000m",
+  "section": "3コーナー"
+ },
+ "case_02.png": {
+  "course": "東京",
+  "progress": 0.3,
+  "mode": "2D",
+  "runners": 8,
+  "leader": "7",
+  "remaining": "残り 約1500m",
+  "section": "向正面"
+ },
+ "case_03.png": {
+  "course": "京都",
+  "progress": 0.6,
+  "mode": "2D",
+  "runners": 18,
+  "leader": "18",
+  "remaining": "残り 約900m",
+  "section": "向正面"
+ },
+ "case_04.png": {
+  "course": "小倉",
+  "progress": 0.3,
+  "mode": "2D",
+  "runners": 12,
+  "leader": "7",
+  "remaining": "残り 約1400m",
+  "section": "1〜2コーナー"
+ },
+ "case_05.png": {
+  "course": "中山",
+  "progress": 0.3,
+  "mode": "2D",
+  "runners": 18,
+  "leader": "1",
+  "remaining": "残り 約2000m",
+  "section": "直線"
+ },
+ "case_06.png": {
+  "course": "新潟",
+  "progress": 0.6,
+  "mode": "2D",
+  "runners": 8,
+  "leader": "1",
+  "remaining": "残り 約500m",
+  "section": "直線"
+ },
+ "case_07.png": {
+  "course": "中山",
+  "progress": 0.95,
+  "mode": "3D",
+  "runners": 18,
+  "leader": "17",
+  "remaining": "ゴール前",
+  "section": "直線"
+ }
+}
