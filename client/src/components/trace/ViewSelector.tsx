@@ -3,7 +3,7 @@ import { VIEW_HINT, VIEW_LABEL, VIEW_MODES, type ViewDepth, type ViewMode } from
 
 /** View mode picker (flat map / pseudo-3D overhead): a two-option radio group. */
 export function ViewSelector({ mode, onChange, depth }: { mode: ViewMode; onChange: (mode: ViewMode) => void; depth: ViewDepth }) {
-  return <div className="kt-camera kt-view" role="group" aria-label="表示モード">
+  return <div className="kt-camera kt-view" role="group" aria-label="表示モード" data-depth={depth}>
     <span className="kt-camera-title" id="kt-view-title">VIEW</span>
     <div role="radiogroup" aria-labelledby="kt-view-title" className="kt-camera-options kt-view-options">
       {VIEW_MODES.map(value => <button

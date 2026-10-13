@@ -21,8 +21,10 @@ import { ElevationPanel, ScenarioOrderPanel } from "@/components/trace/ScenarioO
 import { TrackStage } from "@/components/trace/TrackStage";
 import { CameraSelector } from "@/components/trace/CameraSelector";
 import { ViewSelector } from "@/components/trace/ViewSelector";
+import { RaceStatusStrip, type StatusVariant } from "@/components/trace/RaceStatusStrip";
+import { leaderChips, raceStatus, remainingLabel, sectionCallout } from "@/lib/raceStatusView";
 import { viewDepth, type ViewMode } from "@/lib/viewMode";
-import { createThrottledEmitter, crossingSequence } from "@/lib/scenarioOrder";
+import { createThrottledEmitter, crossingSequence, orderView } from "@/lib/scenarioOrder";
 import { createSimulatorTracker } from "@/lib/simulatorAnalytics";
 import { buildTerrainProfile, tempoAt, TERRAIN_LABEL_JA, TERRAIN_NOTE, type TerrainProfile } from "@/lib/terrainTempo";
 import { buildHorseProfiles, horseHistoryOf, type HorseHistory } from "@/lib/horseScenarioProfile";
@@ -50,6 +52,8 @@ import {
 // illustration, not race time: nothing on screen is labelled in seconds.
 const SCENARIO_MS = 30_000;
 const SPEEDS = [1, 1.5, 2] as const;
+type UxLayout = "A" | "B" | "C";
+const DEFAULT_LAYOUT: UxLayout = "C";
 // React state (progress label, SCENARIO ORDER, section) follows at ~8 Hz; the track itself is
 // written straight to the DOM every animation frame by TrackStage, so nothing re-renders per frame.
 const ORDER_TABLE_MS = 125;
@@ -282,6 +286,13 @@ export default function SimulatorShell() {
   const terrainLabel = tempoAt(terrain, progress).label;
   const section = sectionAt(course, courseShare(course, packLap), progress);
   const facts = useMemo(() => courseFacts(course), [course]);
+  // Race status strip: read-only views of values already held here (the same orderView the order panel renders).
+  const statusVariant: StatusVariant = useMemo(() => { const value = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("uxv"); return value === "A" || value === "C" ? value : "B"; }, []);
+  // Layout candidates (presentation only): A = status strip only, B = compact surroundings, C = track focus. Query `uxl` selects one for comparison.
+  const layout: UxLayout = useMemo(() => { const value = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("uxl"); return value === "A" || value === "B" || value === "C" ? value : DEFAULT_LAYOUT; }, []);
+  const orderRows = useMemo(() => orderView(runners, progress, pace, seed, field).rows, [runners, progress, pace, seed, field]);
+  const leaders = useMemo(() => leaderChips(orderRows), [orderRows]);
+  const selectedRank = selectedNo === null ? null : orderRows.find(row => row.no === selectedNo)?.rank ?? null;
 
   const restart = () => { tracker.onRestart(); seek(0); autoSwitched.current = false; setMode("SCENARIO"); setPlaying(true); };
   const togglePlay = () => { if (complete) { restart(); return; } setMode("SCENARIO"); setPlaying(value => !value); };
@@ -328,11 +339,13 @@ export default function SimulatorShell() {
             </select>
           </label>
           <span className="kt-sim-assumption">pace scenario · {pace} <b className="kt-research-chip">RESEARCH_ONLY</b></span>
-          {source.kind === "loading" ? <span role="status">出走馬を読み込み中…</span> : null}
-          {source.kind === "error" ? <span role="alert">出走馬を取得できません。デモ隊列を表示しています。</span> : null}
+          {layout === "A" ? <>
+            {source.kind === "loading" ? <span role="status">出走馬を読み込み中…</span> : null}
+            {source.kind === "error" ? <span role="alert">出走馬を取得できません。デモ隊列を表示しています。</span> : null}
+          </> : <span className="kt-sim-status" role={source.kind === "error" ? "alert" : "status"}>{source.kind === "loading" ? "出走馬を読み込み中…" : source.kind === "error" ? "出走馬を取得できません。デモ隊列を表示しています。" : ""}</span>}
         </section>
 
-        <PreRacePanel race={race} />
+        {layout === "C" ? null : <PreRacePanel race={race} />}
         <div className="kt-share-controls">
           <button type="button" aria-pressed={shareView} onClick={() => setShareView(value => !value)}>{shareView ? "SHARE VIEW を終了" : "SHARE VIEW"}</button>
         </div>
@@ -345,7 +358,7 @@ export default function SimulatorShell() {
         {mode === "SCENARIO" ? (
           <div className="simulator-stage kt-sim-stage">
             <header className="kt-capture-title"><strong>KEIBA TRACE</strong><span>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "距離未確認" : `${course.distance}m`}</span><span>Scenario · {pace} / {STANDARD_VARIANT}</span><b>SCENARIO SIMULATION · 実際の着順予測ではありません</b><span className="kt-capture-selection" data-selected={selectedNo !== null}>{selectedNo === null ? "馬をタップして選択" : `選択中 #${selectedNo} ${runners.find(runner => runner.no === selectedNo)?.name ?? ""}`}</span></header>
-            <section className="track-shell kt-track" aria-label="研究用コース表示（シナリオ）">
+            <section className="track-shell kt-track" data-layout={layout} aria-label="研究用コース表示（シナリオ）">
               <header className="kt-track-head">
                 <strong>{raceTitle}</strong>
                 <span className="kt-section-chip" aria-live="polite" data-section={complete ? "COMPLETE" : section}>{complete ? "SCENARIO COMPLETE" : <>SECTION · {SECTION_LABEL[section]}<small> {SECTION_LABEL_JA[section]}</small></>}</span>
@@ -354,15 +367,19 @@ export default function SimulatorShell() {
               <p className="kt-motion-note"><b>SCENARIO MOTION</b> <b>SCENARIO POSITION</b> 実測位置ではありません</p>
               <p className="kt-terrain-note" data-terrain={terrainLabel ?? "NONE"}><b>COURSE EFFECT</b> {terrainLabel ? TERRAIN_LABEL_JA[terrainLabel] : "—"} · {TERRAIN_NOTE}</p>
               <TrackStage selectedNo={selectedNo} store={store} runners={runners} pace={pace} seed={seed} course={course} compact={compact} cameraMode={cameraMode} reducedMotion={reducedMotion} viewDepth={viewDepth(viewMode, reducedMotion)} honmeiNo={honmeiNo} terrain={terrain} field={field} label={`${PHASE_LABEL[phase]}付近の隊列シナリオ。${runners.length}頭。`} />
+              {complete ? <div className="kt-complete" role="status">
+                <strong>SCENARIO COMPLETE</strong>
+                <span>この通過順は着順予測ではありません</span>
+                <div className="kt-complete-actions">
+                  <button type="button" className="kt-cta" onClick={restart}><RotateCcw size={14} aria-hidden="true" /> REPLAY · もう一度見る</button>
+                  {race ? confirmed
+                    ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>RESULT · 公式結果を見る</button>
+                    : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
+                    : <span>デモ隊列には公式結果はありません。</span>}
+                </div>
+              </div> : null}
               {cameraMode !== "TRACK" ? <div className="kt-broadcast-overlay"><b>{raceTitle} · {course.surface} {course.distance === "UNKNOWN" ? "" : `${course.distance}m`}</b><span>{SECTION_LABEL[section]} · {pace} / {STANDARD_VARIANT}{selectedNo !== null ? ` · 選択 #${selectedNo}` : ""}</span></div> : null}
-              <p className="kt-palette-note">馬番の色は識別用です（枠色ではありません）。線の先が走行位置、▼と枠線は選択中、薄い表示は仮想ゴール通過済み。</p>
-              <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
-              <ViewSelector mode={viewMode} onChange={setViewMode} depth={viewDepth(viewMode, reducedMotion)} />
-              <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
-              <p className="kt-course-note">{courseNote(course)}</p>
-              <div className="kt-phase-rail" role="group" aria-label="レース区間">
-                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); tracker.onSeek(PHASE_KEYFRAME[item]); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
-              </div>
+              <RaceStatusStrip variant={statusVariant} status={raceStatus(progress, playing)} section={sectionCallout(course, section, complete)} remaining={complete ? null : remainingLabel(course.distance, packLap)} leaders={leaders} selectedNo={selectedNo} selectedRank={selectedRank} onSelect={setSelectedNo} />
               <footer className="kt-playback">
                 <button type="button" className="kt-play" onClick={togglePlay} aria-label={playing ? "一時停止" : complete ? "もう一度再生" : "再生"}>{playing ? <Pause size={18} /> : <Play size={18} />}</button>
                 <button type="button" onClick={() => { setPlaying(false); tracker.onRestart(); seek(0); setMode("SCENARIO"); autoSwitched.current = false; }} aria-label="最初から"><RotateCcw size={16} /></button>
@@ -375,17 +392,28 @@ export default function SimulatorShell() {
                 </div>
                 <small className="kt-num">Scenario progress {pct}%</small>
               </footer>
-              {complete ? <div className="kt-complete" role="status">
-                <strong>SCENARIO COMPLETE</strong>
-                <span>この通過順は着順予測ではありません</span>
-                <div className="kt-complete-actions">
-                  <button type="button" className="kt-cta" onClick={restart}><RotateCcw size={14} aria-hidden="true" /> REPLAY · もう一度見る</button>
-                  {race ? confirmed
-                    ? <button type="button" className="kt-cta kt-cta--official" onClick={() => setMode("RESULT")}>RESULT · 公式結果を見る</button>
-                    : <span>{official && officialReady ? official.label : "公式結果を確認中"}</span>
-                    : <span>デモ隊列には公式結果はありません。</span>}
-                </div>
-              </div> : null}
+              {layout === "A" ? <>
+              <div className="kt-phase-rail" role="group" aria-label="レース区間">
+                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); tracker.onSeek(PHASE_KEYFRAME[item]); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
+              </div>
+              <p className="kt-palette-note">馬番の色は識別用です（枠色ではありません）。線の先が走行位置、▼と枠線は選択中、薄い表示は仮想ゴール通過済み。</p>
+              <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
+              <ViewSelector mode={viewMode} onChange={setViewMode} depth={viewDepth(viewMode, reducedMotion)} />
+              <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
+              <p className="kt-course-note">{courseNote(course)}</p>
+              </> : <>
+              <ViewSelector mode={viewMode} onChange={setViewMode} depth={viewDepth(viewMode, reducedMotion)} />
+              <details className="kt-more">
+                <summary>区間ジャンプ・カメラ・コース情報</summary>
+              <div className="kt-phase-rail" role="group" aria-label="レース区間">
+                {PHASES.map(item => <button type="button" key={item} className={item === phase ? "is-current" : PHASE_KEYFRAME[item] < progress ? "is-done" : ""} aria-pressed={item === phase} onClick={() => { setPlaying(false); tracker.onSeek(PHASE_KEYFRAME[item]); seek(PHASE_KEYFRAME[item]); }}>{item}</button>)}
+              </div>
+              <CameraSelector mode={cameraMode} onChange={changeCamera} reducedMotion={reducedMotion} />
+              <p className="kt-palette-note">馬番の色は識別用です（枠色ではありません）。線の先が走行位置、▼と枠線は選択中、薄い表示は仮想ゴール通過済み。</p>
+              <ul className="kt-course-facts" aria-label="コースの特徴（Course Atlas）">{facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
+              <p className="kt-course-note">{courseNote(course)}</p>
+              </details>
+              </>}
             </section>
 
             <section className="order-shell kt-order" aria-label="隊列パネル（シナリオ）">
@@ -409,6 +437,8 @@ export default function SimulatorShell() {
             </section>
           </div>
         )}
+
+        {layout === "C" ? <PreRacePanel race={race} /> : null}
 
         <p className="shell-notice">
           Scenario progress はシナリオ再生の進み具合で、レース経過時間ではありません。走行中の計測値や勝率更新は提供しません。

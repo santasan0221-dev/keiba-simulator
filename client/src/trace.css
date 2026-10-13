@@ -885,3 +885,113 @@ body { background: var(--kt-bg); }
 }
 
 .is-share-view .kt-terrain-note { display: none; }
+
+
+/* ------------------------------------------------ race status strip (presentation only) */
+.kt-status { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--kt-border-strong); background: #0a1712cc; }
+.kt-status-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.kt-status-state { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--kt-research); color: var(--kt-research); font-size: 11px; font-weight: 800; letter-spacing: .08em; align-self: center; }
+.kt-status[data-status="PLAYING"] .kt-status-state { background: var(--kt-research); color: #150f24; }
+.kt-status-phase { font-size: 24px; line-height: 1.15; color: #fff; letter-spacing: .02em; }
+.kt-status-remaining { font-size: 17px; font-weight: 700; color: var(--kt-primary); }
+.kt-leaders { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.kt-leaders-title { display: grid; font-size: 13px; font-weight: 800; color: var(--kt-muted); line-height: 1.1; flex: none; }
+.kt-leaders-title small { font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+.kt-leaders ol { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; flex: 1; min-width: 0; }
+.kt-leaders li { flex: 1 1 0; max-width: 64px; min-width: 44px; }
+.kt-leaders button { position: relative; display: grid; place-items: center; width: 100%; min-width: 44px; min-height: 44px; padding: 0; border-radius: 10px; border: 2px solid #0b1118; background: var(--runner-fill); color: var(--runner-ink); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
+.kt-leader-no { font: 800 20px/1 var(--kt-num); font-style: normal; }
+.kt-leader-rank { position: absolute; top: -8px; left: -6px; min-width: 21px; height: 21px; padding: 0 3px; border-radius: 11px; background: #0b1118; color: #fff; border: 1.5px solid #fff; font: 800 13px/18px var(--kt-num); font-style: normal; text-align: center; }
+.kt-leaders button[data-rank="1"] { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #0b1118; }
+.kt-leaders button[data-selected="true"] { outline: 3px dashed #fff; outline-offset: 3px; }
+.kt-leaders button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.kt-status-selected { margin: 0; font-size: 13px; color: var(--kt-muted); }
+@media (max-width: 760px) { .kt-status-phase { font-size: 22px; } .kt-leaders-title small { display: none; } }
+@media (prefers-reduced-motion: reduce) { .kt-leaders button { transition: none; } }
+/* The status strip carries the section; the old overlay repeated race title / section / pace (all still in the page header and track head). */
+.kt-track .kt-status ~ .kt-broadcast-overlay, .kt-track .kt-broadcast-overlay { display: none; }
+
+/* ------------------------------------------------ layout B (compact) / C (track focus): presentation only.
+   No geometry, camera or projection change: the SVG viewBox is untouched, only the CSS box around it grows. */
+.kt-track[data-layout="B"], .kt-track[data-layout="C"] { gap: 6px; }
+.kt-track[data-layout="B"] .kt-motion-note, .kt-track[data-layout="C"] .kt-motion-note,
+.kt-track[data-layout="B"] .kt-terrain-note, .kt-track[data-layout="C"] .kt-terrain-note { font-size: 11px; line-height: 1.35; margin: 0; min-height: 0; }
+.kt-track[data-layout="B"] .kt-status, .kt-track[data-layout="C"] .kt-status { padding: 6px 8px; gap: 6px; }
+.kt-track[data-layout="B"] .kt-view small:not(.kt-view-note), .kt-track[data-layout="C"] .kt-view small:not(.kt-view-note) { display: none; }
+.kt-track[data-layout="B"] .kt-view:not([data-depth="LITE"]) small, .kt-track[data-layout="C"] .kt-view:not([data-depth="LITE"]) small { display: none; }
+.kt-track[data-layout="B"] .kt-view[data-depth="LITE"] small, .kt-track[data-layout="C"] .kt-view[data-depth="LITE"] small { display: block; }
+.kt-track[data-layout="B"] .kt-playback, .kt-track[data-layout="C"] .kt-playback { gap: 6px 8px; }
+.kt-track[data-layout="B"] .kt-playback .kt-play, .kt-track[data-layout="C"] .kt-playback .kt-play { order: 1; }
+.kt-track[data-layout="B"] .kt-playback > button:not(.kt-play), .kt-track[data-layout="C"] .kt-playback > button:not(.kt-play) { order: 2; }
+.kt-track[data-layout="B"] .kt-playback .kt-speed, .kt-track[data-layout="C"] .kt-playback .kt-speed { order: 3; margin-left: auto; }
+.kt-track[data-layout="B"] .kt-playback .kt-scrubber, .kt-track[data-layout="C"] .kt-playback .kt-scrubber { order: 4; flex: 1 1 140px; }
+.kt-track[data-layout="B"] .kt-playback small, .kt-track[data-layout="C"] .kt-playback small { order: 5; flex: none; }
+.kt-more { border: 1px solid var(--kt-border); border-radius: 10px; background: #0a171266; }
+.kt-more > summary { min-height: 44px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--kt-muted); cursor: pointer; }
+.kt-more > summary:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.kt-more[open] { display: grid; gap: 8px; padding-bottom: 10px; }
+.kt-more[open] > :not(summary) { margin-inline: 10px; }
+.is-share-view .kt-more { display: none; }
+@media (max-width: 760px) {
+  .kt-sim-stage:has(.kt-track[data-layout="B"]) { margin-inline: -8px; }
+  .simulator-shell .kt-track[data-layout="B"] { padding: 6px; }
+  .kt-sim-stage:has(.kt-track[data-layout="C"]) { margin-inline: -16px; }
+  .simulator-shell .kt-track[data-layout="C"] { padding: 4px 4px 8px; border-radius: 0; border-inline: 0; }
+  .kt-track[data-layout="C"] .kt-track-head, .kt-track[data-layout="C"] .kt-motion-note, .kt-track[data-layout="C"] .kt-terrain-note { padding-inline: 8px; }
+  .kt-track[data-layout="C"] .kt-playback, .kt-track[data-layout="C"] .kt-view, .kt-track[data-layout="C"] .kt-more, .kt-track[data-layout="C"] .kt-complete { margin-inline: 8px; }
+  .kt-track[data-layout="C"] .kt-status { margin-inline: 4px; }
+  .is-share-view .kt-sim-stage:has(.kt-track) { margin-inline: 0; }
+}
+@media (max-width: 760px) {
+  /* layout C: the page chrome above the stage gives way to the track (copy and controls unchanged, only spacing and type size) */
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-head { margin-top: 8px; gap: 8px; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-head h1 { margin: 4px 0 2px; font-size: 22px; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-head p { font-size: 12px; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-research-badge { padding: 4px 10px; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-notice { margin: 8px 0; padding: 8px 10px; font-size: 12px; line-height: 1.5; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; margin-bottom: 8px; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-controls label:nth-of-type(3), .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-controls .kt-sim-assumption { grid-column: auto; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-assumption { padding-bottom: 0; font-size: 12px; align-self: center; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-share-controls { margin: 8px 0; }
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-mode-tabs { margin-bottom: 8px; }
+}
+@media (max-width: 760px) {
+  .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-controls label { min-width: 0; }
+  .kt-page.broadcast .kt-container:has(.kt-track[data-layout="C"]) .kt-sim-controls select { min-width: 0; width: 100%; }
+  /* the capture title repeats the research notice in normal view; Share View keeps it whole */
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title { padding: 8px 12px; gap: 2px 12px; }
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title b,
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title span:last-child { display: none; }
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title strong { font-size: 16px; }
+}
+
+/* ------------------------------------------------ Share View for layouts B / C: one screen = title + track + status/leaders.
+   The long order list stays out of the capture (the leaders strip carries the top five, labelled as virtual order). */
+.is-share-view .kt-sim-stage:has(.kt-track[data-layout="B"]), .is-share-view .kt-sim-stage:has(.kt-track[data-layout="C"]) { grid-template-columns: minmax(0, 1fr); }
+.is-share-view .kt-sim-stage:has(.kt-track[data-layout="B"]) .kt-order, .is-share-view .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-order { display: none; }
+.is-share-view .kt-track[data-layout="B"] .kt-track-svg, .is-share-view .kt-track[data-layout="C"] .kt-track-svg { width: min(100%, calc((100svh - 415px) * 640 / 300)); margin-inline: auto; }
+@media (max-width: 760px) {
+  .is-share-view .kt-track[data-layout="B"] .kt-track-svg, .is-share-view .kt-track[data-layout="C"] .kt-track-svg { width: min(100%, calc((100svh - 330px) * 360 / 320)); }
+}
+.is-share-view .kt-container:has(.kt-track[data-layout="B"]), .is-share-view .kt-container:has(.kt-track[data-layout="C"]) { padding-inline: 8px; }
+.is-share-view .kt-sim-stage:has(.kt-track[data-layout="B"]) .kt-capture-title span:last-child, .is-share-view .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title span:last-child { display: none; }
+.is-share-view .kt-sim-stage:has(.kt-track[data-layout="B"]) .kt-capture-title, .is-share-view .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title { padding: 10px 14px; gap: 4px 18px; }
+/* Share View: the status strip is scaled up so phase, remaining distance, rank badges and numbers survive SNS downscaling. */
+.is-share-view .kt-status[data-variant] .kt-status-phase { font-size: 30px; }
+.is-share-view .kt-status[data-variant] .kt-status-remaining { font-size: 22px; }
+.is-share-view .kt-status[data-variant] .kt-status-state { font-size: 12px; }
+.is-share-view .kt-leaders button { min-height: 56px; }
+.is-share-view .kt-leader-no { font-size: 28px; }
+.is-share-view .kt-leader-rank { min-width: 26px; height: 26px; font-size: 17px; line-height: 23px; border-radius: 13px; top: -10px; left: -8px; }
+.is-share-view .kt-leaders-title { font-size: 15px; }
+/* A reserved status line: the load message appears without moving anything below it (layout shift 0). */
+.kt-sim-status { flex-basis: 100%; min-height: 1.4em; font-size: 12px; color: var(--kt-muted); }
+.kt-sim-status:empty { min-height: 1.4em; }
+@media (max-width: 760px) { .kt-sim-controls .kt-sim-status { grid-column: 1 / -1; } }
+@media (max-width: 760px) {
+  /* fixed one-line capture title in normal view: the demo and race titles differ in length, so a wrapping title would shift the stage when the race loads */
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title { flex-wrap: nowrap; align-items: center; height: 44px; padding-block: 0; overflow: hidden; }
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title span:nth-of-type(1) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kt-page:not(.is-share-view) .kt-sim-stage:has(.kt-track[data-layout="C"]) .kt-capture-title span:nth-of-type(2) { display: none; }
+}
+@media (max-width: 760px) { .kt-track[data-layout="B"] .kt-track-head, .kt-track[data-layout="C"] .kt-track-head { min-height: 66px; align-content: flex-start; } }
