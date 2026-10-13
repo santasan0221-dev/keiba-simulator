@@ -1,0 +1,26 @@
+{
+  "target": "origin/main",
+  "originMainSha": "5e9bda1f38588397e5cfbf6a6dff08c8a87bd8ac",
+  "finalBranch": "feat/simulator-v3-final-promotion-package",
+  "finalBranchBase": "5e9bda1f38588397e5cfbf6a6dff08c8a87bd8ac",
+  "commits": [
+    {"sha": "f9d4502", "role": "Visual Polish READY (cherry-pick of c6c4a80, patch-id 915a9a4a3a697e3fda4f7bb896e7dc8ce9f83c75)"},
+    {"sha": "4a5b232", "role": "Visual UX READY (squash of aea0f690 + 14aa7f0a)"},
+    {"sha": "docs", "role": "audit document (this commit)"}
+  ],
+  "visualPolish": {
+    "claimedSourceCommit": "32bf5ebe2e995498091d25b5a518fbda87184098",
+    "claimedSourceCommitObjectFound": false,
+    "matchedBy": "9 files byte-identical (modulo CRLF checkout) to the saved audit sources C:/t/v3/visual_polish_closure/top3d_final_20261010_085057_d6ec0c4cd1c4/sources; patch identical to c6c4a80",
+    "readySnapshotHashClaim": "d6ec0c4cd1c46667fe7a177e4afb57a6064b6e63da503018d8824af1a5727a2a",
+    "readySnapshotHashRecomputed": false
+  },
+  "visualUx": {"sourceShas": ["aea0f690", "14aa7f0a"], "defaultLayout": "C", "query": "?uxl=A|B|C"},
+  "prerequisites": {"newPrerequisiteCommits": 0, "note": "all 11 earlier prerequisite commits are already ancestors of origin/main"},
+  "topology": {"mergeBase": "5e9bda1f38588397e5cfbf6a6dff08c8a87bd8ac", "behind": 0, "ahead": 3, "fastForwardOnly": true},
+  "tests": {"baselineOriginMain": "620 passed / 4 failed (624)", "candidate": "641 passed / 4 failed (645)", "sameFourFailures": ["server/resultOps.test.ts x2", "server/single-pick-ai-base.test.ts", "server/singlePickSync.connection.test.ts"], "candidateOnlyFailures": 0},
+  "build": {"tsc": "clean", "viteBuildRoot": "ok", "viteBuildPagesBase": "ok (--base=/keiba-simulator/)"},
+  "protectedFilesTouched": [],
+  "humanThreeSecondTest": "NOT RUN (screens prepared in scratchpad/simulator/human_3sec_test)",
+  "finalLabel": "KEIBA_TRACE_SIMULATOR_V3_FINAL_PROMOTION_HUMAN_CHECK_PENDING"
+}

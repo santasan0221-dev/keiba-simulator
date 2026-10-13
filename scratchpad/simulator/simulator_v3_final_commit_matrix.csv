@@ -1,0 +1,14 @@
+sha,subject,role,classification_vs_origin_main_5e9bda1,action_in_final_package
+66459974,Full Finish / GOAL + Scenario Order 100%,runtime foundation,ALREADY_IN_MAIN,none (ancestor of origin/main)
+fbb0ed56,seeded within-style ranking,logic,ALREADY_IN_MAIN,none
+17aa6a96,terrainTempo + TrackStage/SimulatorShell wiring,runtime foundation,ALREADY_IN_MAIN,none
+aa2a1509,horse-course compatibility + seeded noise,logic/research,ALREADY_IN_MAIN,none
+96a03018,scenario contract tests,tests,ALREADY_IN_MAIN,none
+6918420c,simulator analytics,analytics,ALREADY_IN_MAIN,none
+17713fb5,visual polish presentation layer (runner labels/Share base),runtime foundation,ALREADY_IN_MAIN,none
+1b8fd2ce,TOP_3D view + ViewSelector,runtime foundation,ALREADY_IN_MAIN,none
+d67f8dd9,reduced-motion label gap,intermediate fix,ALREADY_IN_MAIN (partly superseded),none
+029315c9,normal wide label gap,intermediate fix,ALREADY_IN_MAIN (partly superseded),none
+5e9bda1f,projection-aware AABB admission,runtime foundation,ALREADY_IN_MAIN (= origin/main tip),none
+c6c4a80 -> f9d4502,audited TOP_3D visual polish (9 files),Visual Polish READY,NEW,cherry-pick (clean; patch-id identical)
+aea0f690+14aa7f0a -> 4a5b232,Visual UX READY (status strip + layout C + Share fit),Visual UX READY,NEW,cherry-pick -n of both then one squashed commit (2 conflicts resolved: trace.css keep-both; one SimulatorShell line)
