@@ -1,0 +1,18 @@
+.prediction-card { box-sizing: border-box; max-width: 860px; margin: 0 auto; padding: 20px; background: #14212a; color: #f2f0e8; border: 1px solid #6c7480; border-radius: 16px; font: 16px/1.65 system-ui,sans-serif; overflow-wrap: anywhere; }
+.prediction-card * { box-sizing: border-box; }
+.prediction-card h2 { font-size: 22px; margin: 8px 0; }
+.prediction-card h3 { font-size: 17px; margin: 0; }
+.prediction-card p { margin: 8px 0; }
+.prediction-card-marks { list-style: none; padding: 0; display: grid; gap: 10px; }
+.prediction-card-marks li { min-width: 0; padding: 12px; border: 1px solid #52616d; border-radius: 8px; }
+.prediction-card-focus { background: #313027; border-color: #ddba78 !important; }
+.prediction-card-focus h3 { font-size: 21px; }
+.prediction-card-marks li:not(.prediction-card-focus) > p { font-size: 13px; line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.pc-rank { font-size: 12px; font-weight: normal; }
+.pc-evidence { color: #f1d698; }
+.prediction-card summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+.prediction-card summary:focus-visible { outline: 3px solid #ffdb86; outline-offset: 2px; }
+.prediction-card footer { margin-top: 16px; font-size: 13px; }
+.prediction-card details ul { padding-left: 20px; }
+@media (min-width: 768px) { .prediction-card-marks { grid-template-columns: repeat(2,minmax(0,1fr)); } .prediction-card-focus { grid-column: 1/-1; } }
+@media (forced-colors: active) { .prediction-card, .prediction-card-marks li { border-color: CanvasText; } .prediction-card summary:focus-visible { outline-color: Highlight; } }

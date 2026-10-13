@@ -4,6 +4,7 @@ import { ArrowLeft, CircleAlert, Copy, FlaskConical, History, LoaderCircle, Shar
 import { Link, useParams } from "wouter";
 import { toast } from "sonner";
 import { TruthPanel } from "@/components/TruthPanel";
+import { ProductionPredictionCard } from "@/components/prediction/ProductionPredictionCard";
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { fetchRace, fetchRaces, LabApiError, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
 import { AgreementPanel, PickTrio, RaceHero, RankingBoard, raceVerdict, VerdictBanner, WinnerStrip } from "@/components/trace/RaceParts";
@@ -126,6 +127,7 @@ function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string
     <PickTrio race={race} />
     <AgreementPanel race={race} />
     <RankingBoard race={race} />
+    <ProductionPredictionCard card={race.prediction_card} raceKey={key} />
     <nav className="kt-cta-row" aria-label="次の操作">
       <Link href={`/simulator?race=${encodeURIComponent(key)}`} className="kt-cta kt-cta--primary"><FlaskConical size={16} aria-hidden="true" /> このレースの展開シナリオを見る</Link>
       <Link href="/ai-history#race-ledger" className="kt-cta"><History size={16} aria-hidden="true" /> 結果・履歴を見る</Link>
