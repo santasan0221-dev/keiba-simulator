@@ -236,6 +236,7 @@ export type LabAiPickResult = { horse_no: number; horse_name: string; ai_rank: n
 export type LabRaceResult = { status: string; official_order: LabOfficialOrder[]; ai_pick: LabAiPickResult | null; payouts: Record<string, unknown> | null };
 
 export type LabRace = {
+  prediction_card?: import("./predictionCardContract").PredictionCard | null;
   race: {
     race_key: string | null;
     date: string | null;

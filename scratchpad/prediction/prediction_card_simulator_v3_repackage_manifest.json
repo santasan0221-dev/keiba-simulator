@@ -1,0 +1,193 @@
+{
+  "label": "KEIBA_TRACE_PREDICTION_CARD_SIMULATOR_V3_REPACKAGE_READY",
+  "branch": "feat/prediction-card-simulator-v3-repackage",
+  "base_sha": "f1f795aeb883df3f70b2dd940b644f3ebcccc61f",
+  "old_ui_branch_sha": "c2a90445ff8daa5d56fc3796625c06435a2b459d",
+  "single_pick_ai_contract_sha": "966d1185e0fab66dd0ef17b9920a049630cd82c3",
+  "selected_paths": [
+    "client/src/components/RealRaceLoader.test.tsx",
+    "client/src/components/RealRaceLoader.tsx",
+    "client/src/components/VenueFilter.test.tsx",
+    "client/src/components/VenueFilter.tsx",
+    "client/src/components/prediction/PredictionCard.tsx",
+    "client/src/components/prediction/ProductionPredictionCard.test.tsx",
+    "client/src/components/prediction/ProductionPredictionCard.tsx",
+    "client/src/components/prediction/prediction-card.css",
+    "client/src/components/venueFilter.css",
+    "client/src/lib/predictionCardContract.ts",
+    "client/src/lib/singlePickAi.ts",
+    "client/src/lib/venueFilter.test.ts",
+    "client/src/lib/venueFilter.ts",
+    "client/src/pages/RacePage.tsx"
+  ],
+  "selected_source_sha256": {
+    "client/src/components/RealRaceLoader.test.tsx": "c42b1f97f401dc58cb3626fc4d35d4d993bc505dccdb1e311145e12eeba490b4",
+    "client/src/components/RealRaceLoader.tsx": "4a25d022031d1df62a1ef14d55f0b312d0b161c6eceaccb1140c368106450895",
+    "client/src/components/VenueFilter.test.tsx": "d0233d0e7087c96f1d347e9da62c324cfdf496f67e38aa7729e8ae4535895190",
+    "client/src/components/VenueFilter.tsx": "35ae9e6a27fe837af6821f827e5ed457bf1c3d944bf5aa40b6a63762fc80c772",
+    "client/src/components/prediction/PredictionCard.tsx": "5ea2a564381ef0f39780665a21fc811081e680c5bbb6d8f9560054aaf18a0f73",
+    "client/src/components/prediction/ProductionPredictionCard.test.tsx": "7f45cb5a58132993483d102076ade7f684f8a0241ad6ed346e4e9a97763f5328",
+    "client/src/components/prediction/ProductionPredictionCard.tsx": "2e78bcaec9a5ac098f64979359fa0e89558c97214340e3f1281a3f55723bfedf",
+    "client/src/components/prediction/prediction-card.css": "5af357ef810cf726a294f3d0618c300ec7e7713d921cc940969d04940d8e596f",
+    "client/src/components/venueFilter.css": "28b11956b9439f91d1261a1a3447c8883a4710112e2c866887148646e0bc272d",
+    "client/src/lib/predictionCardContract.ts": "508745cb5a14c2a8f1d8284a97491cf6219f0bde3361df79f366c23b3dbaa746",
+    "client/src/lib/singlePickAi.ts": "d8d9c2af9764ba1de2f6df97460fc0b01bb3579d3c6a96eccce66437499fcbc9",
+    "client/src/lib/venueFilter.test.ts": "9825888f7911beb95cfa7ed189e5ef619f10a70e3f8cb3d066fd3f7e6fae1380",
+    "client/src/lib/venueFilter.ts": "8c80e9fa7dfef9a6c81289bcc4332b8e5f4833bb1b980bbfff18a02b440a22e0",
+    "client/src/pages/RacePage.tsx": "1d87cd98eedeaa524fd1328c7ba95279af4e7d266279d32172215f47d5afd623"
+  },
+  "overlap_files": [],
+  "conflicts": [],
+  "source_identity_to_old": true,
+  "hidden_stack": 0,
+  "unrelated_commits": 0,
+  "expected_topology": "one commit with parent exactly base_sha; final SHA in audit receipt",
+  "protected_sources": {
+    "count": 292,
+    "unchanged": true,
+    "full_hash_evidence": "3db9aa704e4cea06ac6099ce0abbc4bb14317346dafe6d0eae620aa16c67b1d0"
+  },
+  "tests": {
+    "baseline_passed": 647,
+    "candidate_passed": 654,
+    "candidate_failed": 0,
+    "candidate_only_failed": 0,
+    "card_api_passed": 17,
+    "typecheck": "PASS",
+    "OFF_build": "PASS",
+    "isolated_ON_build": "PASS",
+    "canonical_DTO_renderer_copy": "PASS"
+  },
+  "browser": {
+    "card_comparisons": 24,
+    "V3_sessions": 18,
+    "V3_samples": 180,
+    "V3_main_off_on_comparisons": 6,
+    "widths": [
+      390,
+      667,
+      1440
+    ],
+    "small_landscape": "667x375",
+    "JRA_NAR": "PASS",
+    "venue_switch": "PASS; extra requests0; selected Kyoto card matches",
+    "card_OFF_DOM": 0,
+    "ON_six_marks": true,
+    "publication_separation": "visible AI rank1/public honmei disclaimer plus preserved independent public honmei fixture",
+    "overflow": 0,
+    "console_pageerror_failed_requests_HTTPerrors": 0,
+    "request_counts": [
+      {
+        "width": 320,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 360,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 390,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 430,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 667,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 768,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 1024,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      },
+      {
+        "width": 1440,
+        "requests": {
+          "base": 2,
+          "off": 2,
+          "on": 2
+        }
+      }
+    ],
+    "simulation_GOAL_share_reduced_motion": "PASS",
+    "mobile_CLS": "status height and playback document position stable, including COMPLETE; exact main/off/on equality",
+    "desktop_COMPLETE_caveat": "1440 normal 2D status height94.1875->87.59375; controls y1272.765625->1264.5625 (~8.2px), identical on latest main/OFF/ON; not changed or falsely reported zero"
+  },
+  "OFF_SQL_worker": {
+    "additional_SQL": 0,
+    "additional_worker": 0,
+    "evidence": "server/backend byte unchanged; no new consumer fetch or builder; approved backend API17 tests freshly rerun including OFF resolver bypass and SQL trace equality; no live production SQL measured"
+  },
+  "raw_leakage": {
+    "new_card": 0,
+    "candidate_width_contribution_private_audit_reference_sha256_top6_in_bundles": 0,
+    "existing_raw_score_alias": {
+      "baseline": 1,
+      "candidate_OFF": 1,
+      "candidate_ON": 1,
+      "source": "ResearchWorkbench import mapping; unrelated existing analytics retained"
+    }
+  },
+  "flags": {
+    "public_production_enabled": false,
+    "ON_builds": "isolated /tmp only",
+    "api_modified": false
+  },
+  "carry_over": {
+    "production_local_smoke": "user-reported production READY, not re-executed in Cloud",
+    "Windows_task_service_account": "not executed here"
+  },
+  "evidence_sha256": {
+    "card-v3-tests.json": "9ce3f079c92b01b3af4efae7b8832a0bc07a184d17a11ad044acb3ae41f4ec36",
+    "card-v3-main-tests.json": "80203af5a46647afcb27f3bac51fc93f8acc66594a941e14fdddfb964274f8fe",
+    "card-v3-runtime-metrics.json": "0df6465785bf8151e89f060d59ac4fcc401f4b6d5ad9e5642da8cad0df19fc0e",
+    "card-v3-card-metrics.json": "45edbe5f35426f54e43012f663d980c6995be7a7dff873228a700c6d8cd7f4ca",
+    "card-v3-protected.json": "3db9aa704e4cea06ac6099ce0abbc4bb14317346dafe6d0eae620aa16c67b1d0",
+    "card-v3-source-inventory.json": "93d6aae3aaea5768ecefab281b3c474cea3e6b684977b0925a07a5fe3919024b",
+    "card-v3-runtime.mjs": "bfb132ba4b36f3501e8c1932c5c1d75b5fc5d2acb66fb98102e7b4b911078a2a",
+    "card-v3-card-visual.mjs": "68d1f1ecdf57c630c85cf67dddaf80f2dcae84ee5d588b9f70716fda474d9cd7",
+    "card-v3-check.log": "bdea017387e8428015260a1d0326a80caaee969cebdd8beffc1cbbcb86fad891",
+    "card-v3-build.log": "643b5ed4cdc48ab78b2373427969b4389ebcf2a3847a5a0bc30c1a31e1d5e5eb",
+    "card-v3-on-build.log": "976d8adf58c9d8518a59dd78f166d5d4371c96d4794461b83e9a4d8be38a742b"
+  },
+  "evidence_directory": "/workspace/scratch/prediction_card_simulator_v3_repackage",
+  "commit_push_deploy": {
+    "main_push": false,
+    "feature_push": false,
+    "deploy": false,
+    "production_modified": false
+  }
+}

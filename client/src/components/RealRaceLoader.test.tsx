@@ -9,7 +9,7 @@ vi.mock("@/lib/singlePickAi", async (importActual) => {
 
 // wouter's <Link> reads window.location via a browser-only hook; this test
 // runs in vitest's node environment (no DOM), so stub it with a plain <a>.
-vi.mock("wouter", () => ({ Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => React.createElement("a", { href, className }, children) }));
+vi.mock("wouter", () => ({ useSearch: () => "", Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => React.createElement("a", { href, className }, children) }));
 
 import { RaceDetailLink, RealRaceLoader } from "./RealRaceLoader";
 

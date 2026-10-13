@@ -8,6 +8,9 @@ import { retrySinglePick } from "@/lib/singlePickRetry";
 import { organizationFromRaceKey, trackBetaEvent } from "@/lib/betaAnalytics";
 import { decisionBucketLabel, decisionLabel, normalizeDecisionStatus } from "@/lib/labels";
 import { raceKeyToPath } from "@/lib/raceShareUrl";
+import { useSearch } from "wouter";
+import { VenueFilter } from "./VenueFilter";
+import { filterVenue, validVenue } from "@/lib/venueFilter";
 
 const ORGS = ["NAR", "JRA"] as const;
 export type RealRaceLoad = { race: LabRace; horses: Horse[] };
@@ -65,7 +68,17 @@ export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLo
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const requestId = useRef(0);
+  const [loadedScope, setLoadedScope] = useState("");
   const [filter, setFilter] = useState<DecisionFilter>("ALL");
+  const search = useSearch();
+  const selectedVenue = new URLSearchParams(search).get("venue") ?? "";
+  const selectVenue = (key: string, replace = false) => {
+    const url = new URL(window.location.href);
+    if (key) url.searchParams.set("venue", key);
+    else url.searchParams.delete("venue");
+    if (url.href === window.location.href) return;
+    window.history[replace ? "replaceState" : "pushState"](null, "", url);
+  };
 
   const refresh = () => {
     if (!date) { setLoadingRaces(false); setRaces([]); setNotice("開催日を選択してください。"); return; }
@@ -76,6 +89,7 @@ export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLo
     void retrySinglePick(() => fetchRaces(date, org), { onRetry: ({ attempt, maxAttempts, nextDelayMs }) => { if (request === requestId.current) setNotice(`接続を再試行しています（${attempt + 1}/${maxAttempts}回・${(nextDelayMs / 1000).toFixed(1)}秒後）。`); } }).then((data) => {
       if (request !== requestId.current) return;
       setRaces(data.races);
+      setLoadedScope(`${date}|${org}`);
       setFilter("ALL");
       onStatusChange?.(data.races.length ? "結果待ち" : "選択日の予測なし");
       setNotice(data.races.length ? `${data.races.length}件のレース候補を取得しました。` : "選択日の予測なし。日付または主催を変更してください。");
@@ -107,6 +121,11 @@ export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLo
     () => filter === "ALL" ? races : races.filter((race) => normalizeDecisionStatus(race.decision?.status) === filter),
     [races, filter],
   );
+  const effectiveVenue = validVenue(filteredRaces, selectedVenue);
+  const visibleRaces = filterVenue(filteredRaces, effectiveVenue);
+  useEffect(() => {
+    if (!loadingRaces && !error && loadedScope === `${date}|${org}` && selectedVenue && !validVenue(filteredRaces, selectedVenue)) selectVenue("", true);
+  }, [races, filter, loadingRaces, error, date, org, loadedScope, selectedVenue]);
 
   return <section id="real-race-input" className="race-catalog" aria-label="今日のAI予想一覧">
     <div className="race-catalog-panel">
@@ -121,7 +140,8 @@ export function RealRaceLoader({ onStatusChange }: { onLoad: (loaded: RealRaceLo
         {(["BET", "NO_BET", "UNKNOWN"] as const).map((bucket) => <button type="button" role="tab" key={bucket} aria-selected={filter === bucket} className={`race-catalog-filter-${bucket.toLowerCase()}${filter === bucket ? " selected" : ""}`} onClick={() => setFilter(bucket)}>{decisionBucketLabel(bucket)}<b>{counts[bucket]}</b></button>)}
       </div>
     </div>}
-    <div className="real-race-list" id="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : filteredRaces.length ? filteredRaces.map((race) => {
+    {!loadingRaces && !error && races.length > 0 && <VenueFilter races={filteredRaces} selected={effectiveVenue} onChange={selectVenue} />}
+    <div className="real-race-list" id="real-race-list">{loadingRaces ? <div className="real-race-empty"><LoaderCircle className="spin" size={17} /> 一覧を取得しています</div> : visibleRaces.length ? visibleRaces.map((race) => {
       const honmei = honmeiPick(race);
       const bucket = normalizeDecisionStatus(race.decision?.status);
       const DecisionIcon = decisionIcon(bucket);
