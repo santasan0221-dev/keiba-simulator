@@ -1,0 +1,90 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "contrast": [
+        {
+          "selector": ".pb-hero h1",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-value",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-eyebrow",
+          "fg": "rgb(200, 168, 102)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 8.337308249414278
+        },
+        {
+          "selector": ".pb-primary",
+          "fg": "rgb(11, 17, 26)",
+          "bg": "rgb(200, 168, 102)",
+          "ratio": 8.337308249414278
+        },
+        {
+          "selector": ".pb-comparison td",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-faq summary",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(21, 30, 43)",
+          "ratio": 14.60221653326231
+        }
+      ],
+      "skip_link_keyboard": "PASS",
+      "scope": "representative contrast; not a full WCAG certification"
+    },
+    {
+      "width": 1440,
+      "contrast": [
+        {
+          "selector": ".pb-hero h1",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-value",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-eyebrow",
+          "fg": "rgb(200, 168, 102)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 8.337308249414278
+        },
+        {
+          "selector": ".pb-primary",
+          "fg": "rgb(11, 17, 26)",
+          "bg": "rgb(200, 168, 102)",
+          "ratio": 8.337308249414278
+        },
+        {
+          "selector": ".pb-comparison td",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(11, 17, 26)",
+          "ratio": 16.486568333893196
+        },
+        {
+          "selector": ".pb-faq summary",
+          "fg": "rgb(243, 239, 229)",
+          "bg": "rgb(21, 30, 43)",
+          "ratio": 14.60221653326231
+        }
+      ],
+      "skip_link_keyboard": "PASS",
+      "scope": "representative contrast; not a full WCAG certification"
+    }
+  ]
+}

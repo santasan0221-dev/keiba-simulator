@@ -1,0 +1,46 @@
+{
+  "main": {
+    "entry_js_bytes": 838163,
+    "entry_js_gzip_bytes": 236331,
+    "all_js_bytes": 1265936,
+    "all_js_gzip_bytes": 351657,
+    "entry_css_files": [
+      "/assets/index-DgXeN697.css"
+    ],
+    "landing_chunks": []
+  },
+  "off": {
+    "entry_js_bytes": 839402,
+    "entry_js_gzip_bytes": 236806,
+    "all_js_bytes": 1294594,
+    "all_js_gzip_bytes": 359813,
+    "entry_css_files": [
+      "/assets/index-DgXeN697.css"
+    ],
+    "landing_chunks": [
+      {
+        "name": "PaidBetaLanding-nK7655_r.js",
+        "bytes": 26310,
+        "gzip_bytes": 7051
+      }
+    ]
+  },
+  "on": {
+    "entry_js_bytes": 839495,
+    "entry_js_gzip_bytes": 236840,
+    "all_js_bytes": 1294754,
+    "all_js_gzip_bytes": 359865,
+    "entry_css_files": [
+      "/keiba-simulator/assets/index-DgXeN697.css"
+    ],
+    "landing_chunks": [
+      {
+        "name": "PaidBetaLanding-tQtL4YbV.js",
+        "bytes": 26361,
+        "gzip_bytes": 7056
+      }
+    ]
+  },
+  "off_entry_delta_bytes": 1239,
+  "off_entry_delta_gzip_bytes": 475
+}

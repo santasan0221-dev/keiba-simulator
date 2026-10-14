@@ -1,0 +1,1283 @@
+{
+  "label": "KEIBA_TRACE_PAID_BETA_LANDING_EXTERNAL_SETUP_REQUIRED",
+  "base_sha": "f1f795aeb883df3f70b2dd940b644f3ebcccc61f",
+  "branch": "feat/paid-beta-landing-prep",
+  "route": "/beta under existing BASE_URL",
+  "flag": "VITE_PAID_BETA_LANDING_ENABLED strict 1, default OFF",
+  "production_actions": {
+    "main_push": false,
+    "deploy": false,
+    "flag_changed": false,
+    "note_published": false,
+    "form_published": false,
+    "recruitment": false,
+    "billing": false
+  },
+  "product": {
+    "name": "KEIBA TRACE 分析β",
+    "monthly_yen": 980,
+    "tax_status": "OPERATIONAL_CONFIRMATION_REQUIRED",
+    "capacity": "invite-only 20, not live membership count",
+    "organization": "JRA",
+    "history": false,
+    "eligibility": false,
+    "market_consensus": false
+  },
+  "sample": "live sample unset, existing fixture demo only; no arbitrary selection",
+  "cta": {
+    "states": [
+      "PRELAUNCH",
+      "INVITE_OPEN",
+      "FULL",
+      "PAUSED"
+    ],
+    "default": "PRELAUNCH",
+    "purchase_approved": false,
+    "missing_urls": "omit links"
+  },
+  "tests": {
+    "passed": 662,
+    "failed": 0,
+    "new_landing_tests": 15,
+    "main_baseline": 647,
+    "baseline_origin": "prior verified same unchanged main SHA"
+  },
+  "mutation": {
+    "baseline": "PASS",
+    "detected": 10,
+    "total": 10,
+    "mutations": [
+      {
+        "name": "paid_as_free",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "NAR_paid",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "eligibility_included",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "market_included",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "simulator_paid",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "missing_note_CTA",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "fake_testimonial",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "prohibited_copy",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "off_nav",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "broken_sample_route",
+        "killed": true,
+        "exit_code": 1
+      }
+    ]
+  },
+  "typecheck": "PASS",
+  "build_off": "PASS",
+  "isolated_pages_base_on_build": "PASS",
+  "server_build": "PASS",
+  "browser": {
+    "scope": "ISOLATED_FIXTURE_PREVIEW_EXTERNAL_RESOURCES_STUBBED",
+    "checks": [
+      {
+        "width": 320,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 564.3125,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875
+        ]
+      },
+      {
+        "width": 360,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 530.3125,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          76.375,
+          76.375,
+          49.1875,
+          76.375,
+          76.375,
+          49.1875
+        ]
+      },
+      {
+        "width": 390,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 503.125,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          76.375,
+          76.375,
+          49.1875,
+          76.375,
+          76.375,
+          49.1875
+        ]
+      },
+      {
+        "width": 390,
+        "state": "INVITE_OPEN",
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "state": "FULL",
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "state": "PAUSED",
+        "overflow": false
+      },
+      {
+        "width": 430,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 475.9375,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875
+        ]
+      },
+      {
+        "width": 768,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 469.671875,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875
+        ]
+      },
+      {
+        "width": 1024,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 494.015625,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875
+        ]
+      },
+      {
+        "width": 1440,
+        "state": "PRELAUNCH",
+        "overflow": false,
+        "heroBottom": 505.34375,
+        "h1": 1,
+        "table": true,
+        "ctaTargets": [
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875,
+          49.1875
+        ]
+      },
+      {
+        "width": 1440,
+        "state": "INVITE_OPEN",
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "state": "FULL",
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "state": "PAUSED",
+        "overflow": false
+      }
+    ],
+    "errors": [],
+    "apiRequests": [],
+    "accessibility": [
+      {
+        "width": 390,
+        "keyboard_details": "PASS",
+        "focus": {
+          "style": "solid",
+          "width": "3px"
+        },
+        "forced_colors": "PASS",
+        "reduced_motion": "PASS",
+        "semantic_table": "PASS"
+      },
+      {
+        "width": 1440,
+        "keyboard_details": "PASS",
+        "focus": {
+          "style": "solid",
+          "width": "3px"
+        },
+        "forced_colors": "PASS",
+        "reduced_motion": "PASS",
+        "semantic_table": "PASS"
+      }
+    ],
+    "analytics": [
+      {
+        "width": 390,
+        "events": [
+          {
+            "name": "landing_view",
+            "properties": {
+              "state": "PRELAUNCH"
+            }
+          },
+          {
+            "name": "faq_open",
+            "properties": {
+              "state": "PRELAUNCH"
+            }
+          }
+        ]
+      },
+      {
+        "width": 1440,
+        "events": [
+          {
+            "name": "landing_view",
+            "properties": {
+              "state": "PRELAUNCH"
+            }
+          },
+          {
+            "name": "faq_open",
+            "properties": {
+              "state": "PRELAUNCH"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "regression": {
+    "kind": "MAIN_VS_OFF_SYNTHETIC_API_EXTERNAL_RESOURCES_STUBBED",
+    "checks": [
+      {
+        "width": 390,
+        "route": "/",
+        "main": {
+          "bodyNodes": 355,
+          "layout": [
+            [
+              "topbar kt-topbar",
+              0,
+              0,
+              390,
+              56
+            ],
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "kt-container",
+              0,
+              72,
+              390,
+              3898.48
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 355,
+          "layout": [
+            [
+              "topbar kt-topbar",
+              0,
+              0,
+              390,
+              56
+            ],
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "kt-container",
+              0,
+              72,
+              390,
+              3898.48
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/free",
+        "main": {
+          "bodyNodes": 42,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 42,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/race/JRA/2026-10-10/%E6%9D%B1%E4%BA%AC/11",
+        "main": {
+          "bodyNodes": 1055,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              838.5,
+              390,
+              61.5
+            ],
+            [
+              "race-page-body kt-container",
+              0,
+              118,
+              390,
+              4757.92
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 1055,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              838.5,
+              390,
+              61.5
+            ],
+            [
+              "race-page-body kt-container",
+              0,
+              118,
+              390,
+              4757.92
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/ai-history",
+        "main": {
+          "bodyNodes": 176,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              838.5,
+              390,
+              61.5
+            ],
+            [
+              "kt-container",
+              0,
+              106,
+              390,
+              1510.41
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 176,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              838.5,
+              390,
+              61.5
+            ],
+            [
+              "kt-container",
+              0,
+              106,
+              390,
+              1510.41
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/performance-analysis",
+        "main": {
+          "bodyNodes": 140,
+          "layout": [
+            [
+              "topbar lab-public-topbar",
+              0,
+              0,
+              390,
+              66
+            ],
+            [
+              "lab-service-nav",
+              0,
+              66,
+              390,
+              45
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "lab-public-page",
+              0,
+              111,
+              390,
+              1010.69
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 140,
+          "layout": [
+            [
+              "topbar lab-public-topbar",
+              0,
+              0,
+              390,
+              66
+            ],
+            [
+              "lab-service-nav",
+              0,
+              66,
+              390,
+              45
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "lab-public-page",
+              0,
+              111,
+              390,
+              1010.69
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/simulator",
+        "main": {
+          "bodyNodes": 462,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "kt-container",
+              0,
+              8,
+              390,
+              3480.2
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 462,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              835,
+              390,
+              65
+            ],
+            [
+              "kt-container",
+              0,
+              8,
+              390,
+              3480.2
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 390,
+        "route": "/beta",
+        "main": {
+          "bodyNodes": 23,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 23,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/",
+        "main": {
+          "bodyNodes": 355,
+          "layout": [
+            [
+              "topbar kt-topbar",
+              0,
+              0,
+              1440,
+              64
+            ],
+            [
+              "lab-service-nav",
+              0,
+              64,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              139,
+              1280,
+              2775.25
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 355,
+          "layout": [
+            [
+              "topbar kt-topbar",
+              0,
+              0,
+              1440,
+              64
+            ],
+            [
+              "lab-service-nav",
+              0,
+              64,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              139,
+              1280,
+              2775.25
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/free",
+        "main": {
+          "bodyNodes": 42,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 42,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/race/JRA/2026-10-10/%E6%9D%B1%E4%BA%AC/11",
+        "main": {
+          "bodyNodes": 1055,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              65,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "race-page-body kt-container",
+              80,
+              183,
+              1280,
+              2255.97
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 1055,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              65,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "race-page-body kt-container",
+              80,
+              183,
+              1280,
+              2255.97
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/ai-history",
+        "main": {
+          "bodyNodes": 176,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              65,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              130,
+              1280,
+              1099.61
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 176,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              65,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              130,
+              1280,
+              1099.61
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/performance-analysis",
+        "main": {
+          "bodyNodes": 140,
+          "layout": [
+            [
+              "topbar lab-public-topbar",
+              0,
+              0,
+              1440,
+              76
+            ],
+            [
+              "lab-service-nav",
+              0,
+              76,
+              1440,
+              45
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "lab-public-page",
+              140,
+              121,
+              1160,
+              786.78
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 140,
+          "layout": [
+            [
+              "topbar lab-public-topbar",
+              0,
+              0,
+              1440,
+              76
+            ],
+            [
+              "lab-service-nav",
+              0,
+              76,
+              1440,
+              45
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "lab-public-page",
+              140,
+              121,
+              1160,
+              786.78
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/simulator",
+        "main": {
+          "bodyNodes": 538,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              65,
+              1280,
+              2658.48
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 538,
+          "layout": [
+            [
+              "lab-service-nav",
+              0,
+              0,
+              1440,
+              49
+            ],
+            [
+              "kt-bottom-nav",
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              "kt-container",
+              80,
+              65,
+              1280,
+              2658.48
+            ]
+          ],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      },
+      {
+        "width": 1440,
+        "route": "/beta",
+        "main": {
+          "bodyNodes": 23,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "off": {
+          "bodyNodes": 23,
+          "layout": [],
+          "betaLinks": 0,
+          "betaPage": false,
+          "cards": 0,
+          "overflow": false
+        },
+        "extra_api_requests": 0,
+        "layout_dom_equal": true
+      }
+    ],
+    "errors": [],
+    "real_app_on": {
+      "base_path": "PASS",
+      "query_state_ignored": true,
+      "purchase_links": 0,
+      "production_api_requests": 0,
+      "seo_runtime": "PASS",
+      "zoom_enabled": true
+    }
+  },
+  "accessibility": {
+    "checks": [
+      {
+        "width": 390,
+        "contrast": [
+          {
+            "selector": ".pb-hero h1",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-value",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-eyebrow",
+            "fg": "rgb(200, 168, 102)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 8.337308249414278
+          },
+          {
+            "selector": ".pb-primary",
+            "fg": "rgb(11, 17, 26)",
+            "bg": "rgb(200, 168, 102)",
+            "ratio": 8.337308249414278
+          },
+          {
+            "selector": ".pb-comparison td",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-faq summary",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(21, 30, 43)",
+            "ratio": 14.60221653326231
+          }
+        ],
+        "skip_link_keyboard": "PASS",
+        "scope": "representative contrast; not a full WCAG certification"
+      },
+      {
+        "width": 1440,
+        "contrast": [
+          {
+            "selector": ".pb-hero h1",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-value",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-eyebrow",
+            "fg": "rgb(200, 168, 102)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 8.337308249414278
+          },
+          {
+            "selector": ".pb-primary",
+            "fg": "rgb(11, 17, 26)",
+            "bg": "rgb(200, 168, 102)",
+            "ratio": 8.337308249414278
+          },
+          {
+            "selector": ".pb-comparison td",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(11, 17, 26)",
+            "ratio": 16.486568333893196
+          },
+          {
+            "selector": ".pb-faq summary",
+            "fg": "rgb(243, 239, 229)",
+            "bg": "rgb(21, 30, 43)",
+            "ratio": 14.60221653326231
+          }
+        ],
+        "skip_link_keyboard": "PASS",
+        "scope": "representative contrast; not a full WCAG certification"
+      }
+    ]
+  },
+  "performance": {
+    "main": {
+      "entry_js_bytes": 838163,
+      "entry_js_gzip_bytes": 236331,
+      "all_js_bytes": 1265936,
+      "all_js_gzip_bytes": 351657,
+      "entry_css_files": [
+        "/assets/index-DgXeN697.css"
+      ],
+      "landing_chunks": []
+    },
+    "off": {
+      "entry_js_bytes": 839402,
+      "entry_js_gzip_bytes": 236806,
+      "all_js_bytes": 1294594,
+      "all_js_gzip_bytes": 359813,
+      "entry_css_files": [
+        "/assets/index-DgXeN697.css"
+      ],
+      "landing_chunks": [
+        {
+          "name": "PaidBetaLanding-nK7655_r.js",
+          "bytes": 26310,
+          "gzip_bytes": 7051
+        }
+      ]
+    },
+    "on": {
+      "entry_js_bytes": 839495,
+      "entry_js_gzip_bytes": 236840,
+      "all_js_bytes": 1294754,
+      "all_js_gzip_bytes": 359865,
+      "entry_css_files": [
+        "/keiba-simulator/assets/index-DgXeN697.css"
+      ],
+      "landing_chunks": [
+        {
+          "name": "PaidBetaLanding-tQtL4YbV.js",
+          "bytes": 26361,
+          "gzip_bytes": 7056
+        }
+      ]
+    },
+    "off_entry_delta_bytes": 1239,
+    "off_entry_delta_gzip_bytes": 475
+  },
+  "protected_source_files": 67,
+  "candidate_only_failures": 0,
+  "remaining": [
+    "real Form/note URLs and privacy consent",
+    "tax/billing/cancel/refund confirmation",
+    "terms/privacy/commerce/operator/contact pages",
+    "home beta access/canonical data/Node/CDN verification",
+    "actual server sample and reviewed route integration",
+    "legacy MEMBER wording reconciliation",
+    "static OG/deep-link crawler review"
+  ],
+  "scope": "fixture browser external resources stubbed, not production smoke",
+  "implementation_sha": "c92234d898b2bffb81fcfe387ad85399aa1a32aa",
+  "tests_sha": "401bf87e79ac88b4dfa6155d8cb1f72d3960e669"
+}

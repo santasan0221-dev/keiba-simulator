@@ -1,0 +1,209 @@
+{
+  "scope": "ISOLATED_FIXTURE_PREVIEW_EXTERNAL_RESOURCES_STUBBED",
+  "checks": [
+    {
+      "width": 320,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 564.3125,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875
+      ]
+    },
+    {
+      "width": 360,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 530.3125,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        76.375,
+        76.375,
+        49.1875,
+        76.375,
+        76.375,
+        49.1875
+      ]
+    },
+    {
+      "width": 390,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 503.125,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        76.375,
+        76.375,
+        49.1875,
+        76.375,
+        76.375,
+        49.1875
+      ]
+    },
+    {
+      "width": 390,
+      "state": "INVITE_OPEN",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "state": "FULL",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "state": "PAUSED",
+      "overflow": false
+    },
+    {
+      "width": 430,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 475.9375,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875
+      ]
+    },
+    {
+      "width": 768,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 469.671875,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875
+      ]
+    },
+    {
+      "width": 1024,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 494.015625,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "PRELAUNCH",
+      "overflow": false,
+      "heroBottom": 505.34375,
+      "h1": 1,
+      "table": true,
+      "ctaTargets": [
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875,
+        49.1875
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "INVITE_OPEN",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "state": "FULL",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "state": "PAUSED",
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "apiRequests": [],
+  "accessibility": [
+    {
+      "width": 390,
+      "keyboard_details": "PASS",
+      "focus": {
+        "style": "solid",
+        "width": "3px"
+      },
+      "forced_colors": "PASS",
+      "reduced_motion": "PASS",
+      "semantic_table": "PASS"
+    },
+    {
+      "width": 1440,
+      "keyboard_details": "PASS",
+      "focus": {
+        "style": "solid",
+        "width": "3px"
+      },
+      "forced_colors": "PASS",
+      "reduced_motion": "PASS",
+      "semantic_table": "PASS"
+    }
+  ],
+  "analytics": [
+    {
+      "width": 390,
+      "events": [
+        {
+          "name": "landing_view",
+          "properties": {
+            "state": "PRELAUNCH"
+          }
+        },
+        {
+          "name": "faq_open",
+          "properties": {
+            "state": "PRELAUNCH"
+          }
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "events": [
+        {
+          "name": "landing_view",
+          "properties": {
+            "state": "PRELAUNCH"
+          }
+        },
+        {
+          "name": "faq_open",
+          "properties": {
+            "state": "PRELAUNCH"
+          }
+        }
+      ]
+    }
+  ]
+}

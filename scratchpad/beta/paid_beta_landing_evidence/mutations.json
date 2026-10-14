@@ -1,0 +1,57 @@
+{
+  "baseline": "PASS",
+  "detected": 10,
+  "total": 10,
+  "mutations": [
+    {
+      "name": "paid_as_free",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "NAR_paid",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "eligibility_included",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "market_included",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "simulator_paid",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "missing_note_CTA",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "fake_testimonial",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "prohibited_copy",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "off_nav",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "name": "broken_sample_route",
+      "killed": true,
+      "exit_code": 1
+    }
+  ]
+}
