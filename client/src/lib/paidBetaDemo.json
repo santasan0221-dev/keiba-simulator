@@ -1,0 +1,101 @@
+{
+  "version": "prediction_card_v1",
+  "status": "OK",
+  "title": "KEIBA TRACE AI候補6頭",
+  "race": {
+    "race_key": "JRA|2026-10-10|東京|11",
+    "title": "デモ・架空レース（fixture）",
+    "organization": "JRA"
+  },
+  "marks": [
+    {
+      "rank": 1,
+      "symbol": "◎",
+      "horse_no": 2,
+      "horse_name": "馬2",
+      "short": "最上位評価。基礎能力を高評価、騎手を評価、距離適性はやや割引。次点との差は大きめ。",
+      "medium": "2番馬2は最上位評価。基礎能力を高評価(メンバー2位)、騎手を評価(メンバー1位)。距離適性はやや割引。次点との差が比較的大きい。",
+      "evidence": "十分",
+      "unknown": []
+    },
+    {
+      "rank": 2,
+      "symbol": "○",
+      "horse_no": 5,
+      "horse_name": "馬5",
+      "short": "対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点と僅差。",
+      "medium": "5番馬5は対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点とは僅差。",
+      "evidence": "十分",
+      "unknown": []
+    },
+    {
+      "rank": 3,
+      "symbol": "▲",
+      "horse_no": 4,
+      "horse_name": "馬4",
+      "short": "上位候補。基礎能力と脚質・展開を高評価、距離適性を評価、騎手・安定度はやや割引。",
+      "medium": "4番馬4は上位候補。基礎能力と脚質・展開を高評価、距離適性を評価。騎手・安定度はやや割引。次点とは僅差。",
+      "evidence": "十分",
+      "unknown": []
+    },
+    {
+      "rank": 4,
+      "symbol": "☆",
+      "horse_no": 1,
+      "horse_name": "馬1",
+      "short": "4番手評価。基礎能力を高評価、安定度はやや割引。",
+      "medium": "1番馬1は4番手評価。基礎能力を高評価(メンバー1位)。安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点をやや上回る評価。",
+      "evidence": "一部不足",
+      "unknown": [
+        "脚質"
+      ]
+    },
+    {
+      "rank": 5,
+      "symbol": "△",
+      "horse_no": 3,
+      "horse_name": "馬3",
+      "short": "候補圏。基礎能力を高評価、開催場適性を評価、距離適性・安定度はやや割引。",
+      "medium": "3番馬3は候補圏。基礎能力を高評価(メンバー3位)、開催場適性を評価。距離適性・安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点とは僅差。",
+      "evidence": "一部不足",
+      "unknown": [
+        "脚質"
+      ]
+    },
+    {
+      "rank": 6,
+      "symbol": "△",
+      "horse_no": 7,
+      "horse_name": "馬7",
+      "short": "候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。",
+      "medium": "7番馬7は候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。次点とは僅差。",
+      "evidence": "十分",
+      "unknown": []
+    }
+  ],
+  "explanation": {
+    "available": true
+  },
+  "pairwise": [
+    {
+      "upper": 2,
+      "lower": 5,
+      "text": "◎は基礎能力と脚質・展開で上回り、○は開催場適性で優位。評価差は比較的大きめ。"
+    },
+    {
+      "upper": 5,
+      "lower": 4,
+      "text": "○は開催場適性・騎手で上回り、▲は脚質・展開で優位。評価差は僅差。"
+    }
+  ],
+  "selectivity": {
+    "grade": "C",
+    "label": "LOW"
+  },
+  "disclaimer": "印はAI候補順位です。公開本命とは異なります。収束度は的中率ではありません。予想は参考情報です。",
+  "source_versions": {
+    "six_marks_version": "six_marks_v1",
+    "explanation_version": "prediction_explanation_v1_1.0",
+    "selectivity_version": "selectivity_rule_v1"
+  }
+}

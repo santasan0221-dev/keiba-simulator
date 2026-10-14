@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+import { paidBetaLandingEnabled } from "@/lib/paidBetaLandingFlag";
 /* Velvet Turf design: the root stays intentionally minimal so the race-lab page owns the visual hierarchy. */
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,11 +21,13 @@ import RulesPage from "./pages/RulesPage";
 import { BetaAnalyticsObserver } from "./components/BetaAnalyticsObserver";
 import { BetaSurvey } from "./components/BetaSurvey";
 
+const PaidBetaLanding = lazy(() => import("./pages/PaidBetaLanding"));
+
 function Router() {
   // Base path follows Vite's build base so the app works both at the site root
   // and when served under a sub-path (e.g. single_pick_ai serves it at /sim/).
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  return <WouterRouter base={base}><BetaAnalyticsObserver /><Switch><Route path="/" component={Home} /><Route path="/simulator" component={SimulatorPage} /><Route path="/race/:org/:date/:venue/:no" component={RacePage} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/rules" component={RulesPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch><BetaSurvey /></WouterRouter>;
+  return <WouterRouter base={base}><BetaAnalyticsObserver /><Switch>{paidBetaLandingEnabled() && <Route path="/beta"><Suspense fallback={<main aria-busy="true">分析βの案内を読み込んでいます</main>}><PaidBetaLanding /></Suspense></Route>}<Route path="/" component={Home} /><Route path="/simulator" component={SimulatorPage} /><Route path="/race/:org/:date/:venue/:no" component={RacePage} /><Route path="/access-code" component={AccessCodeForm} /><Route path="/free" component={FreeRacesPage} /><Route path="/betting-candidates" component={BettingCandidatesPage} /><Route path="/performance-analysis" component={PerformanceAnalysisPage} /><Route path="/member" component={MemberPage} /><Route path="/rules" component={RulesPage} /><Route path="/research-workbench" component={ResearchWorkbenchPage} /><Route path="/ai-history" component={RaceHistoryPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch><BetaSurvey /></WouterRouter>;
 }
 
 export default function App() {

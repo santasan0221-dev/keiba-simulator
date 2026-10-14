@@ -1,3 +1,4 @@
+import { PaidBetaLandingLink } from "@/components/PaidBetaLandingLink";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { RealRaceLoader, type RealRaceLoad, type RealRaceLoadStatus } from "@/components/RealRaceLoader";
@@ -74,6 +75,7 @@ export default function Home() {
     <LabServiceNavigation active="today" />
     <main className="kt-container">
       <TraceHero />
+      <PaidBetaLandingLink />
       <CommandCenter />
       <section id="today-races" className="kt-finder" aria-label="レースファインダー">
         <RealRaceLoader onLoad={handleRealRaceLoad} onStatusChange={setRealRaceLoadStatus} />
