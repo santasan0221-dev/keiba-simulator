@@ -4,6 +4,3 @@
 .race-venue-filter button[aria-pressed="true"] { border-color: #dfbb72; background: #3a3020; font-weight: 700; box-shadow: inset 0 -3px #dfbb72; }
 .race-venue-filter button:focus-visible { outline: 2px solid #dfbb72; outline-offset: 2px; }
 @media (min-width: 768px) { .race-venue-filter { flex-wrap: wrap; } }
-
-.prediction-card-venue-slot { height: 68px; display: flex; align-items: center; min-width: 0; }
-.prediction-card-venue-slot .race-venue-filter { width: 100%; margin: 0; flex-wrap: nowrap; }
