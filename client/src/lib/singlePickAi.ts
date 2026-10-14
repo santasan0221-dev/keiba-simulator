@@ -1,3 +1,4 @@
+import { betaGeneration, betaToken } from "@/lib/betaAccess";
 // Integration with single_pick_ai's read-only KEIBA LAB API (/api/lab/*).
 //
 // single_pick_ai is the prediction brain: it exposes real per-race model output
@@ -236,6 +237,7 @@ export type LabAiPickResult = { horse_no: number; horse_name: string; ai_rank: n
 export type LabRaceResult = { status: string; official_order: LabOfficialOrder[]; ai_pick: LabAiPickResult | null; payouts: Record<string, unknown> | null };
 
 export type LabRace = {
+  prediction_card?: import("./predictionCardContract").PredictionCard | null;
   race: {
     race_key: string | null;
     date: string | null;
@@ -290,11 +292,13 @@ export function inFlightRequestCount(): number {
 export function getJson<T>(path: string): Promise<T> {
   const base = getApiBase();
   const url = `${base}${path}`;
-  const headers = getApiRequestHeaders(base);
-  const key = `GET ${url} ${JSON.stringify(headers ?? {})}`;
+  const access = path.startsWith("/api/lab/race/") ? betaToken(base) : null;
+  const epoch = betaGeneration();
+  const headers = access ? { ...getApiRequestHeaders(base), Authorization: `Bearer ${access}` } : getApiRequestHeaders(base);
+  const key = `GET ${url} ${epoch} ${JSON.stringify(headers ?? {})}`;
   const pending = inFlight.get(key);
   if (pending) return pending as Promise<T>;
-  const request = requestJson<T>(url, headers).finally(() => {
+  const request = requestJson<T>(url, headers).then(value => { if (epoch !== betaGeneration()) throw new Error("ACCESS_CHANGED"); return value; }).finally(() => {
     if (inFlight.get(key) === request) inFlight.delete(key);
   });
   inFlight.set(key, request);
@@ -302,7 +306,7 @@ export function getJson<T>(path: string): Promise<T> {
 }
 
 async function requestJson<T>(url: string, headers: HeadersInit | undefined): Promise<T> {
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers, redirect: "error", cache: "no-store" });
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
   const body: unknown = isJson ? await response.json().catch(() => null) : null;

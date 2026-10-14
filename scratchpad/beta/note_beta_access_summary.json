@@ -1,0 +1,279 @@
+{
+  "label": "KEIBA_TRACE_NOTE_BETA_ACCESS_LOCAL_VERIFY_REQUIRED",
+  "backend_parent": "3b19a04dd3b1cfb1369cdef202ffdf41f798a835",
+  "ui_parent": "f1f795aeb883df3f70b2dd940b644f3ebcccc61f",
+  "branch": "feat/note-beta-access-prep",
+  "access_db": "data/access/beta_access.sqlite3",
+  "production_flags": "NOT_CHANGED_DEFAULT_OFF",
+  "beta_flag": "strict env 1 only",
+  "session": "opaque bearer; SHA256 stored; 7 days or code end",
+  "codes": "128bit CSPRNG base32; HMAC-SHA256; no plaintext persisted",
+  "backend_tests": {
+    "passed": 361,
+    "existing_skips": 6,
+    "failed": 0,
+    "baseline_passed": 298,
+    "baseline_skips": 6
+  },
+  "frontend_tests": {
+    "passed": 667,
+    "failed": 0
+  },
+  "mutations": {
+    "baseline": "PASS",
+    "mutations": [
+      {
+        "name": "client_tier",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "JRA_gate",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "NAR_allow",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "expired_session",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "access_version",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "builder_before_auth",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "free_payload",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "no_store",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "logout_revoke",
+        "killed": true,
+        "exit_code": 1
+      },
+      {
+        "name": "plaintext_log",
+        "killed": true,
+        "exit_code": 1
+      }
+    ],
+    "detected": 10,
+    "total": 10
+  },
+  "candidate_only_failures": 0,
+  "dry_run": {
+    "kind": "SYNTHETIC_TEMP_DB_ONLY",
+    "matrix": {
+      "free_normal": true,
+      "beta_jra": true,
+      "beta_nar_denied": true,
+      "expired_denied": true,
+      "free_sample": true,
+      "emergency_revoke": true,
+      "off_denied": true,
+      "no_plaintext": true
+    },
+    "performance": {
+      "free": {
+        "iterations": 100,
+        "median_ms": 0.26165449526160955,
+        "max_ms": 0.4551070014713332
+      },
+      "beta": {
+        "iterations": 100,
+        "median_ms": 0.4506195036810823,
+        "max_ms": 0.6214970053406432
+      },
+      "session": {
+        "iterations": 100,
+        "median_ms": 0.23299650638364255,
+        "max_ms": 0.40667300345376134
+      },
+      "off": {
+        "iterations": 100,
+        "median_ms": 0.0008110073395073414,
+        "max_ms": 0.0039050064515322447
+      }
+    },
+    "protected_files": 0,
+    "protected_hashes_before": {},
+    "protected_hashes_after": {},
+    "protected_hashes_equal": true,
+    "real_production_data": "LOCAL_VERIFY_REQUIRED"
+  },
+  "typecheck": "PASS",
+  "build_off": "PASS",
+  "production_actions": {
+    "deploy": false,
+    "main_master_push": false,
+    "note_billing": false,
+    "note_article": false,
+    "live_code_generation": false
+  },
+  "pending": [
+    "home canonical data verification",
+    "protected production store hashes",
+    "service-account Node and file ACLs",
+    "actual CDN bypass and CORS",
+    "note billing/cancellation/article behavior",
+    "production browser smoke",
+    "CSP and same-origin Pages content audit"
+  ],
+  "new_beta_tests": 44,
+  "off_ui_compatibility": {
+    "kind": "SYNTHETIC_API_MAIN_VS_OFF_EXTERNAL_RESOURCES_STUBBED",
+    "checks": [
+      {
+        "width": 390,
+        "checks": [
+          {
+            "mode": "main",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          },
+          {
+            "mode": "off",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          }
+        ],
+        "extra_api_requests": 0,
+        "card_dom": 0,
+        "beta_dom": 0
+      },
+      {
+        "width": 667,
+        "checks": [
+          {
+            "mode": "main",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          },
+          {
+            "mode": "off",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          }
+        ],
+        "extra_api_requests": 0,
+        "card_dom": 0,
+        "beta_dom": 0
+      },
+      {
+        "width": 1440,
+        "checks": [
+          {
+            "mode": "main",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          },
+          {
+            "mode": "off",
+            "metrics": {
+              "cards": 0,
+              "beta": 0,
+              "nodes": 1078,
+              "overflow": false
+            },
+            "requests": [
+              "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+              "/api/lab/races?date=2026-10-10&organization=JRA"
+            ]
+          }
+        ],
+        "extra_api_requests": 0,
+        "card_dom": 0,
+        "beta_dom": 0
+      }
+    ]
+  },
+  "browser": {
+    "kind": "ISOLATED_SYNTHETIC_API_BROWSER_EXTERNAL_RESOURCES_STUBBED",
+    "checks": [
+      {
+        "width": 390,
+        "height": 844,
+        "free_card": 0,
+        "beta_card": 1,
+        "logout_card": 0,
+        "back_forward_stale": 0,
+        "overflow": 0
+      },
+      {
+        "width": 667,
+        "height": 375,
+        "free_card": 0,
+        "beta_card": 1,
+        "logout_card": 0,
+        "back_forward_stale": 0,
+        "overflow": 0
+      },
+      {
+        "width": 1440,
+        "height": 900,
+        "free_card": 0,
+        "beta_card": 1,
+        "logout_card": 0,
+        "back_forward_stale": 0,
+        "overflow": 0
+      }
+    ],
+    "errors": []
+  }
+}

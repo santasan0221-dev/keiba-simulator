@@ -1,0 +1,33 @@
+{
+  "kind": "ISOLATED_SYNTHETIC_API_BROWSER_EXTERNAL_RESOURCES_STUBBED",
+  "checks": [
+    {
+      "width": 390,
+      "height": 844,
+      "free_card": 0,
+      "beta_card": 1,
+      "logout_card": 0,
+      "back_forward_stale": 0,
+      "overflow": 0
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "free_card": 0,
+      "beta_card": 1,
+      "logout_card": 0,
+      "back_forward_stale": 0,
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "free_card": 0,
+      "beta_card": 1,
+      "logout_card": 0,
+      "back_forward_stale": 0,
+      "overflow": 0
+    }
+  ],
+  "errors": []
+}

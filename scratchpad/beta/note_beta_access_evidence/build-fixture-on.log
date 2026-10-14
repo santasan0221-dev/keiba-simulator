@@ -1,0 +1,19 @@
+vite v7.1.9 building for production...
+transforming...
+✓ 2403 modules transformed.
+Generated an empty chunk: "pdf-export".
+Generated an empty chunk: "image-export".
+rendering chunks...
+computing gzip size...
+../../../tmp/note-beta-ui-on/index.html                       369.40 kB │ gzip: 106.15 kB
+../../../tmp/note-beta-ui-on/assets/index-C-WQ77Pm.css        348.83 kB │ gzip:  62.41 kB
+../../../tmp/note-beta-ui-on/assets/pdf-export-l0sNRNKZ.js      0.00 kB │ gzip:   0.02 kB
+../../../tmp/note-beta-ui-on/assets/image-export-l0sNRNKZ.js    0.00 kB │ gzip:   0.02 kB
+../../../tmp/note-beta-ui-on/assets/recharts-Ptio9lBY.js      427.77 kB │ gzip: 115.97 kB
+../../../tmp/note-beta-ui-on/assets/index-Utu3DHU8.js         851.36 kB │ gzip: 242.54 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.12s

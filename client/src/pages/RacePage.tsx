@@ -1,8 +1,15 @@
+import { BetaAccess } from "@/components/BetaAccess";
+import { betaGeneration, subscribeBeta } from "@/lib/betaAccess";
+import { VenueFilter } from "@/components/VenueFilter";
+import { filterVenue, validVenue, venueKey } from "@/lib/venueFilter";
+import { predictionCardUiEnabled, validPredictionCard } from "@/lib/predictionCardUi";
+import { raceKeyToPath } from "@/lib/raceShareUrl";
 import { ApiState } from "@/components/ApiState";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, CircleAlert, Copy, FlaskConical, History, LoaderCircle, Share2, TriangleAlert } from "lucide-react";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
+import { ProductionPredictionCard } from "@/components/prediction/ProductionPredictionCard";
 import { TruthPanel } from "@/components/TruthPanel";
 import { LabServiceNavigation } from "@/components/LabServiceNavigation";
 import { fetchRace, fetchRaces, LabApiError, type LabRace, type LabRaceListItem } from "@/lib/singlePickAi";
@@ -48,7 +55,11 @@ export function resetScrollForRace(target: Pick<Window, "scrollTo"> | undefined)
 
 export default function RacePage() {
   const params = useParams<RaceUrlParams>();
+  const [, navigate] = useLocation();
+  const [selectedVenue, setSelectedVenue] = useState("");
   const raceKey = paramsToRaceKey(params);
+  const [accessEpoch, setAccessEpoch] = useState(betaGeneration());
+  useEffect(() => subscribeBeta(() => { setState({kind:"loading"}); setAccessEpoch(betaGeneration()); }), []);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => { resetScrollForRace(typeof window === "undefined" ? undefined : window); }, [raceKey]);
@@ -72,7 +83,7 @@ export default function RacePage() {
         }
       });
     return () => { active = false; };
-  }, [raceKey]);
+  }, [raceKey, accessEpoch]);
 
   const now = useNow();
   const [dayRaces, setDayRaces] = useState<LabRaceListItem[]>([]);
@@ -86,24 +97,44 @@ export default function RacePage() {
     return () => { active = false; };
   }, [readyRace?.race.date, readyRace?.race.organization]);
 
+  const uiEnabled = predictionCardUiEnabled();
+  useEffect(() => {
+    if (!uiEnabled || !selectedVenue || readyRace?.race.race_key !== raceKey) return;
+    const organization = readyRace.race.organization;
+    const expected = typeof organization === "string" ? venueKey({ organization, venue: readyRace.race.venue }) : "";
+    if (selectedVenue !== expected) setSelectedVenue(expected);
+  }, [uiEnabled, selectedVenue, raceKey, readyRace?.race.race_key]);
+  const venuePrep = uiEnabled && readyRace?.race.race_key === raceKey && validPredictionCard(readyRace?.prediction_card, raceKey);
+  const effectiveVenue = validVenue(dayRaces, selectedVenue);
+  const readyForVenue = uiEnabled && readyRace?.race.race_key === raceKey && dayRaces.some(r => r.organization === readyRace?.race.organization && typeof r.race_key === "string" && r.race_key.split("|")[1] === readyRace?.race.date);
+  const venueRaces = venuePrep ? (readyForVenue ? Array.from(filterVenue(dayRaces, effectiveVenue)) : []) : dayRaces;
+  const selectVenue = (venue: string) => {
+    setSelectedVenue(venue);
+    const first = filterVenue(dayRaces, venue)[0];
+    if (venue && first && first.race_key !== raceKey) {
+      const path = raceKeyToPath(first.race_key);
+      if (path) navigate(path);
+    }
+  };
   return <main className="race-page kt-page">
     <header className="race-page-topbar kt-topbar">
       <Link href="/" className="race-page-back"><ArrowLeft size={16} /> 今日のレース一覧へ</Link>
       {state.kind === "ready" && <strong className="race-sticky-identity">{state.race.race.venue} {state.race.race.race_no}R <small>{state.race.race.distance ?? "—"}m</small></strong>}
     </header>
     <LabServiceNavigation active="today" />
-    {dayRaces.length > 0 && <RaceTicker races={dayRaces} nowMs={now} activeKey={raceKey} />}
+    {dayRaces.length > 0 && <RaceTicker races={venueRaces} nowMs={now} activeKey={raceKey} />}
     <div className="race-page-body kt-container">
+      {uiEnabled && <BetaAccess />}
       {state.kind === "loading" && <section className="race-page-status" aria-busy="true"><LoaderCircle className="spin" size={18} /><p>レースを読み込んでいます…</p></section>}
       {state.kind === "invalid_url" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースURLは正しくありません。</h2><p>共有されたURLが正しいか確認するか、レース一覧から選び直してください。</p></div></section>}
       {state.kind === "not_found" && <section className="race-page-status race-page-status--error" role="alert"><CircleAlert size={18} /><div><h2>このレースは見つかりませんでした。</h2><p>race_key: <code>{state.raceKey}</code></p><p>開催がない、または予測がまだ生成されていない可能性があります。0件として扱わず、取得不能として表示しています。</p></div></section>}
       {state.kind === "unavailable" && <section className="race-page-status race-page-status--error" role="alert"><TriangleAlert size={18} /><div><h2>現在データを取得できません。</h2><ApiState kind="unavailable" status={state.status}/><p>正本APIへ接続できないため、0件や取得成功として表示していません。時間をおいて再度お試しください。</p></div></section>}
-      {state.kind === "ready" && <RaceExperience race={state.race} raceKey={raceKey} now={now} />}
+      {state.kind === "ready" && <RaceExperience race={state.race} raceKey={raceKey} now={now} venueControls={venuePrep && readyForVenue && dayRaces.length > 0 ? <VenueFilter races={dayRaces} selected={effectiveVenue} onChange={selectVenue} /> : null} />}
     </div>
   </main>;
 }
 
-function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string | null; now: number }) {
+function RaceExperience({ race, raceKey, now, venueControls }: { race: LabRace; raceKey: string | null; now: number; venueControls?: ReactNode }) {
   const { verdict, reasons } = raceVerdict(race);
   const key = race.race.race_key ?? raceKey ?? "";
   // Counted once per successfully loaded race (not on a failed load). Only the
@@ -125,6 +156,7 @@ function RaceExperience({ race, raceKey, now }: { race: LabRace; raceKey: string
     <VerdictBanner verdict={verdict} reasons={reasons} />
     <PickTrio race={race} />
     <AgreementPanel race={race} />
+    <ProductionPredictionCard card={race.prediction_card} raceKey={raceKey} venueControls={venueControls} />
     <RankingBoard race={race} />
     <nav className="kt-cta-row" aria-label="次の操作">
       <Link href={`/simulator?race=${encodeURIComponent(key)}`} className="kt-cta kt-cta--primary"><FlaskConical size={16} aria-hidden="true" /> このレースの展開シナリオを見る</Link>

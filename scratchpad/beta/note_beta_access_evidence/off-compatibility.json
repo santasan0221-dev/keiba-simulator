@@ -1,0 +1,107 @@
+{
+  "kind": "SYNTHETIC_API_MAIN_VS_OFF_EXTERNAL_RESOURCES_STUBBED",
+  "checks": [
+    {
+      "width": 390,
+      "checks": [
+        {
+          "mode": "main",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        },
+        {
+          "mode": "off",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        }
+      ],
+      "extra_api_requests": 0,
+      "card_dom": 0,
+      "beta_dom": 0
+    },
+    {
+      "width": 667,
+      "checks": [
+        {
+          "mode": "main",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        },
+        {
+          "mode": "off",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        }
+      ],
+      "extra_api_requests": 0,
+      "card_dom": 0,
+      "beta_dom": 0
+    },
+    {
+      "width": 1440,
+      "checks": [
+        {
+          "mode": "main",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        },
+        {
+          "mode": "off",
+          "metrics": {
+            "cards": 0,
+            "beta": 0,
+            "nodes": 1078,
+            "overflow": false
+          },
+          "requests": [
+            "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+            "/api/lab/races?date=2026-10-10&organization=JRA"
+          ]
+        }
+      ],
+      "extra_api_requests": 0,
+      "card_dom": 0,
+      "beta_dom": 0
+    }
+  ]
+}

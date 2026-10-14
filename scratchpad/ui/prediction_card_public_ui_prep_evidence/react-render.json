@@ -1,0 +1,6 @@
+{
+  "kind": "SYNTHETIC_REACT_SSR_NOT_CLIENT_PROFILER",
+  "iterations": 100,
+  "offMsPerRender": 0.012758829999999648,
+  "onFullMsPerRender": 1.0768446899999997
+}
