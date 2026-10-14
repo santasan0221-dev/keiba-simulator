@@ -1,0 +1,16 @@
+{
+  "scope": "NEW_CANDIDATE_SYNTHETIC_API_NOT_PRODUCTION",
+  "checks": [],
+  "errors": [],
+  "failedRequests": [],
+  "comparisons": [],
+  "raceSwitch": [],
+  "accessibility": {
+    "keyboardFocusOutline": "solid",
+    "forcedColors": true,
+    "article": 1,
+    "listItems": 6,
+    "detailsKeyboard": "PASS",
+    "ariaSnapshot": "- region \"AI候補順位（公開本命とは別）\":\n  - group:\n    - text: AI候補6頭 公開◎とは別のAI候補順位\n    - group \"開催場で絞り込み\":\n      - button \"すべて2\" [pressed]\n      - button \"東京1\"\n      - button \"京都1\"\n    - article \"KEIBA TRACE AI候補6頭\":\n      - paragraph: AI候補順位 · 東京 · 2026-10-10 · JRA\n      - heading \"KEIBA TRACE AI候補6頭\" [level=2]\n      - paragraph: ◎はAI候補順位1位です。公開本命ではありません。\n      - list \"AI評価上位6頭\":\n        - listitem:\n          - heading \"AI評価1位 2 馬2\" [level=3]: 候補1位 2 馬2\n          - paragraph: 最上位評価。基礎能力を高評価、騎手を評価、距離適性はやや割引。次点との差は大きめ。\n          - paragraph: \"説明根拠: 十分\"\n          - paragraph: ◎は基礎能力と脚質・展開で上回り、○は開催場適性で優位。評価差は比較的大きめ。\n        - listitem:\n          - heading \"AI候補2位 5 馬5\" [level=3]: 候補2位 5 馬5\n          - paragraph: 対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点と僅差。\n        - listitem:\n          - heading \"AI候補3位 4 馬4\" [level=3]: 候補3位 4 馬4\n          - paragraph: 上位候補。基礎能力と脚質・展開を高評価、距離適性を評価、騎手・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補4位 1 馬1\" [level=3]: 候補4位 1 馬1\n          - paragraph: 4番手評価。基礎能力を高評価、安定度はやや割引。\n        - listitem:\n          - heading \"AI候補5位 3 馬3\" [level=3]: 候補5位 3 馬3\n          - paragraph: 候補圏。基礎能力を高評価、開催場適性を評価、距離適性・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補6位 7 馬7\" [level=3]: 候補6位 7 馬7\n          - paragraph: 候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。\n      - region \"候補収束度\":\n        - 'heading \"候補収束度: LOW\" [level=3]'\n        - paragraph: ◎の的中確率を示すものではありません。\n      - group:\n        - text: 説明の詳細\n        - list:\n          - listitem:\n            - heading \"◎ 2 馬2\" [level=3]\n            - paragraph: 2番馬2は最上位評価。基礎能力を高評価(メンバー2位)、騎手を評価(メンバー1位)。距離適性はやや割引。次点との差が比較的大きい。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"○ 5 馬5\" [level=3]\n            - paragraph: 5番馬5は対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"▲ 4 馬4\" [level=3]\n            - paragraph: 4番馬4は上位候補。基礎能力と脚質・展開を高評価、距離適性を評価。騎手・安定度はやや割引。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"☆ 1 馬1\" [level=3]\n            - paragraph: 1番馬1は4番手評価。基礎能力を高評価(メンバー1位)。安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点をやや上回る評価。\n            - paragraph: \"説明根拠: 一部不足\"\n            - paragraph: \"未評価: 脚質\"\n          - listitem:\n            - heading \"△ 3 馬3\" [level=3]\n            - paragraph: 3番馬3は候補圏。基礎能力を高評価(メンバー3位)、開催場適性を評価。距離適性・安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点とは僅差。\n            - paragraph: \"説明根拠: 一部不足\"\n            - paragraph: \"未評価: 脚質\"\n          - listitem:\n            - heading \"△ 7 馬7\" [level=3]\n            - paragraph: 7番馬7は候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n      - text: 印はAI候補順位です。公開本命とは異なります。収束度は的中率ではありません。予想は参考情報です。\n      - paragraph: 発走前データから評価した上位候補です。印は購入を推奨するものではなく、公開本命ではありません。収束度と説明根拠は◎の的中確率ではありません。"
+  }
+}

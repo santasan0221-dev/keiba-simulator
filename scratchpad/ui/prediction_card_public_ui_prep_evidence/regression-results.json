@@ -1,0 +1,105 @@
+{
+  "scope": "NEW_CANDIDATE_SYNTHETIC_API_NOT_PRODUCTION",
+  "checks": [
+    {
+      "mode": "main",
+      "route": "/",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "main",
+      "route": "/ai-history",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "main",
+      "route": "/betting-candidates",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "main",
+      "route": "/performance-analysis",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "off",
+      "route": "/",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "off",
+      "route": "/ai-history",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "off",
+      "route": "/betting-candidates",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "off",
+      "route": "/performance-analysis",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "on",
+      "route": "/",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "on",
+      "route": "/ai-history",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "on",
+      "route": "/betting-candidates",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    },
+    {
+      "mode": "on",
+      "route": "/performance-analysis",
+      "cardDOM": 0,
+      "overflow": 0,
+      "bodyAvailable": true,
+      "scope": "fixture navigation/fallback"
+    }
+  ],
+  "errors": [],
+  "failedRequests": [],
+  "comparisons": [],
+  "raceSwitch": []
+}

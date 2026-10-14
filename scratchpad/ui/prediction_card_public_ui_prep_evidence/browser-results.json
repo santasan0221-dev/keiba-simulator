@@ -1,0 +1,1210 @@
+{
+  "scope": "NEW_CANDIDATE_SYNTHETIC_API_NOT_PRODUCTION",
+  "checks": [
+    {
+      "mode": "main",
+      "width": 320,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 376.90000000596046,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 288,
+        "h": 4709.421875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 320,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 374.30000001192093,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 288,
+        "h": 4709.421875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 320,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 369.79999999701977,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 288,
+        "h": 6364.0625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 360,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 387.5,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 328,
+        "h": 4709.421875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 360,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 419.09999999403954,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 328,
+        "h": 4709.421875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 360,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 396.09999999403954,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 328,
+        "h": 6252.78125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 390,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 405.90000000596046,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 4653.921875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 390,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 383.09999999403954,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 4653.921875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 384.5,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 6128.015625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 430,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 451.70000000298023,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 398,
+        "h": 4631.828125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 430,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 372.70000000298023,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 398,
+        "h": 4631.828125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 430,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 378.3999999910593,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 398,
+        "h": 6060.03125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 768,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.014176000000000001,
+        0.04611
+      ],
+      "firstMeaningfulMs": 395.1000000089407,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 720,
+        "h": 2246.84375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 768,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.014176000000000001,
+        0.04611
+      ],
+      "firstMeaningfulMs": 374.6000000089407,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 720,
+        "h": 2246.84375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 768,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.014176000000000001,
+        0.04611
+      ],
+      "firstMeaningfulMs": 395,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 720,
+        "h": 3234.859375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 1024,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.01384375,
+        0.045029296875
+      ],
+      "firstMeaningfulMs": 357.5,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 976,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 1024,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.01384375,
+        0.045029296875
+      ],
+      "firstMeaningfulMs": 385,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 976,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1024,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.01384375,
+        0.045029296875
+      ],
+      "firstMeaningfulMs": 390.40000000596046,
+      "raceRect": {
+        "x": 24,
+        "y": 183,
+        "w": 976,
+        "h": 3126.09375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "main",
+      "width": 1440,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 342.1000000089407,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "off",
+      "width": 1440,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 378.5,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "full",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 399.90000000596046,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3126.09375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "missing",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 364.69999998807907,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 4653.921875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "no-explanation",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1111,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 328.79999999701977,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 5581.890625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "no-selectivity",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1145,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 358.70000000298023,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 6057.578125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "full",
+      "org": "NAR",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1129,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 392.8999999910593,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 6038.078125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLEこの主催はAI評価1位の対象外ですMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/NAR%7C2026-10-10%7C%E5%A4%A7%E4%BA%95%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "marks-only",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1108,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 359.20000000298023,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 5519.453125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "optional-omitted",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1108,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 363.09999999403954,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 5519.453125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "malformed",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.06265442150895084
+      ],
+      "firstMeaningfulMs": 319.79999999701977,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 4653.921875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "long",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 364.90000000596046,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 7140.953125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "three",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 3,
+      "domNodes": 1119,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 343.69999998807907,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 5770.875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 390,
+      "kind": "details",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.013190404528200174,
+        0.04870594775499203
+      ],
+      "firstMeaningfulMs": 343.29999999701977,
+      "raceRect": {
+        "x": 16,
+        "y": 118,
+        "w": 358,
+        "h": 6128.015625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "missing",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 381.8999999910593,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "no-explanation",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1111,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 361.20000000298023,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2850.53125
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "no-selectivity",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1145,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 337.70000000298023,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3055.65625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "full",
+      "org": "NAR",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1129,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 334.80000001192093,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3075.15625
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLEこの主催はAI評価1位の対象外ですMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/NAR%7C2026-10-10%7C%E5%A4%A7%E4%BA%95%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "marks-only",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1108,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 354.90000000596046,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2788.09375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "optional-omitted",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1108,
+      "layoutShifts": [
+        0.03773703703703704
+      ],
+      "firstMeaningfulMs": 362.59999999403954,
+      "raceRect": {
+        "x": 104,
+        "y": 177,
+        "w": 1232,
+        "h": 2788.09375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "malformed",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 0,
+      "marks": 0,
+      "domNodes": 1065,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 403.3999999910593,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 2183.96875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "long",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.03773703703703704
+      ],
+      "firstMeaningfulMs": 385.1000000089407,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3531.9375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "three",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 3,
+      "domNodes": 1119,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 399.09999999403954,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3007.046875
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    },
+    {
+      "mode": "on",
+      "width": 1440,
+      "kind": "details",
+      "org": "JRA",
+      "overflow": 0,
+      "cardDOM": 1,
+      "marks": 6,
+      "domNodes": 1148,
+      "layoutShifts": [
+        0.008750617283950617,
+        0.028462962962962964
+      ],
+      "firstMeaningfulMs": 386,
+      "raceRect": {
+        "x": 104,
+        "y": 183,
+        "w": 1232,
+        "h": 3126.09375
+      },
+      "publication": [
+        "HONMEI公開◎本命◎18馬18AI勝率40.0%単勝オッズ3.0倍AI TOPAI評価1位UNAVAILABLE勝率データが揃っていませんMARKET TOP市場評価1位UNAVAILABLE発走前オッズが未公開です"
+      ],
+      "requests": [
+        "/api/lab/race/JRA%7C2026-10-10%7C%E6%9D%B1%E4%BA%AC%7C11",
+        "/api/lab/races"
+      ]
+    }
+  ],
+  "errors": [],
+  "failedRequests": [],
+  "comparisons": [
+    {
+      "width": 320,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 360,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 390,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 430,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 768,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 1024,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 1440,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    }
+  ],
+  "raceSwitch": [
+    {
+      "from": "東京",
+      "to": "京都",
+      "staleDuringLoading": 0
+    },
+    {
+      "backNavigation": "東京",
+      "venueAligned": true
+    },
+    {
+      "forwardNavigation": "京都",
+      "venueAligned": true
+    },
+    {
+      "from": "京都",
+      "to": "東京 without card",
+      "staleAfterResponse": 0
+    }
+  ],
+  "accessibility": {
+    "article": 1,
+    "headingLevels": [
+      2,
+      3
+    ],
+    "candidateListItems": 6,
+    "keyboardDisclosures": "PASS",
+    "target44": "PASS",
+    "forcedColors": "PASS",
+    "focusOutline": "solid",
+    "ariaSnapshot": "- region \"AI候補順位（公開本命とは別）\":\n  - group:\n    - text: AI候補6頭 公開◎とは別のAI候補順位\n    - group \"開催場で絞り込み\":\n      - button \"すべて2\" [pressed]\n      - button \"東京1\"\n      - button \"京都1\"\n    - article \"KEIBA TRACE AI候補6頭\":\n      - paragraph: AI候補順位 · 京都 · 2026-10-10 · JRA\n      - heading \"KEIBA TRACE AI候補6頭\" [level=2]\n      - paragraph: ◎はAI候補順位1位です。公開本命ではありません。\n      - list \"AI評価上位6頭\":\n        - listitem:\n          - heading \"AI評価1位 2 馬2\" [level=3]: 候補1位 2 馬2\n          - paragraph: 最上位評価。基礎能力を高評価、騎手を評価、距離適性はやや割引。次点との差は大きめ。\n          - paragraph: \"説明根拠: 十分\"\n          - paragraph: ◎は基礎能力と脚質・展開で上回り、○は開催場適性で優位。評価差は比較的大きめ。\n        - listitem:\n          - heading \"AI候補2位 5 馬5\" [level=3]: 候補2位 5 馬5\n          - paragraph: 対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点と僅差。\n        - listitem:\n          - heading \"AI候補3位 4 馬4\" [level=3]: 候補3位 4 馬4\n          - paragraph: 上位候補。基礎能力と脚質・展開を高評価、距離適性を評価、騎手・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補4位 1 馬1\" [level=3]: 候補4位 1 馬1\n          - paragraph: 4番手評価。基礎能力を高評価、安定度はやや割引。\n        - listitem:\n          - heading \"AI候補5位 3 馬3\" [level=3]: 候補5位 3 馬3\n          - paragraph: 候補圏。基礎能力を高評価、開催場適性を評価、距離適性・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補6位 7 馬7\" [level=3]: 候補6位 7 馬7\n          - paragraph: 候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。\n      - region \"候補収束度\":\n        - 'heading \"候補収束度: LOW\" [level=3]'\n        - paragraph: ◎の的中確率を示すものではありません。\n      - group: 説明の詳細\n      - text: 印はAI候補順位です。公開本命とは異なります。収束度は的中率ではありません。予想は参考情報です。\n      - paragraph: 発走前データから評価した上位候補です。印は購入を推奨するものではなく、公開本命ではありません。収束度と説明根拠は◎の的中確率ではありません。"
+  }
+}

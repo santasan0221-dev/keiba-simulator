@@ -1,0 +1,539 @@
+{
+  "label": "KEIBA_TRACE_PREDICTION_CARD_PUBLIC_UI_PREP_READY",
+  "base_sha": "f1f795aeb883df3f70b2dd940b644f3ebcccc61f",
+  "branch": "feat/prediction-card-public-ui-prep",
+  "package_sha": "git rev-parse HEAD at final package commit",
+  "reused_assets_commit": "ac9d3adde83108f75d666c3c6421c41d95fa2d26",
+  "integration_location": "C: collapsed after AgreementPanel, before RankingBoard",
+  "flag": "VITE_PREDICTION_CARD_PUBLIC_ENABLED",
+  "default": "OFF",
+  "strict_on": "1",
+  "backend_changed_files": 0,
+  "api_contract_changes": 0,
+  "publication_changed_files": 0,
+  "scheduler_changes": 0,
+  "production_flag_activated": false,
+  "deployed": false,
+  "widths": [
+    320,
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440
+  ],
+  "browser_cases": 41,
+  "off_pixel_comparisons": [
+    {
+      "width": 320,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 360,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 390,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 430,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 768,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 1024,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    },
+    {
+      "width": 1440,
+      "offPixelsIdentical": true,
+      "offLayoutIdentical": true,
+      "extraFetch": 0,
+      "publicationUnchanged": true
+    }
+  ],
+  "card_api_missing_dom": 0,
+  "card_malformed_dom": 0,
+  "extra_fetch": 0,
+  "overflow": 0,
+  "console_page_errors": 0,
+  "failed_requests": 0,
+  "race_venue_back_forward": [
+    {
+      "from": "東京",
+      "to": "京都",
+      "staleDuringLoading": 0
+    },
+    {
+      "backNavigation": "東京",
+      "venueAligned": true
+    },
+    {
+      "forwardNavigation": "京都",
+      "venueAligned": true
+    },
+    {
+      "from": "京都",
+      "to": "東京 without card",
+      "staleAfterResponse": 0
+    }
+  ],
+  "accessibility": {
+    "keyboardFocusOutline": "solid",
+    "forcedColors": true,
+    "article": 1,
+    "listItems": 6,
+    "detailsKeyboard": "PASS",
+    "ariaSnapshot": "- region \"AI候補順位（公開本命とは別）\":\n  - group:\n    - text: AI候補6頭 公開◎とは別のAI候補順位\n    - group \"開催場で絞り込み\":\n      - button \"すべて2\" [pressed]\n      - button \"東京1\"\n      - button \"京都1\"\n    - article \"KEIBA TRACE AI候補6頭\":\n      - paragraph: AI候補順位 · 東京 · 2026-10-10 · JRA\n      - heading \"KEIBA TRACE AI候補6頭\" [level=2]\n      - paragraph: ◎はAI候補順位1位です。公開本命ではありません。\n      - list \"AI評価上位6頭\":\n        - listitem:\n          - heading \"AI評価1位 2 馬2\" [level=3]: 候補1位 2 馬2\n          - paragraph: 最上位評価。基礎能力を高評価、騎手を評価、距離適性はやや割引。次点との差は大きめ。\n          - paragraph: \"説明根拠: 十分\"\n          - paragraph: ◎は基礎能力と脚質・展開で上回り、○は開催場適性で優位。評価差は比較的大きめ。\n        - listitem:\n          - heading \"AI候補2位 5 馬5\" [level=3]: 候補2位 5 馬5\n          - paragraph: 対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点と僅差。\n        - listitem:\n          - heading \"AI候補3位 4 馬4\" [level=3]: 候補3位 4 馬4\n          - paragraph: 上位候補。基礎能力と脚質・展開を高評価、距離適性を評価、騎手・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補4位 1 馬1\" [level=3]: 候補4位 1 馬1\n          - paragraph: 4番手評価。基礎能力を高評価、安定度はやや割引。\n        - listitem:\n          - heading \"AI候補5位 3 馬3\" [level=3]: 候補5位 3 馬3\n          - paragraph: 候補圏。基礎能力を高評価、開催場適性を評価、距離適性・安定度はやや割引。\n        - listitem:\n          - heading \"AI候補6位 7 馬7\" [level=3]: 候補6位 7 馬7\n          - paragraph: 候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。\n      - region \"候補収束度\":\n        - 'heading \"候補収束度: LOW\" [level=3]'\n        - paragraph: ◎の的中確率を示すものではありません。\n      - group:\n        - text: 説明の詳細\n        - list:\n          - listitem:\n            - heading \"◎ 2 馬2\" [level=3]\n            - paragraph: 2番馬2は最上位評価。基礎能力を高評価(メンバー2位)、騎手を評価(メンバー1位)。距離適性はやや割引。次点との差が比較的大きい。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"○ 5 馬5\" [level=3]\n            - paragraph: 5番馬5は対抗評価。基礎能力を高評価、開催場適性・安定度を評価。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"▲ 4 馬4\" [level=3]\n            - paragraph: 4番馬4は上位候補。基礎能力と脚質・展開を高評価、距離適性を評価。騎手・安定度はやや割引。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n          - listitem:\n            - heading \"☆ 1 馬1\" [level=3]\n            - paragraph: 1番馬1は4番手評価。基礎能力を高評価(メンバー1位)。安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点をやや上回る評価。\n            - paragraph: \"説明根拠: 一部不足\"\n            - paragraph: \"未評価: 脚質\"\n          - listitem:\n            - heading \"△ 3 馬3\" [level=3]\n            - paragraph: 3番馬3は候補圏。基礎能力を高評価(メンバー3位)、開催場適性を評価。距離適性・安定度はやや割引。脚質は評価材料が限定的(中立扱い)。次点とは僅差。\n            - paragraph: \"説明根拠: 一部不足\"\n            - paragraph: \"未評価: 脚質\"\n          - listitem:\n            - heading \"△ 7 馬7\" [level=3]\n            - paragraph: 7番馬7は候補圏。基礎能力を高評価、脚質・展開と開催場適性を評価。次点とは僅差。\n            - paragraph: \"説明根拠: 十分\"\n      - text: 印はAI候補順位です。公開本命とは異なります。収束度は的中率ではありません。予想は参考情報です。\n      - paragraph: 発走前データから評価した上位候補です。印は購入を推奨するものではなく、公開本命ではありません。収束度と説明根拠は◎の的中確率ではありません。"
+  },
+  "regression_browser_cases": 12,
+  "candidate_tests": {
+    "passed": 660,
+    "failed": 0
+  },
+  "baseline_tests": {
+    "passed": 647,
+    "failed": 0
+  },
+  "candidate_only_failures": 0,
+  "mutations": {
+    "flag_bypass": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "publication_label": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "missing_placeholder": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "fake_convergence": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "raw_score": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "stale_race": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "page_crash": {
+      "killed": true,
+      "exit_code": 1
+    },
+    "extra_fetch": {
+      "killed": true,
+      "exit_code": 1
+    }
+  },
+  "mutation_killed_count": 8,
+  "protected_source_file_count": 153,
+  "protected_source_sha256": {
+    "client/src/components/trace/CameraSelector.tsx": "d57f37b1a748dbe98830b63d18f92b4f8f575ab43a1151770327089b7e29887e",
+    "client/src/components/trace/CommandCenter.tsx": "bf445c2fe1040ef18806bb2f9b3428da135ebe64f3bee3ea9b0966f55aa92449",
+    "client/src/components/trace/GrowthP0.contract.test.tsx": "0dce81d9380e77288de8068f2ee14f3d5e92e6584e1ac6222cf74ae49fa37629",
+    "client/src/components/trace/RaceExperience.contract.test.tsx": "9ab39e51104cc449b5e6af450c01abb78f41b45fcbae0338fd29ad912db3e684",
+    "client/src/components/trace/RaceParts.tsx": "69ef73bdab6cb76dbb41002b98bd78b2cb90cb8763b07fab09e64080a1bfa47b",
+    "client/src/components/trace/RaceStatusStrip.test.tsx": "5d2a26538c92fac40fadb34ae7040a824700d09267a91cc18dc8e51c24c241e1",
+    "client/src/components/trace/RaceStatusStrip.tsx": "be083650d1686994c480def9ca77ba025ebb4d87687861e1f664d3dc4dd8e067",
+    "client/src/components/trace/ScenarioOrderPanel.tsx": "039e50254b528cf7bfdc32a1f803c559c9dfa60d347d3109419dd4dc2115c7b6",
+    "client/src/components/trace/TodayRecord.tsx": "5155ce30fc1e1f62d95b70ca4eab3c168d3125c549588f85d496be4f4edba95e",
+    "client/src/components/trace/TraceChrome.tsx": "b379bf0ca7c362c027e4f41ba5ff6ebb6788fac7f1497c71b068b9bfd89dc358",
+    "client/src/components/trace/TraceHero.tsx": "b00714ab5bec03a53c8420eb5a0d561ba6bc42b6a1d5f1d04cc9ffd489597347",
+    "client/src/components/trace/TrackStage.tsx": "99e267a54291c10e12f77c2529ea960cf0a4d62cde3c1ac26099c8faba0570f1",
+    "client/src/components/trace/ViewSelector.tsx": "a73220afeeea8649180d09a7814d482b89411f74df3029d883e42e3df9d602a7",
+    "client/src/components/trace/annotationLayout.test.ts": "76e9466280ba6e11b416b515faeda608292eb4f4f3c789bba61cc370bd48defe",
+    "client/src/components/trace/annotationLayout.ts": "19b0c5d8956953712caaea125b19312a92b110c727b6ce241bcf1579abc5d2eb",
+    "client/src/components/trace/annotationProjection.test.ts": "d503dd5cfc6b67865d57d16f97bdb565a92e690d5ad9c2d381cadc1dfc61720c",
+    "client/src/components/trace/annotationProjection.ts": "5258993de8bbbfdc6f54b45a552b973d8b922df6f0836f684600ba748a451303",
+    "client/src/components/trace/runnerLabels.test.ts": "b01b5dcee8fdbc387aa37fb9a5967e5fdf483c016b13f2ed76a6d82f2ff4d2f2",
+    "client/src/components/trace/runnerLabels.ts": "27282db531fd70b9270f2a5cd4dc7ee551d8961f2ad1ef246531857c619a565c",
+    "client/src/components/trace/runnerPresentation.test.ts": "ec9993c0bfbccdd5efab84e1fa5d730d60f1c7f7cfe26e1f295498d1e5b9c47c",
+    "client/src/components/trace/runnerPresentation.ts": "4d10b939bb2229070c5254ae428d6906b5c43200f7491494c3f974078dc8fe9c",
+    "client/src/components/trace/top3d.test.tsx": "2faf6bdfbfd9c72b52527f7ce7205989d11d8c0ba148996e36cd0353ac4e3887",
+    "client/src/components/trace/top3dClosureInvariance.test.ts": "6f3cae14a51e719d00165953d1150622b9a5a14f8272879f1d96a727ebeea8cd",
+    "client/src/components/trace/top3dProjection.test.ts": "a56cba54e2c8f865c39d153276c98374cd5a5ed1cd42d2de0fa94c29e8ad457d",
+    "client/src/components/trace/top3dProjection.ts": "f0b2ad60b0989195f5702629af9db7cc876c68e5767b23ac1c291878765fb8d9",
+    "client/src/components/trace/visualInvariance.test.ts": "1c627edd12f0d93c763035d3addd22a249c2cf8216c0e55b2119eec49bc1ace9",
+    "client/src/lib/accessTier.test.ts": "b85c6c35271094163484d478d96fa9c6751c27206e357aa4e237d8f1c5973f75",
+    "client/src/lib/accessTier.ts": "596f23ae6e847c1d23c19359d9a3a010cd8f3f6cde3730cf30558409084d2f2d",
+    "client/src/lib/backup-and-csv.test.ts": "13d80ebc08ff8d16b8ffad4872621ca36acf9509e125c105837cd62bc5b0e699",
+    "client/src/lib/betaAnalytics.test.ts": "d387ff54b60a7fb68ebf232d759a17edca6b0470ae328aa3156ba17253f8b446",
+    "client/src/lib/betaAnalytics.ts": "a4f6c60fcad2b3cc58d210cab454c7930d87df8560a4ed6d5c0536b27f3f9bb4",
+    "client/src/lib/camera.test.ts": "b42b82949d36d93dc3779f5940bd88a966029794ea7d97f428957e0ef1a459e5",
+    "client/src/lib/camera.ts": "78546201baaa5920135f6d6aa2fee9ee148d65f3ea33d99c9a214a8ac38fd0cd",
+    "client/src/lib/campaign.test.ts": "9f02098573d928c7734be79f8301593f982cfa1f4567bcb943eab1d668b58f67",
+    "client/src/lib/campaign.ts": "6be575905922b8972554f48d2a917345a8719839e790956cfbd0d229baddef9f",
+    "client/src/lib/courseAtlas.test.ts": "7de12383a2f363ac3fc75b3ca0db34722a1e5f131be51307e51161766a3faad8",
+    "client/src/lib/courseAtlas.ts": "2c78122f205185ef2eeb6b3a4e30b20f7be14b1429c304374027097fca5e0d4c",
+    "client/src/lib/courseDiagramData.ts": "f9ab3cce59620d1a2718839913bb668e7c16c8988ca10332c985d3dee9a8d90f",
+    "client/src/lib/courseSections.test.ts": "2706b285f19339fc97a6b4843c8cf7aad3f0812f296f1e93366cc5eb8d1e2c65",
+    "client/src/lib/courseSections.ts": "e40a432855fa5e306929ca62f6e61a01780dfa55dde9039d54d3c89d20bbcfe5",
+    "client/src/lib/displayFormat.test.ts": "20a775d76f49fa2c2f9ee73661b9f92c918bba7995c9900df532314cd83220e7",
+    "client/src/lib/displayFormat.ts": "d8d52f5b1d2f4e207398352ac3f3bf331fa1962ad9f5304c29059db7d6028d7b",
+    "client/src/lib/freeScopeRule.test.ts": "7606191e03e8d9302df36a4bca7d042614c752b3007fb504a691c3183f568d9f",
+    "client/src/lib/freeScopeRule.ts": "72c5da4d2db80d4b668f14b989e549d3e25bc98b1336d53fd8661043db74f1e4",
+    "client/src/lib/getJsonDedupe.test.ts": "4d91c057438b2a3d008f70482a5214aea08c1f631a3d10a6b0a92cbd132929f1",
+    "client/src/lib/horseScenarioProfile.test.ts": "ccfcb3400363b553793b8592fd82bf0c4b23ec9535f8616e33c4c7c86323c6a7",
+    "client/src/lib/horseScenarioProfile.ts": "2dcb00cb8a9d23371e983211c12d6ce9bf73ba2f099f5d480651ff3694cc2bb6",
+    "client/src/lib/horseTypes.simulation.test.ts": "375bccdec8969b68a0ad19407f695b9f038d23d55b632326621a67a2fefccff9",
+    "client/src/lib/horseTypes.ts": "860accfcecfed1e000f8a99a9e249d5ab94508e1a177cf7968d9a5b88f1a0b4f",
+    "client/src/lib/labRaceIntegration.test.tsx": "39218b18dd1fa1861fd943c2ca2a4711002d51fef437f6d1672dfcd096c8d737",
+    "client/src/lib/labels.test.ts": "e42b44d9234bc00081967d7a0b818d71d65520ba6d557d3fe6a3b29ed89db075",
+    "client/src/lib/labels.ts": "61aaa1f09fe879b1f8ec2be06d63e4c295e0df9d505300e90538328f09f56633",
+    "client/src/lib/managementPagination.test.ts": "0aed8aad2a12950d1b7dc5cd760fa10c5821acb1bab3f2f510868b2c1f94b5cd",
+    "client/src/lib/managementPagination.ts": "85baa2de2dc2d82f98af8ab33ff023822b1429fd9f933923aec2c0d4f910303c",
+    "client/src/lib/officialRaceData.test.ts": "7a59aa01d4748154f047702e081e6e0ceed02a4849e4db1371bd6289c6d26b8a",
+    "client/src/lib/officialRaceData.ts": "4f94fca049679246063b26b15864b446fca484499effe8a5da7daab315ddc312",
+    "client/src/lib/officialRaceResult.test.ts": "7b72e5c5e0a588bfb9016b333edcc03d0d7232b9a659d890e0388f90071c09b4",
+    "client/src/lib/officialRaceResult.ts": "28837fd6d00ed51366f1c9cc0de8fdad6a46d3138b83b3e8794ab9f1e3ebd06d",
+    "client/src/lib/officialResultOps.ts": "c7e17dfb1b21e1b8ec78528100b243ad1585b2eed32da4269f90ed18c902cf28",
+    "client/src/lib/photoFinishSettings.test.ts": "a26aafd81becb88c1301753529480b61346f034dbc29bc2b7ebed5f9f8f8ae48",
+    "client/src/lib/photoFinishSettings.ts": "c4e2fa4db8f66dc7d531a0818213de791a100c6d64ceb82d7884c0bf17e8dc30",
+    "client/src/lib/progressStore.ts": "0c11f45e405d1f4ccf55a3a8b15d734274d3b1835131910e5014b8efad4b3cea",
+    "client/src/lib/publicAsset.ts": "5c3f95f55a01dd937c08c9663c0f462e55eb029dcc9d7c95c0d2bce6c86c1c5f",
+    "client/src/lib/publicFeatureApi.test.ts": "de0e98db7f1f6994a01a7833a2f30d7156827353ef4736d7516471538d780499",
+    "client/src/lib/publicFeatureApi.ts": "889b30cb958eadb855f5bbc93b4e5955044e0f4ace2302da7bfd86df7136467f",
+    "client/src/lib/raceCatalogAnalytics.test.ts": "ccd644897815bc0603af832cd9ac26f1b95e8f05c097710cc7e6af3e6b625a22",
+    "client/src/lib/raceCatalogAnalytics.ts": "6ceda6c4a873e9ac1756318db967332552b56f5ffaf9c05b93c61aaaec7060f9",
+    "client/src/lib/raceHistoryTools.test.ts": "79564b3caa125f22414d1b77a6993ba67fab0d69ffa769554387cabe9e6eabce",
+    "client/src/lib/raceHistoryTools.ts": "dde1e6c432c7569e3f5bb75c1c2414f6f996cc8832a844cd2b9166e22c55c456",
+    "client/src/lib/raceMarketTable.ts": "0b955cb40c10f4a6a7dedcef4b68396afa061bbf53422d45e74e4d76f025e106",
+    "client/src/lib/raceOutcomeAnalysis.test.ts": "b8c3adb83f667204a04f6545874feebcaec79044fb19d1704f4d5e6b1750030c",
+    "client/src/lib/raceOutcomeAnalysis.ts": "7123c4077510957c40efd2478795bd923ceba67cec2cee58c0ca1c7280edc649",
+    "client/src/lib/racePlayback.test.ts": "9886b075f421a33c8b4a89615f4386c20aed2383284c0e4b07b345f0462b8126",
+    "client/src/lib/racePlayback.ts": "2610a44500c94351d4dcdffc14fc8d2508f21bb7b2bdc0c3ddbba579bc40b263",
+    "client/src/lib/raceShareUrl.test.ts": "0b0c6b94a890d19817ae2e8008dcfd3f0325964223fca01ea815bb16fa722056",
+    "client/src/lib/raceShareUrl.ts": "9c3a31874af756220f4b07b70165d878c9c10abc22b90bd8647685a4546c2730",
+    "client/src/lib/raceStatusView.test.ts": "c64b0e02226e3081b74b4f6c360f05b97c4bef1ec706b46855ac8e91a09c7b91",
+    "client/src/lib/raceStatusView.ts": "3d9478f4a85e66286088c1579250fc4abda7696335ddd3b542eb5d5f0ffbbc7a",
+    "client/src/lib/raceView.test.ts": "ebf1d1595103cbcb353a0178d295adb5b652341042b698ac98f49e69cd7ea284",
+    "client/src/lib/raceView.ts": "9b76f27516f5bd9631a1a175d16c19c7a8c2df9fe2ab8d29cce14e8f38557442",
+    "client/src/lib/resultFormat.ts": "a26c06d9ba1bb80016fa0ec125d6182f07904fca82acc1acbf311b02ea4702e9",
+    "client/src/lib/resultPoller.test.ts": "3948046b112dddbdfdc1d41fc2ae7c5aac3aebd109ec3740a2f536d06d863172",
+    "client/src/lib/resultPoller.ts": "4b35b14c3dd6cd9ff64f6ab341c3ac28bc5d26f2a7c6491c269aaaacb24ccbdc",
+    "client/src/lib/scenarioContract.test.ts": "041b273a0c757c26c2c3c76bc64f217111f0eb365bb9daf1b25a0888c5246ea6",
+    "client/src/lib/scenarioMotion.test.ts": "912d53c65fd4f2d3059aea18f8366599269533c3d02ee785b61dc04878ee109e",
+    "client/src/lib/scenarioMotion.ts": "a3854322abb8cc47001a1d5391cc10cc8cb86439fc6e737a2fe0809a2066a4d0",
+    "client/src/lib/scenarioNoise.test.ts": "60279a9ff44bd730ac1c071b8f81c3b723029699c921c0f4a47d73555fbbbb3f",
+    "client/src/lib/scenarioNoise.ts": "8f175228c81d1c07b209ab6845720008ca3dcee0f270e47ac4a98435c2397944",
+    "client/src/lib/scenarioOrder.test.ts": "43d01f59eb87489d13e8493d416e89815425a61ccaedc2a4a58c4c5205bbfc29",
+    "client/src/lib/scenarioOrder.ts": "697201b75e3151e3bb1e2d6b0424f7fde78864a414a339f84058494ecf46ecc7",
+    "client/src/lib/scenarioProvenance.test.ts": "7b17e69685107dba24c46b7ce8960589554593af793721a0c05f55d80aad0c1a",
+    "client/src/lib/scenarioProvenance.ts": "f2a7b9bdbcc833e19b39530ad9047b693b14175e290c4e1c149c368dc29e556c",
+    "client/src/lib/scenarioReplay.test.ts": "a9f0499ee1fa1edf17370d67b7a78318a3f35179bd98d00bf81078566d7d41bc",
+    "client/src/lib/scenarioReplay.ts": "78b8f094ab0b43577af9338705bf67ea819b41ed79b2666de18a1f6907f930bf",
+    "client/src/lib/scenarioRunnerField.test.ts": "bd68c5e558ca29e0d025552119b8ce757dbeab4f664b5dc3b1d65fb7b0417930",
+    "client/src/lib/scenarioRunnerField.ts": "edc354e53cba93298f654593d7efdba8de8fafd411b583ba917965a86e42fc5d",
+    "client/src/lib/simulationCalibration.test.ts": "47c268aed60427881fe6f8c7425700222bab157265006184d692d6dc6a0d68df",
+    "client/src/lib/simulationCalibration.ts": "35245ed043871304c70ecfe7d15ce3321061a0e8098298d8ecfa4a09f74b05a3",
+    "client/src/lib/simulatorAnalytics.test.ts": "2cfe42c99a431ec00fbf5cbe7d0019480b72ef17ba701fc9e395074dc977dd0d",
+    "client/src/lib/simulatorAnalytics.ts": "ef9fd658a81a690ecf06a1df79cead85271d8cad853dbfff7b15fa1016629d4b",
+    "client/src/lib/simulatorResult.test.ts": "b48734a6f11ee86065800798018528629d8232f3d110d2a973a8531944c99511",
+    "client/src/lib/simulatorResult.ts": "ff5379164f1e417da9ee254c8a678b0adaba9d0b911a4cfd84cfe0c485730a9b",
+    "client/src/lib/singlePickAi.test.ts": "1b7987bef9361988369197232433ce69a068124f538c87263b2a5333b9100c7a",
+    "client/src/lib/singlePickRetry.test.ts": "c3f1ea9fb00d8280a9624212bc038e8687976e50395e1a05434d262af4d375ed",
+    "client/src/lib/singlePickRetry.ts": "5f63b7fe934344d726f68f46e8f8f85dd7dc270c9e180173cbda651d73af42e2",
+    "client/src/lib/singlePickSyncStatus.test.ts": "11bee4cc9e1c14f442436e792e6cd10de225d2c747afd819bf11e089ce68b93f",
+    "client/src/lib/singlePickSyncStatus.ts": "5420340bc4d178bda7d4d61adca3bbe76e921809a79186040f208583e1e69a65",
+    "client/src/lib/singlePickSyncUpdate.test.ts": "5740420f7cb1b68d08e9c7efcf24434747d5946a04aedb3385368422c4d8a840",
+    "client/src/lib/singlePickSyncUpdate.ts": "4027dbf4f52ef2b48c7ab8fce84cb75215c5a7b88f4f7f9bf732a3cbcce63cf6",
+    "client/src/lib/terrainTempo.test.ts": "4b28f23a045e3cf8f0f17213ba2a15cdd67ef781868888d5f9f655adc505fa0d",
+    "client/src/lib/terrainTempo.ts": "35a0068f1bd1d50fe1e4cf54eace2a2c757d88e5f7e8ad6c8b77207b901fdc9a",
+    "client/src/lib/todayRecord.test.ts": "6f62da677401c8eca0e236c297aefea62ebb5f8a4fffed5a0f9c2d48c634deb8",
+    "client/src/lib/todayRecord.ts": "87a7f4e233f58727acb03ef2ba72c57dc489d62d9a772e0eaca7f46eecf85258",
+    "client/src/lib/trpc.ts": "d883ad43f46eaf73342924feaf5342ce601d04abe1a828076625071931cc0ef3",
+    "client/src/lib/utils.ts": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+    "client/src/lib/viewMode.ts": "b526c7f367e6ab66ade4901a8b90bbe1dee81526a7cef21e212f488c57c52ea6",
+    "client/src/lib/whatIfTransparency.test.ts": "7d23119e4335dcec188cf8e2fd9eb0033576a3b8adc9b4c81dd0ceb404f9a183",
+    "client/src/lib/whatIfTransparency.ts": "28244b40abb2937a25648ccca2d8aed52be5c4d777c9fec475042086c4d2cc5d",
+    "server/_core/context.ts": "a43ea9ca8624270a83857d61a7154f17c48bb2c19126d1ee037a37345f6bda86",
+    "server/_core/cookies.ts": "8b9f416d2d3ea74b3c26cb6855d9019ad7cc4403e103a150502179874c568373",
+    "server/_core/dataApi.ts": "194ef8e309abde283a1132aa383af10ae583e27e983afa30dfcece3aa9ce27a7",
+    "server/_core/env.ts": "15356c6c79afa61c60b20e126691853d07b51c48b9e57f205b7ce63dd02d622b",
+    "server/_core/heartbeat.ts": "e9070208f34813a427d4a79207819acc2ac0d1de5244b4db55fe3a94bfe3f950",
+    "server/_core/imageGeneration.ts": "3218b6a0a642d92fc5cb24f8737147b8e4f3f11474e53576b6ed4679d7973ccb",
+    "server/_core/index.ts": "6eb0c709b889b3e8e80c127a9b5f15796ddcf5a96a35a88e8ec6f97274ba5dbd",
+    "server/_core/llm.ts": "30d3f1c62a9fbbb4cdba6cb91e1580213dae53fb3d404b5bdd1d41cb6f1d5096",
+    "server/_core/map.ts": "c04f24ee38ef6840d56053f3464091d164a6236fc36e37672d555a684461ab7e",
+    "server/_core/notification.ts": "550bf6544bf792b6d13c68539679deb363b70fbf07c0dbde189a98787f66f003",
+    "server/_core/oauth.ts": "310791a577a40e7920f2ac449f730e4a27ce452c7f6a932834260943be469826",
+    "server/_core/sdk.ts": "828ff33d41561c3353065deb46930ee44cb81fdf47b75c03171cb5fbd74a81d7",
+    "server/_core/storageProxy.ts": "dec37a868cf4d82d4cadf18ba279e3aa60ff863c9026ecd2a2165650d2d968e0",
+    "server/_core/systemRouter.ts": "61bb2c904da1fa08a425f8882aa3b23003bba7266ce00b2d9fcd685e5d4bffaf",
+    "server/_core/trpc.ts": "95679492e0478938f9bab6e3388ba6a95d3ab3329e6ff2eb9686e638cd07d98e",
+    "server/_core/types/cookie.d.ts": "c2ed733d67b16ae4621164dbce09e99de0233b4a0ed05227bc35096822173c05",
+    "server/_core/types/manusTypes.ts": "d073995b792a4376177bf7270cbcf3a670d4e72efb8eb6a83ecb55043cc729c3",
+    "server/_core/vite.ts": "957da5abe4ca740e48fedf9cd3c26ce1c9eca473ed50d7e7588f2173798f6b1b",
+    "server/_core/voiceTranscription.ts": "c53b328b12e54adfacbc632e668c2b58b9954547ce9d3313907096c8b2db330c",
+    "server/auth.logout.test.ts": "253f4a050743093300aa70fc0072f5fbd46cfba96ecfd1d52d434fbe7dcfb54a",
+    "server/brand-rebrand.test.ts": "71f5d001feac7e43ed8d5804f1bc29ed809bf5d40c6d4691181e64e89be9de01",
+    "server/db.ts": "16cff90aae436a580326ab9ad143cd9979dc627a4570d2eb225124739ab983a1",
+    "server/github-pages-deploy.test.ts": "dd940dde2fa705f0e265ffee085f5b921d8b7b6616fa17d1565ab734c294aa06",
+    "server/index.ts": "1173c62861b9c60b2a3f55fd4189917813cdaa16f1eff6fc2f860a0e020db215",
+    "server/public-beta-analytics.test.ts": "86b12fa338e61d4f77f7bd55010c1ea32e5f45347759f554f0a7785b9d659cf8",
+    "server/raceSync.ts": "5e2a2b3b7f7d153ce4a09378e243aa98f459bb8c6267e1a7ea9b60e9d8388492",
+    "server/resultOps.test.ts": "72c8a7a1ff323496af97f14f664684f5e7335b6e4ff01075eeb6538da4532ae6",
+    "server/resultOps.ts": "26c7e5a151641f84df8ec31e1b53893f6aa27bdf6ded92ae3c2c3351d538c975",
+    "server/routers.ts": "761b243337a062ed326ebb6e99b4833759fd8eaafd450784e355190ba4cd6027",
+    "server/single-pick-ai-base.test.ts": "96c2f04e55e3828dca852b53b2851f08936028f8233e89797669f02cc1d133c1",
+    "server/singlePickSync.connection.test.ts": "8ea9eefc141118e4b7ae4ae28098d272a29b37b518b737ad1be8011815807e3d",
+    "server/storage.ts": "55eab39960d991bfbd50e86fb586fd6842fff88bcc7ab6d3538982a3fd9dd860",
+    "shared/_core/errors.ts": "52bee7d152045eaa009083e26a4cbc21d413c80b0403a23c4b5572141dec942a",
+    "shared/const.ts": "30a4b7bfc3369a0f98f4af263dbf8ec5c6fee95cebe8922e347eeb03ab5afccc",
+    "shared/types.ts": "959aeb30b032e203677e278922e97988b7cbcb56485694458298859af5589974"
+  },
+  "simulator_sessions": 18,
+  "simulator_comparisons": [
+    {
+      "width": 390,
+      "height": 844,
+      "reduced": false,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reduced": true,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "reduced": false,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "reduced": true,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": false,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "reduced": true,
+      "mainOffOn": "IDENTICAL_V3_SEMANTICS_AND_GEOMETRY"
+    }
+  ],
+  "bundle": {
+    "main": {
+      ".js": {
+        "bytes": 1291080,
+        "gzip_bytes": 357350
+      },
+      ".css": {
+        "bytes": 346121,
+        "gzip_bytes": 61290
+      }
+    },
+    "off": {
+      ".js": {
+        "bytes": 1299622,
+        "gzip_bytes": 359605
+      },
+      ".css": {
+        "bytes": 348830,
+        "gzip_bytes": 61947
+      }
+    },
+    "on_fixture": {
+      ".js": {
+        "bytes": 1299619,
+        "gzip_bytes": 359606
+      },
+      ".css": {
+        "bytes": 348830,
+        "gzip_bytes": 61947
+      }
+    }
+  },
+  "bundle_delta_off_vs_main": {
+    ".js": {
+      "bytes": 8542,
+      "gzip_bytes": 2255
+    },
+    ".css": {
+      "bytes": 2709,
+      "gzip_bytes": 657
+    }
+  },
+  "fixture_performance": {
+    "main": {
+      "first_meaningful_ms_median": 387.5,
+      "dom_nodes": {
+        "320": 1065,
+        "360": 1065,
+        "390": 1065,
+        "430": 1065,
+        "768": 1065,
+        "1024": 1065,
+        "1440": 1065
+      },
+      "non_input_cls": {
+        "320": 0.0618963522831922,
+        "360": 0.0618963522831922,
+        "390": 0.06265442150895084,
+        "430": 0.06265442150895084,
+        "768": 0.060286,
+        "1024": 0.058873046875,
+        "1440": 0.03721358024691358
+      }
+    },
+    "off": {
+      "first_meaningful_ms_median": 378.5,
+      "dom_nodes": {
+        "320": 1065,
+        "360": 1065,
+        "390": 1065,
+        "430": 1065,
+        "768": 1065,
+        "1024": 1065,
+        "1440": 1065
+      },
+      "non_input_cls": {
+        "320": 0.0618963522831922,
+        "360": 0.0618963522831922,
+        "390": 0.0618963522831922,
+        "430": 0.0618963522831922,
+        "768": 0.060286,
+        "1024": 0.058873046875,
+        "1440": 0.03721358024691358
+      }
+    },
+    "on": {
+      "first_meaningful_ms_median": 390.40000000596046,
+      "dom_nodes": {
+        "320": 1148,
+        "360": 1148,
+        "390": 1148,
+        "430": 1148,
+        "768": 1148,
+        "1024": 1148,
+        "1440": 1148
+      },
+      "non_input_cls": {
+        "320": 0.0618963522831922,
+        "360": 0.0618963522831922,
+        "390": 0.0618963522831922,
+        "430": 0.0618963522831922,
+        "768": 0.060286,
+        "1024": 0.058873046875,
+        "1440": 0.03721358024691358
+      }
+    }
+  },
+  "react_render": {
+    "kind": "SYNTHETIC_REACT_SSR_NOT_CLIENT_PROFILER",
+    "iterations": 100,
+    "offMsPerRender": 0.016301179999999818,
+    "onFullMsPerRender": 1.3100165099999999
+  },
+  "typecheck": "PASS",
+  "production_off_build": "PASS",
+  "real_api_verification": "LOCAL_API_VERIFICATION_REQUIRED_SEPARATE_TASK",
+  "remaining_public_gate": [
+    "API canonical local verification",
+    "organization-scoped backend rollout approval",
+    "CI/env OFF audit and later production smoke"
+  ],
+  "images": [
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-details.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-long.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-malformed.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-marks-only.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-missing.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-no-explanation.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-no-selectivity.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-optional-omitted.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-JRA-three.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/1440-NAR-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-details.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-long.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-malformed.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-marks-only.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-missing.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-no-explanation.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-no-selectivity.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-optional-omitted.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-JRA-three.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-NAR-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-card-focus.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-forced-colors-keyboard.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/390-forced-colors-no-card.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-1024-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-1440-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-320-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-360-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-390-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-430-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/main-768-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-1024-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-1440-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-320-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-360-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-390-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-430-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/off-768-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-1024-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-1440-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-320-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-360-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-390-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-430-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/on-768-full.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-1440-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-1440-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-390-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-390-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-667-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/main-667-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-1440-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-1440-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-390-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-390-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-667-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/off-667-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-1440-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-1440-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-390-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-390-reduced-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-667-normal-share.png",
+    "scratchpad/ui/prediction_card_public_ui_prep_evidence/simulator/on-667-reduced-share.png"
+  ],
+  "venue_controls_location": "inside collapsed card disclosure; no added non-input loading CLS",
+  "card_api_missing_has_no_venue_controls": true
+}

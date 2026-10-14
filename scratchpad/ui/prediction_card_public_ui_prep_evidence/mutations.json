@@ -1,0 +1,34 @@
+{
+  "flag_bypass": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "publication_label": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "missing_placeholder": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "fake_convergence": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "raw_score": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "stale_race": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "page_crash": {
+    "killed": true,
+    "exit_code": 1
+  },
+  "extra_fetch": {
+    "killed": true,
+    "exit_code": 1
+  }
+}

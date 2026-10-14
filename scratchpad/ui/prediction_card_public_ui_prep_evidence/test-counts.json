@@ -1,0 +1,11 @@
+{
+  "candidate": {
+    "passed": 660,
+    "failed": 0
+  },
+  "baseline": {
+    "passed": 647,
+    "failed": 0
+  },
+  "candidate_only_failures": 0
+}
